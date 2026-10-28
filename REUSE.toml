@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 version = 1
-SPDX-PackageName = "Aperture"
-SPDX-PackageSupplier = "The LineageOS Project"
-SPDX-PackageDownloadLocation = "https://github.com/LineageOS/android_packages_apps_Aperture"
+SPDX-PackageName = "Camera"
+SPDX-PackageSupplier = "Saalim Quadri"
+SPDX-PackageDownloadLocation = "https://github.com/PVOT-OSS/Camera"
 
 [[annotations]]
 path = [".github/workflows/**", ".gitignore", "app/.gitignore", "lens_launcher/.gitignore"]

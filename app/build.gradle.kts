@@ -14,11 +14,11 @@ plugins {
 }
 
 android {
-    namespace = "org.lineageos.aperture"
+    namespace = "org.prauga.camera"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "org.lineageos.aperture"
+        applicationId = "org.prauga.camera"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
