@@ -7,10 +7,8 @@ package org.prauga.camera
 
 import android.animation.ValueAnimator
 import android.app.KeyguardManager
-import android.content.ClipData
 import android.content.Intent
 import android.content.pm.ActivityInfo
-import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Rect
 import android.graphics.drawable.AnimatedVectorDrawable
@@ -37,17 +35,11 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.ExperimentalZeroShutterLag
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.MirrorMode
-import androidx.camera.core.resolutionselector.AspectRatioStrategy
-import androidx.camera.core.resolutionselector.ResolutionSelector
 import androidx.camera.extensions.ExtensionMode
 import androidx.camera.video.Quality
-import androidx.camera.video.QualitySelector
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.CameraController
 import androidx.camera.view.PreviewView
@@ -75,51 +67,33 @@ import coil3.size.Scale
 import coil3.video.VideoFrameDecoder
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.prauga.camera.ext.camera2CameraControl
 import org.prauga.camera.ext.flashMode
 import org.prauga.camera.ext.mapToRange
 import org.prauga.camera.ext.px
-import org.prauga.camera.ext.scale
-import org.prauga.camera.ext.setColorCorrectionAberrationMode
-import org.prauga.camera.ext.setDistortionCorrectionMode
-import org.prauga.camera.ext.setEdgeMode
-import org.prauga.camera.ext.setFrameRate
-import org.prauga.camera.ext.setHotPixelMode
-import org.prauga.camera.ext.setNoiseReductionMode
 import org.prauga.camera.ext.setPadding
-import org.prauga.camera.ext.setShadingMode
-import org.prauga.camera.ext.setVideoStabilizationMode
 import org.prauga.camera.ext.slide
 import org.prauga.camera.ext.slideDown
 import org.prauga.camera.ext.smoothRotate
-import org.prauga.camera.ext.transform
 import org.prauga.camera.ext.updateBarsVisibility
-import org.prauga.camera.models.AssistantIntent
 import org.prauga.camera.models.CameraConfiguration
-import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.CameraMode
 import org.prauga.camera.models.CameraState
 import org.prauga.camera.models.Event
+import org.prauga.camera.models.LaunchRequest
 import org.prauga.camera.models.FlashMode
-import org.prauga.camera.models.GestureAction
 import org.prauga.camera.models.GridMode
-import org.prauga.camera.models.HardwareKey
 import org.prauga.camera.models.MediaType
 import org.prauga.camera.models.Permission
 import org.prauga.camera.models.PermissionState
-import org.prauga.camera.models.PhotoOutputFormat
 import org.prauga.camera.models.Rotation
 import org.prauga.camera.models.ThermalStatus
 import org.prauga.camera.models.TimerMode
 import org.prauga.camera.models.VideoDynamicRange
-import org.prauga.camera.models.VideoMirrorMode
-import org.prauga.camera.models.VideoStabilizationMode
+import org.prauga.camera.ui.GalleryLauncher
+import org.prauga.camera.ui.HardwareKeyHandler
 import org.prauga.camera.ui.dialogs.LocationPermissionsDialog
 import org.prauga.camera.ui.dialogs.QrBottomSheetDialog
 import org.prauga.camera.ui.views.CameraModeSelectorLayout
@@ -132,12 +106,11 @@ import org.prauga.camera.ui.views.LensSelectorLayout
 import org.prauga.camera.ui.views.LevelerView
 import org.prauga.camera.ui.views.PreviewBlurView
 import org.prauga.camera.ui.views.VerticalSlider
-import org.prauga.camera.utils.ExifUtils
+import org.prauga.camera.utils.CaptureIntentResult
 import org.prauga.camera.utils.PermissionsManager
 import org.prauga.camera.utils.ShortcutsUtils
 import org.prauga.camera.viewmodels.CameraViewModel
 import java.io.ByteArrayInputStream
-import java.io.FileNotFoundException
 import java.io.InputStream
 import kotlin.math.abs
 import kotlin.reflect.safeCast
@@ -186,16 +159,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     // System services
     private val keyguardManager by lazy { getSystemService(KeyguardManager::class.java) }
 
-    /**
-     * The currently shown URI.
-     */
-    private var galleryButtonUri: Uri? = null
-
-    /**
-     * Medias captured from secure activity will be stored here
-     * NOTE: Order is important, the first element is the newest one.
-     */
-    private val secureMediaUris = ArrayDeque<Uri>()
+    private val galleryLauncher by lazy { GalleryLauncher(this, viewModel::fileExists) }
 
     // QR
     private val qrBottomSheetDialog by lazy { QrBottomSheetDialog(this) }
@@ -317,47 +281,21 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         PauseToResume(R.drawable.avd_video_recording_resume),
     }
 
-    private val intentActions = mapOf(
-        // Intents
-        MediaStore.ACTION_IMAGE_CAPTURE to {
-            viewModel.initialCameraMode = CameraMode.PHOTO
-            viewModel.inSingleCaptureMode.value = true
-        },
-        MediaStore.ACTION_IMAGE_CAPTURE_SECURE to {
-            viewModel.initialCameraMode = CameraMode.PHOTO
-            viewModel.inSingleCaptureMode.value = true
-        },
-        MediaStore.ACTION_VIDEO_CAPTURE to {
-            viewModel.initialCameraMode = CameraMode.VIDEO
-            viewModel.inSingleCaptureMode.value = true
-        },
-        MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA to {
-            viewModel.initialCameraMode = CameraMode.PHOTO
-        },
-        MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA_SECURE to {
-            viewModel.initialCameraMode = CameraMode.PHOTO
-        },
-        MediaStore.INTENT_ACTION_VIDEO_CAMERA to {
-            viewModel.initialCameraMode = CameraMode.VIDEO
-        },
+    private val hardwareKeyHandler by lazy {
+        HardwareKeyHandler(
+            viewModel,
+            onShutter = { shutterButton.performClick() },
+            onFocus = {
+                viewFinderTouchEvent = null
+                viewFinder.performClick()
+            },
+            isMicButtonEnabled = { micButton.isEnabled },
+        )
+    }
 
-        // Shortcuts
-        ShortcutsUtils.SHORTCUT_ID_SELFIE to {
-            viewModel.initialCameraMode = CameraMode.PHOTO
-            viewModel.initialCameraFacing = CameraFacing.FRONT
-        },
-        ShortcutsUtils.SHORTCUT_ID_VIDEO to {
-            viewModel.initialCameraMode = CameraMode.VIDEO
-            viewModel.initialCameraFacing = CameraFacing.BACK
-        },
-        ShortcutsUtils.SHORTCUT_ID_QR to {
-            viewModel.initialCameraMode = CameraMode.QR
-        },
-    )
-    private val assistantIntent
-        get() = AssistantIntent.fromIntent(intent)
-    private val launchedViaVoiceIntent
-        get() = isVoiceInteractionRoot && intent.hasCategory(Intent.CATEGORY_VOICE)
+    private val launchRequest by lazy {
+        LaunchRequest.fromIntent(intent, overrideInitialCameraMode(), isVoiceInteractionRoot)
+    }
 
     @Suppress("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -388,23 +326,10 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         // Register shortcuts
         ShortcutsUtils.registerShortcuts(this)
 
-        // Initialize initial camera mode
-        overrideInitialCameraMode()?.let {
-            viewModel.initialCameraMode = it
-        }
-
-        // Handle intent
-        intent.action?.let {
-            intentActions[it]?.invoke()
-        }
-
-        // Handle assistant intent
-        assistantIntent?.useFrontCamera?.let {
-            viewModel.initialCameraFacing = if (it) {
-                CameraFacing.FRONT
-            } else {
-                CameraFacing.BACK
-            }
+        launchRequest.cameraMode?.let { viewModel.initialCameraMode = it }
+        launchRequest.cameraFacing?.let { viewModel.initialCameraFacing = it }
+        if (launchRequest.singleCapture) {
+            viewModel.inSingleCaptureMode.value = true
         }
 
         // Setup window insets
@@ -474,9 +399,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                     previewBlurView.isVisible = false
 
                     // Issue capture if requested via assistant
-                    if ((launchedViaVoiceIntent || assistantIntent?.cameraOpenOnly != null)
-                        && assistantIntent?.cameraOpenOnly != true
-                    ) {
+                    if (launchRequest.captureOnStart) {
                         shutterButton.performClick()
                     }
                 }
@@ -534,7 +457,9 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
             }
         }
 
-        galleryButtonCardView.setOnClickListener { openGallery() }
+        galleryButtonCardView.setOnClickListener {
+            lifecycleScope.launch { galleryLauncher.openGallery() }
+        }
 
         // Set lens switching callback
         lensSelectorLayout.onCameraChangeCallback = {
@@ -636,12 +561,20 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?) = when (capturePreviewLayout.isVisible) {
         true -> super.onKeyDown(keyCode, event)
-        false -> handleHardwareKeyDown(keyCode, event) ?: super.onKeyDown(keyCode, event)
+        false -> when (hardwareKeyHandler.onKeyDown(keyCode, event)) {
+            HardwareKeyHandler.Result.HANDLED -> true
+            HardwareKeyHandler.Result.DEFAULT -> super.onKeyDown(keyCode, event)
+            null -> super.onKeyDown(keyCode, event)
+        }
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent?) = when (capturePreviewLayout.isVisible) {
         true -> super.onKeyUp(keyCode, event)
-        false -> handleHardwareKeyUp(keyCode, event) ?: super.onKeyUp(keyCode, event)
+        false -> when (hardwareKeyHandler.onKeyUp(keyCode)) {
+            HardwareKeyHandler.Result.HANDLED -> true
+            HardwareKeyHandler.Result.DEFAULT -> super.onKeyDown(keyCode, event)
+            null -> super.onKeyUp(keyCode, event)
+        }
     }
 
     /**
@@ -1457,196 +1390,10 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         previewBlurView.freeze()
         previewBlurView.isVisible = true
 
-        // Unbind previous use cases
-        viewModel.cameraController.unbind()
-
         // Hide grid until preview is ready
         gridView.alpha = 0f
 
-        // If the current camera doesn't support the selected camera mode, give up
-        require(cameraConfiguration.camera.supportsCameraMode(cameraConfiguration.cameraMode)) {
-            "Selected camera mode (${
-                cameraConfiguration.cameraMode
-            }) not supported by camera ${cameraConfiguration.camera.cameraId}"
-        }
-
-        // Make sure the extension mode is supported
-        require(
-            cameraConfiguration.camera.supportsExtensionMode(
-                cameraConfiguration.extensionMode
-            )
-        ) {
-            "Selected extension mode (${
-                cameraConfiguration.extensionMode
-            }) not supported by camera ${cameraConfiguration.camera.cameraId}"
-        }
-
-        // Initialize the use case we want and set its properties
-        val cameraUseCases = when (cameraConfiguration) {
-            is CameraConfiguration.Photo -> {
-                require(
-                    cameraConfiguration.photoCaptureMode != ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG
-                            || cameraConfiguration.camera.supportsZsl
-                ) {
-                    "Requested ZSL capture mode when the camera doesn't support it"
-                }
-
-                require(
-                    cameraConfiguration.camera.supportedPhotoOutputFormats.contains(
-                        cameraConfiguration.photoOutputFormat
-                    )
-                ) {
-                    "Selected photo output format (${
-                        cameraConfiguration.photoOutputFormat
-                    } not supported by camera ${cameraConfiguration.camera.cameraId})"
-                }
-
-                viewModel.cameraController.imageCaptureMode = cameraConfiguration.photoCaptureMode
-
-                viewModel.cameraController.imageOutputFormat = when (
-                    cameraConfiguration.photoOutputFormat
-                ) {
-                    PhotoOutputFormat.JPEG -> ImageCapture.OUTPUT_FORMAT_JPEG
-                    PhotoOutputFormat.JPEG_ULTRA_HDR -> ImageCapture.OUTPUT_FORMAT_JPEG_ULTRA_HDR
-                    PhotoOutputFormat.RAW -> ImageCapture.OUTPUT_FORMAT_RAW
-                    PhotoOutputFormat.RAW_JPEG -> ImageCapture.OUTPUT_FORMAT_RAW_JPEG
-                }
-
-                viewModel.cameraController.imageCaptureResolutionSelector =
-                    ResolutionSelector.Builder()
-                        .setAspectRatioStrategy(
-                            AspectRatioStrategy(
-                                cameraConfiguration.photoAspectRatio,
-                                AspectRatioStrategy.FALLBACK_RULE_AUTO,
-                            )
-                        )
-                        .setAllowedResolutionMode(
-                            if (cameraConfiguration.enableHighResolution) {
-                                ResolutionSelector.PREFER_HIGHER_RESOLUTION_OVER_CAPTURE_RATE
-                            } else {
-                                ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION
-                            }
-                        )
-                        .build()
-
-                CameraController.IMAGE_CAPTURE
-            }
-
-            is CameraConfiguration.Video -> {
-                // Check whether or not the video quality is supported
-                val videoQualityInfo = cameraConfiguration.camera.supportedVideoQualities[
-                    cameraConfiguration.videoQuality
-                ] ?: error("Video quality not supported by the camera")
-
-                require(
-                    videoQualityInfo.supportedFrameRates.contains(
-                        cameraConfiguration.videoFrameRate
-                    )
-                ) {
-                    "Video frame rate not supported with the requested video quality"
-                }
-
-                require(
-                    videoQualityInfo.supportedDynamicRanges.contains(
-                        cameraConfiguration.videoDynamicRange
-                    )
-                ) {
-                    "Video dynamic range not supported with the requested video quality"
-                }
-
-                // Set the quality
-                viewModel.cameraController.videoCaptureQualitySelector =
-                    QualitySelector.from(cameraConfiguration.videoQuality)
-
-                // Set the dynamic range
-                viewModel.cameraController.videoCaptureDynamicRange =
-                    cameraConfiguration.videoDynamicRange.dynamicRange
-
-                // Set video mirror mode
-                viewModel.cameraController.videoCaptureMirrorMode =
-                    when (cameraConfiguration.videoMirrorMode) {
-                        VideoMirrorMode.OFF -> MirrorMode.MIRROR_MODE_OFF
-                        VideoMirrorMode.ON -> MirrorMode.MIRROR_MODE_ON
-                        VideoMirrorMode.ON_FFC_ONLY -> when (
-                            cameraConfiguration.camera.cameraFacing
-                        ) {
-                            CameraFacing.FRONT -> MirrorMode.MIRROR_MODE_ON
-                            else -> MirrorMode.MIRROR_MODE_OFF
-                        }
-                    }
-
-                CameraController.VIDEO_CAPTURE
-            }
-
-            is CameraConfiguration.Qr -> {
-                viewModel.cameraController.setImageAnalysisAnalyzer(
-                    viewModel.cameraExecutor, viewModel.qrImageAnalyzer
-                )
-
-                CameraController.IMAGE_ANALYSIS
-            }
-        }
-
-        // Get the camera selector
-        val cameraSelector = viewModel.getExtensionEnabledCameraSelector(
-            cameraConfiguration.camera, cameraConfiguration.extensionMode
-        )
-
-        // Workaround: We cannot set flash mode to screen with a non front facing camera.
-        // VM will set the correct value later on
-        if (cameraConfiguration.camera.cameraFacing != CameraFacing.FRONT
-            && viewModel.cameraController.flashMode == FlashMode.SCREEN
-        ) {
-            viewModel.cameraController.flashMode = FlashMode.OFF
-        }
-
-        // Bind use cases to camera
-        viewModel.cameraController.cameraSelector = cameraSelector
-        viewModel.cameraController.setEnabledUseCases(cameraUseCases)
-
-        // Bind camera controller to lifecycle
-        viewModel.cameraController.bindToLifecycle(this)
-
-        // Wait for camera to be ready
-        lifecycleScope.launch {
-            viewModel.cameraController.initializationFuture.await()
-
-            val camera2CameraControl = viewModel.cameraController.camera2CameraControl ?: run {
-                Log.wtf(LOG_TAG, "Camera2CameraControl not available even with camera ready?")
-                return@launch
-            }
-
-            val camera2Options = cameraConfiguration.camera2Options
-
-            // Set Camera2 CaptureRequest options
-            camera2CameraControl.setCaptureRequestOptions(CaptureRequestOptions.Builder()
-                .setFrameRate(
-                    when (cameraConfiguration) {
-                        is CameraConfiguration.Video -> cameraConfiguration.videoFrameRate
-                        else -> null
-                    }
-                )
-                .setVideoStabilizationMode(
-                    when (cameraConfiguration) {
-                        is CameraConfiguration.Video -> when (
-                            cameraConfiguration.enableVideoStabilization
-                        ) {
-                            true -> VideoStabilizationMode.getMode(cameraConfiguration.camera)
-                            false -> null
-                        }
-
-                        else -> null
-                    } ?: VideoStabilizationMode.OFF
-                )
-                .setEdgeMode(camera2Options.edgeMode)
-                .setNoiseReductionMode(camera2Options.noiseReductionMode)
-                .setShadingMode(camera2Options.shadingMode)
-                .setColorCorrectionAberrationMode(camera2Options.colorCorrectionAberrationMode)
-                .setDistortionCorrectionMode(camera2Options.distortionCorrectionMode)
-                .setHotPixelMode(camera2Options.hotPixelMode)
-                .build()
-            )
-        }
+        viewModel.cameraXBinder.bind(cameraConfiguration, this)
 
         // Restore settings that can be set on the fly
         viewModel.setVideoMicrophoneEnabled(viewModel.videoMicMode.value)
@@ -1670,7 +1417,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                 return@runOnUiThread
             }
 
-            galleryButtonUri = uri
+            galleryLauncher.galleryUri = uri
 
             // When keyguard is unlocked, we want media from MediaStore, else we only trust the
             // ones coming from the capture
@@ -1704,89 +1451,6 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         }
     }
 
-    private fun dismissKeyguardAndRun(runnable: () -> Unit) {
-        if (!keyguardManager.isKeyguardLocked) {
-            runnable()
-            return
-        }
-
-        keyguardManager.requestDismissKeyguard(
-            this,
-            object : KeyguardManager.KeyguardDismissCallback() {
-                override fun onDismissSucceeded() {
-                    super.onDismissSucceeded()
-                    runnable()
-                }
-            }
-        )
-    }
-
-    private fun openGallery() {
-        lifecycleScope.launch {
-            // secureMediaUris will be cleared if keyguard is unlocked
-            // or none of the items were found.
-            withContext(Dispatchers.IO) {
-                updateSecureMediaUris(keyguardManager.isKeyguardLocked)
-            }
-
-            if (keyguardManager.isKeyguardLocked) {
-                // In this state the only thing we can do is launch a secure review intent
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-                    && secureMediaUris.isNotEmpty()
-                ) {
-                    val intent = Intent(
-                        MediaStore.ACTION_REVIEW_SECURE, secureMediaUris.first()
-                    ).apply {
-                        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                        if (secureMediaUris.size > 1) {
-                            clipData = ClipData.newUri(
-                                contentResolver, null, secureMediaUris[1]
-                            ).apply {
-                                for (i in 2 until secureMediaUris.size) {
-                                    addItem(contentResolver, ClipData.Item(secureMediaUris[i]))
-                                }
-                            }
-                        }
-                    }
-                    runCatching {
-                        startActivity(intent)
-                        return@launch
-                    }
-                }
-            }
-
-            galleryButtonUri?.also { uri ->
-                // Try to open the Uri in the non secure gallery
-                dismissKeyguardAndRun {
-                    mutableListOf<String>().apply {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            add(MediaStore.ACTION_REVIEW)
-                        }
-                        add(Intent.ACTION_VIEW)
-                    }.forEach {
-                        val intent = Intent(it, uri).apply {
-                            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                        }
-                        runCatching {
-                            startActivity(intent)
-                            return@dismissKeyguardAndRun
-                        }
-                    }
-                }
-            } ?: run {
-                // If the Uri is null, attempt to launch non secure-gallery
-                dismissKeyguardAndRun {
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        type = "image/*"
-                    }
-                    runCatching {
-                        startActivity(intent)
-                    }
-                }
-            }
-        }
-    }
-
     private fun openCapturePreview(uri: Uri, mediaType: MediaType) {
         runOnUiThread {
             capturePreviewLayout.updateSource(uri, mediaType)
@@ -1806,62 +1470,8 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
      * app that sent the intent and closes the camera.
      */
     private fun sendIntentResultAndExit(input: Any) {
-        // The user confirmed the choice
-        var outputUri: Uri? = null
-        if (intent.extras?.containsKey(MediaStore.EXTRA_OUTPUT) == true) {
-            outputUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                intent.extras?.getParcelable(MediaStore.EXTRA_OUTPUT, Uri::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                intent.extras?.get(MediaStore.EXTRA_OUTPUT) as Uri
-            }
-        }
-
-        outputUri?.let {
-            try {
-                contentResolver.openOutputStream(it, "wt").use { outputStream ->
-                    when (input) {
-                        is InputStream -> input.use {
-                            input.copyTo(outputStream!!)
-                        }
-
-                        is Uri -> contentResolver.openInputStream(input).use { inputStream ->
-                            inputStream!!.copyTo(outputStream!!)
-                        }
-
-                        else -> throw IllegalStateException("Input is not Uri or InputStream")
-                    }
-                }
-
-                setResult(RESULT_OK)
-            } catch (exc: FileNotFoundException) {
-                Log.e(LOG_TAG, "Failed to open URI")
-                setResult(RESULT_CANCELED)
-            }
-        } ?: setResult(RESULT_OK, Intent().apply {
-            when (input) {
-                is InputStream -> {
-                    // No output URI provided, so return the photo inline as a downscaled Bitmap.
-                    action = "inline-data"
-                    val transform = ExifUtils.getTransform(input)
-                    val bitmap = input.use { BitmapFactory.decodeStream(input) }
-                    val scaledAndRotatedBitmap = bitmap.scale(
-                        SINGLE_CAPTURE_INLINE_MAX_SIDE_LEN_PIXELS
-                    ).transform(transform)
-                    putExtra("data", scaledAndRotatedBitmap)
-                }
-
-                is Uri -> {
-                    // We saved the media (video), so return the URI that we saved.
-                    data = input
-                    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    putExtra(MediaStore.EXTRA_OUTPUT, input)
-                }
-
-                else -> throw IllegalStateException("Input is not Uri or InputStream")
-            }
-        })
-
+        val (resultCode, data) = CaptureIntentResult.build(contentResolver, intent, input)
+        setResult(resultCode, data)
         finish()
     }
 
@@ -1873,7 +1483,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     private fun startTimerAndRun(runnable: () -> Unit) {
         // Allow forcing timer if requested by the assistant
         val timerModeSeconds =
-            assistantIntent?.timerDurationSeconds ?: viewModel.timerMode.value.seconds
+            launchRequest.timerDurationSeconds ?: viewModel.timerMode.value.seconds
 
         if (timerModeSeconds <= 0 || !viewModel.canRestartCamera()) {
             runnable()
@@ -1904,159 +1514,10 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
     /**
      * Method called when a new media have been successfully captured and saved.
-     * Keep track of media items captured while in a secure lockscreen state so that they
-     * can be passed to the gallery for viewing without unlocking the device. However, if the
-     * keyguard is no longer locked, clear any existing URIs, and do not add this one.
      */
     private fun onCapturedMedia(item: Uri?) {
         updateGalleryButton(item, true)
-
-        if (!keyguardManager.isKeyguardLocked) {
-            secureMediaUris.clear()
-        } else {
-            item?.let {
-                secureMediaUris.addFirst(it)
-            }
-        }
-    }
-
-    /**
-     * If keyguard is not locked, remove any URIs that were stored while in the secure camera state.
-     * Otherwise, remove any URIs that no longer exist.
-     */
-    private fun updateSecureMediaUris(keyguardLocked: Boolean) {
-        if (!keyguardLocked) {
-            secureMediaUris.clear()
-        } else {
-            secureMediaUris.removeIf { !viewModel.fileExists(it) }
-        }
-    }
-
-    private fun handleHardwareKeyDown(
-        keyCode: Int, event: KeyEvent?
-    ) = HardwareKey.match(keyCode)?.let { (hardwareKey, tempIncrease) ->
-        val increase = when (viewModel.getHardwareKeyInvert(hardwareKey)) {
-            true -> !tempIncrease
-            false -> tempIncrease
-        }
-
-        val gestureAction = viewModel.getHardwareKeyAction(hardwareKey)
-
-        if (gestureAction.isTwoWayAction && !hardwareKey.isTwoWayKey) {
-            Log.wtf(
-                LOG_TAG,
-                "${gestureAction.name} requires two-way key but ${hardwareKey.name} is not"
-            )
-            return@let true
-        }
-
-        when (gestureAction) {
-            GestureAction.SHUTTER -> {
-                if (viewModel.cameraMode.value == CameraMode.VIDEO
-                    && viewModel.isShutterButtonEnabled.value
-                    && event?.repeatCount == 0
-                ) {
-                    shutterButton.performClick()
-                }
-                true
-            }
-
-            GestureAction.FOCUS -> {
-                if (event?.repeatCount == 0) {
-                    viewFinderTouchEvent = null
-                    viewFinder.performClick()
-                }
-                true
-            }
-
-            GestureAction.MIC_MUTE -> {
-                if (viewModel.cameraMode.value == CameraMode.VIDEO && micButton.isEnabled &&
-                    event?.repeatCount == 0
-                ) {
-                    viewModel.toggleVideoMicrophoneEnabled()
-                }
-                true
-            }
-
-            GestureAction.ZOOM -> {
-                when (increase) {
-                    true -> viewModel.zoomIn()
-                    false -> viewModel.zoomOut()
-                }
-                true
-            }
-
-            GestureAction.DEFAULT -> {
-                if (hardwareKey.supportsDefault) {
-                    super.onKeyDown(keyCode, event)
-                } else {
-                    Log.wtf(
-                        LOG_TAG,
-                        "Got GestureAction.DEFAULT for ${hardwareKey.name} which doesn't support it"
-                    )
-                    true
-                }
-            }
-
-            GestureAction.NOTHING -> {
-                // Do nothing
-                true
-            }
-        }
-    }
-
-    private fun handleHardwareKeyUp(
-        keyCode: Int, event: KeyEvent?
-    ) = HardwareKey.match(keyCode)?.let { (hardwareKey, _) ->
-        val gestureAction = viewModel.getHardwareKeyAction(hardwareKey)
-
-        if (gestureAction.isTwoWayAction && !hardwareKey.isTwoWayKey) {
-            Log.wtf(
-                LOG_TAG,
-                "${gestureAction.name} requires two-way key but ${hardwareKey.name} is not"
-            )
-            return@let true
-        }
-
-        when (gestureAction) {
-            GestureAction.SHUTTER -> {
-                if (viewModel.cameraMode.value != CameraMode.QR
-                    && viewModel.isShutterButtonEnabled.value
-                ) {
-                    shutterButton.performClick()
-                }
-                true
-            }
-
-            GestureAction.FOCUS -> {
-                true
-            }
-
-            GestureAction.MIC_MUTE -> {
-                true
-            }
-
-            GestureAction.ZOOM -> {
-                true
-            }
-
-            GestureAction.DEFAULT -> {
-                if (hardwareKey.supportsDefault) {
-                    super.onKeyDown(keyCode, event)
-                } else {
-                    Log.wtf(
-                        LOG_TAG,
-                        "Got GestureAction.DEFAULT for ${hardwareKey.name} which doesn't support it"
-                    )
-                    true
-                }
-            }
-
-            GestureAction.NOTHING -> {
-                // Do nothing
-                true
-            }
-        }
+        galleryLauncher.onCapturedMedia(item)
     }
 
     companion object {
@@ -2066,14 +1527,6 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         private const val MSG_HIDE_FOCUS_RING = 1
         private const val MSG_HIDE_EXPOSURE_SLIDER = 2
         private const val MSG_ON_PINCH_TO_ZOOM = 3
-
-        // We need to return something small enough so as not to overwhelm Binder. 1MB is the
-        // per-process limit across all transactions. Camera2 sets a max pixel count of 51200.
-        // We set a max side length of 256, for a max pixel count of 65536. Even at 4 bytes per
-        // pixel, this is only 256K, well within the limits. (Note: It's not clear if any modern
-        // app expects a photo to be returned inline, rather than providing an output URI.)
-        // https://developer.android.com/guide/components/activities/parcelables-and-bundles#sdbp
-        private const val SINGLE_CAPTURE_INLINE_MAX_SIDE_LEN_PIXELS = 256
 
         private val EXPOSURE_LEVEL_FORMATTER = DecimalFormat("+#;-#")
     }

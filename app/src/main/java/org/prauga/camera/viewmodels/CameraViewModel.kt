@@ -58,6 +58,7 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import org.prauga.camera.camerax.CameraXBinder
 import org.prauga.camera.ext.applicationContext
 import org.prauga.camera.ext.broadcastReceiverFlow
 import org.prauga.camera.ext.flashMode
@@ -155,6 +156,13 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      * QR image analyzer.
      */
     val qrImageAnalyzer = QrImageAnalyzer(applicationContext, viewModelScope)
+
+    val cameraXBinder = CameraXBinder(
+        cameraController,
+        cameraExecutor,
+        qrImageAnalyzer,
+        cameraRepository::getExtensionEnabledCameraSelector,
+    )
 
     /**
      * Do not emit here directly, use [emitEvent].
@@ -996,14 +1004,6 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
 
         return true
     }
-
-    /**
-     * @see CameraRepository.getExtensionEnabledCameraSelector
-     */
-    fun getExtensionEnabledCameraSelector(
-        camera: Camera,
-        mode: Int,
-    ) = cameraRepository.getExtensionEnabledCameraSelector(camera, mode)
 
     /**
      * Get whether we can restart the camera.
