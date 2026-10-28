@@ -133,7 +133,6 @@ import org.prauga.camera.ui.views.LevelerView
 import org.prauga.camera.ui.views.PreviewBlurView
 import org.prauga.camera.ui.views.VerticalSlider
 import org.prauga.camera.utils.ExifUtils
-import org.prauga.camera.utils.GoogleLensUtils
 import org.prauga.camera.utils.PermissionsManager
 import org.prauga.camera.utils.ShortcutsUtils
 import org.prauga.camera.viewmodels.CameraViewModel
@@ -161,7 +160,6 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     private val galleryButtonCardView by lazy { findViewById<CardView>(R.id.galleryButtonCardView) }
     private val galleryButtonIconImageView by lazy { findViewById<ImageView>(R.id.galleryButtonIconImageView) }
     private val galleryButtonPreviewImageView by lazy { findViewById<ImageView>(R.id.galleryButtonPreviewImageView) }
-    private val googleLensButton by lazy { findViewById<ImageButton>(R.id.googleLensButton) }
     private val gridButton by lazy { findViewById<Button>(R.id.gridButton) }
     private val gridView by lazy { findViewById<GridView>(R.id.gridView) }
     private val islandView by lazy { findViewById<IslandView>(R.id.islandView) }
@@ -201,7 +199,6 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
     // QR
     private val qrBottomSheetDialog by lazy { QrBottomSheetDialog(this) }
-    private val isGoogleLensAvailable by lazy { GoogleLensUtils.isGoogleLensAvailable(this) }
 
     private var viewFinderTouchEvent: MotionEvent? = null
     private val gestureDetector by lazy {
@@ -443,11 +440,6 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         // Set secondary bottom bar button callbacks
         proButton.setOnClickListener {
             secondaryTopBarLayout.slide()
-        }
-        googleLensButton.setOnClickListener {
-            dismissKeyguardAndRun {
-                GoogleLensUtils.launchGoogleLens(this)
-            }
         }
         flashButton.setOnClickListener { viewModel.cycleFlashMode(false) }
         flashButton.setOnLongClickListener { viewModel.cycleFlashMode(true) }
@@ -726,7 +718,6 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
                 // Update secondary bottom bar buttons
                 proButton.isVisible = cameraMode != CameraMode.QR
-                googleLensButton.isVisible = cameraMode == CameraMode.QR && isGoogleLensAvailable
 
                 // Update primary bar buttons
                 shutterButton.isInvisible = cameraMode == CameraMode.QR

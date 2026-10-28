@@ -11,7 +11,6 @@
     <string name="flash_button_description">闪光灯模式</string>
     <string name="flip_camera_button_description">翻转摄像头</string>
     <string name="gallery_button_description">相册</string>
-    <string name="google_lens_button_description">打开 Google Lens</string>
     <string name="image_view_description">图像预览</string>
     <string name="pro_button_description">专业设置</string>
     <string name="shutter_button_description">快门</string>

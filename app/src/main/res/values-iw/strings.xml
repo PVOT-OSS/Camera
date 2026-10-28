@@ -11,7 +11,6 @@
     <string name="flash_button_description">מצב מבזק</string>
     <string name="flip_camera_button_description">החלפת מצלמה</string>
     <string name="gallery_button_description">גלריה</string>
-    <string name="google_lens_button_description">פתיחת Google Lens</string>
     <string name="image_view_description">תצוגה מקדימה של תמונה</string>
     <string name="pro_button_description">הגדרות למתקדמים</string>
     <string name="shutter_button_description">צמצם</string>

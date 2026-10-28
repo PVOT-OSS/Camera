@@ -11,7 +11,6 @@
     <string name="flash_button_description">플래시 모드</string>
     <string name="flip_camera_button_description">카메라 회전</string>
     <string name="gallery_button_description">갤러리</string>
-    <string name="google_lens_button_description">Google 렌즈 열기</string>
     <string name="image_view_description">이미지 미리보기</string>
     <string name="pro_button_description">전문가 설정</string>
     <string name="shutter_button_description">셔터</string>

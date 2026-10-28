@@ -11,7 +11,6 @@
     <string name="flash_button_description">Λειτουργία φλας</string>
     <string name="flip_camera_button_description">Αναστροφή κάμερας</string>
     <string name="gallery_button_description">Συλλογή</string>
-    <string name="google_lens_button_description">Άνοιγμα Google Lens</string>
     <string name="image_view_description">Προεπισκόπηση εικόνας</string>
     <string name="pro_button_description">Προηγμένες ρυθμίσεις</string>
     <string name="shutter_button_description">Κλείστρο</string>

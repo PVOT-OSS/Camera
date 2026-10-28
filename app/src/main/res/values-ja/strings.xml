@@ -11,7 +11,6 @@
     <string name="flash_button_description">フラッシュモード</string>
     <string name="flip_camera_button_description">フリップカメラ</string>
     <string name="gallery_button_description">ギャラリー</string>
-    <string name="google_lens_button_description">Google レンズを開く</string>
     <string name="image_view_description">画像プレビュー</string>
     <string name="pro_button_description">プロ設定</string>
     <string name="shutter_button_description">シャッター</string>

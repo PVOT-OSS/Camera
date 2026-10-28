@@ -4,7 +4,6 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="google_lens_button_description">Адкрыць Google Lens</string>
     <string name="qr_wifi_title">Падключыцца да гэтай сеткі Wi-Fi</string>
     <string name="location_permission_dialog_later">Пазней</string>
     <string name="location_permission_dialog_turn_on">Уключыць</string>

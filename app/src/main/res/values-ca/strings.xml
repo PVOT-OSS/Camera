@@ -11,7 +11,6 @@
     <string name="flash_button_description">Mode de flaix</string>
     <string name="flip_camera_button_description">Canvia de càmera</string>
     <string name="gallery_button_description">Galeria</string>
-    <string name="google_lens_button_description">Obre el Google Lens</string>
     <string name="image_view_description">Vista prèvia de la imatge</string>
     <string name="pro_button_description">Configuració pro</string>
     <string name="shutter_button_description">Obturador</string>

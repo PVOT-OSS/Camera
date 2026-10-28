@@ -11,7 +11,6 @@
     <string name="flash_button_description">Flash</string>
     <string name="flip_camera_button_description">Capovolgi fotocamera</string>
     <string name="gallery_button_description">Galleria</string>
-    <string name="google_lens_button_description">Apri Google Lens</string>
     <string name="image_view_description">Anteprima immagine</string>
     <string name="pro_button_description">Impostazioni Pro</string>
     <string name="shutter_button_description">Otturatore</string>

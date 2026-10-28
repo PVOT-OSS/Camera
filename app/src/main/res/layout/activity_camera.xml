@@ -233,18 +233,6 @@
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_pro_button" />
 
-        <ImageButton
-            android:id="@+id/googleLensButton"
-            style="@style/Theme.PvotCamera.Camera.SecondaryBottomBarButton"
-            android:layout_marginStart="40dp"
-            android:contentDescription="@string/google_lens_button_description"
-            android:src="@drawable/ic_google_lens"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:tint="@android:color/white" />
-
         <org.prauga.camera.ui.views.LensSelectorLayout
             android:id="@+id/lensSelectorLayout"
             android:layout_width="wrap_content"

@@ -26,11 +26,6 @@
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
 
-    <queries>
-        <package android:name="com.google.android.apps.googlecamera.fishfood" />
-        <package android:name="com.google.android.googlequicksearchbox" />
-    </queries>
-
     <application
         android:name=".CameraApplication"
         android:enableOnBackInvokedCallback="true"

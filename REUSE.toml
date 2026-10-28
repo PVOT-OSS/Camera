@@ -7,7 +7,7 @@ SPDX-PackageSupplier = "Saalim Quadri"
 SPDX-PackageDownloadLocation = "https://github.com/PVOT-OSS/Camera"
 
 [[annotations]]
-path = [".github/workflows/**", ".gitignore", "app/.gitignore", "lens_launcher/.gitignore"]
+path = [".github/workflows/**", ".gitignore", "app/.gitignore"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "The LineageOS Project"
 SPDX-License-Identifier = "Apache-2.0"
