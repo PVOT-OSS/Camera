@@ -16,6 +16,7 @@ abstract class CameraBaseViewModel(application: Application) : AndroidViewModel(
     private val cameraApplication = getApplication<CameraApplication>()
 
     protected val cameraRepository = cameraApplication.cameraRepository
+    protected val deviceStateRepository = cameraApplication.deviceStateRepository
     protected val mediaRepository = cameraApplication.mediaRepository
     protected val preferencesRepository = cameraApplication.preferencesRepository
 

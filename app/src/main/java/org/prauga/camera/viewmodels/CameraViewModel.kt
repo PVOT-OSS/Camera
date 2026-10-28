@@ -5,43 +5,29 @@
 
 package org.prauga.camera.viewmodels
 
-import android.animation.ValueAnimator
 import android.app.Application
-import android.content.Intent
-import android.content.IntentFilter
-import android.graphics.ImageFormat
-import android.location.LocationManager
 import android.net.Uri
-import android.os.BatteryManager
-import android.os.Build
-import android.os.PowerManager
 import android.util.Log
 import android.view.OrientationEventListener
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
 import androidx.camera.extensions.ExtensionMode
 import androidx.camera.video.Quality
 import androidx.camera.video.Recording
-import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.LifecycleCameraController
-import androidx.camera.view.video.AudioConfig
-import androidx.core.animation.addListener
-import androidx.core.content.ContextCompat
-import androidx.core.location.LocationRequestCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import kotlin.reflect.safeCast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
@@ -49,82 +35,45 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import org.prauga.camera.camerax.CameraXBinder
+import org.prauga.camera.camerax.CameraXCapture
+import org.prauga.camera.camerax.CameraXZoom
 import org.prauga.camera.ext.applicationContext
-import org.prauga.camera.ext.broadcastReceiverFlow
 import org.prauga.camera.ext.flashMode
-import org.prauga.camera.ext.locationFlow
 import org.prauga.camera.ext.mapToRange
 import org.prauga.camera.ext.next
-import org.prauga.camera.ext.nextPowerOfTwo
 import org.prauga.camera.ext.previous
-import org.prauga.camera.ext.previousPowerOfTwo
-import org.prauga.camera.ext.thermalStatusFlow
 import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraConfiguration
 import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.CameraMode
 import org.prauga.camera.models.CameraState
-import org.prauga.camera.models.ColorCorrectionAberrationMode
-import org.prauga.camera.models.DistortionCorrectionMode
-import org.prauga.camera.models.EdgeMode
 import org.prauga.camera.models.Event
-import org.prauga.camera.models.FlashMode
 import org.prauga.camera.models.GridMode
 import org.prauga.camera.models.HardwareKey
-import org.prauga.camera.models.HotPixelMode
-import org.prauga.camera.models.IslandItem
-import org.prauga.camera.models.NoiseReductionMode
-import org.prauga.camera.models.PhotoOutputFormat
 import org.prauga.camera.models.Rotation
-import org.prauga.camera.models.ShadingMode
 import org.prauga.camera.models.ThermalStatus
 import org.prauga.camera.models.TimerMode
 import org.prauga.camera.qr.QrImageAnalyzer
-import org.prauga.camera.repositories.CameraRepository
 import org.prauga.camera.utils.CameraSoundsUtils
-import org.prauga.camera.utils.StorageUtils
-import java.io.ByteArrayOutputStream
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.reflect.safeCast
 
 /**
  * [ViewModel] representing a camera session. This data is used to receive
  * live data regarding the setting currently enabled.
  */
 class CameraViewModel(application: Application) : CameraBaseViewModel(application) {
-    // System services
-    private val locationManager = applicationContext.getSystemService(LocationManager::class.java)
-    private val powerManager = applicationContext.getSystemService(PowerManager::class.java)
-
     // Camera sounds
     val cameraSoundsUtils = CameraSoundsUtils(preferencesRepository)
 
     // Orientation
-    private val orientation = callbackFlow {
-        val orientationEventListener = object : OrientationEventListener(applicationContext) {
-            override fun onOrientationChanged(orientation: Int) {
-                trySend(orientation)
-            }
-        }
-
-        orientationEventListener.enable()
-
-        awaitClose {
-            orientationEventListener.disable()
-        }
-    }
+    private val orientation = deviceStateRepository.orientation
         .flowOn(Dispatchers.IO)
         .shareIn(
             viewModelScope,
@@ -148,14 +97,33 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     val rebindMutex = Mutex()
 
     /**
-     * Mutex used to zoom the camera.
-     */
-    private var zoomGestureMutex = Mutex()
-
-    /**
      * QR image analyzer.
      */
     val qrImageAnalyzer = QrImageAnalyzer(applicationContext, viewModelScope)
+
+    private val cameraXCapture by lazy {
+        CameraXCapture(
+            applicationContext,
+            cameraController,
+            cameraExecutor,
+            viewModelScope,
+            mediaRepository,
+            cameraSoundsUtils,
+            cameraState,
+            inSingleCaptureMode,
+            location = { location.value },
+            cameraFacing = { cameraFacing.value },
+            photoFfcMirror = { preferencesRepository.photoFfcMirror.value },
+            emitEvent = ::emitEvent,
+        )
+    }
+
+    private val cameraXZoom by lazy { CameraXZoom(cameraController) { zoomState.value } }
+
+    private val cameraConfigurationFactory = CameraConfigurationFactory(
+        preferencesRepository,
+        inSingleCaptureMode = { inSingleCaptureMode.value },
+    )
 
     val cameraXBinder = CameraXBinder(
         cameraController,
@@ -330,97 +298,21 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             initialValue = listOf(),
         )
 
-    /**
-     * The current list of supported [FlashMode]s.
-     */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val supportedFlashModes = cameraConfiguration
-        .mapLatest { cameraConfiguration ->
-            cameraConfiguration.cameraMode.supportedFlashModes.intersect(
-                cameraConfiguration.camera.supportedFlashModes
-            )
-        }
-        .flowOn(Dispatchers.IO)
-        .stateIn(
-            viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = setOf()
-        )
-
-    /**
-     * Whether force torch mode should be enabled.
-     */
-    private val forceTorch = MutableStateFlow(false)
-
-    /**
-     * Whether QR torch mode should be enabled.
-     */
-    private val qrFlashMode = MutableStateFlow(FlashMode.OFF)
-
-    /**
-     * The user selected flash mode.
-     */
-    private val wantedFlashMode = combine(
+    private val flashController = FlashController(
+        viewModelScope,
         cameraConfiguration,
-        preferencesRepository.photoFlashMode,
-        preferencesRepository.videoFlashMode,
-        qrFlashMode,
-    ) { cameraConfiguration, photoFlashMode, videoFlashMode, qrFlashMode ->
-        when (cameraConfiguration.cameraMode) {
-            CameraMode.PHOTO -> photoFlashMode
-            CameraMode.VIDEO -> videoFlashMode
-            CameraMode.QR -> qrFlashMode
-        }
-    }
-        .flowOn(Dispatchers.IO)
-        .shareIn(
-            viewModelScope,
-            started = SharingStarted.Eagerly,
-            replay = 1
-        )
-
-    /**
-     * The flash mode that will actually be used.
-     */
-    val flashMode = combine(
-        supportedFlashModes,
-        wantedFlashMode,
-        forceTorch,
-        cameraConfiguration,
-    ) { supportedFlashModes, wantedFlashMode, forceTorch, cameraConfiguration ->
-        val flashMode = wantedFlashMode.takeIf { it in supportedFlashModes } ?: FlashMode.OFF
-
-        val shouldForceTorch = forceTorch
-                && cameraConfiguration.cameraMode == CameraMode.PHOTO
-                && FlashMode.TORCH in cameraConfiguration.camera.supportedFlashModes
-
-        when (shouldForceTorch) {
-            true -> FlashMode.TORCH
-            false -> flashMode
-        }
-    }
-        .flowOn(Dispatchers.IO)
-        .stateIn(
-            viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = FlashMode.OFF
-        )
-
-    /**
-     * Whether the user should be able to cycle between different flash modes.
-     */
-    val isFlashButtonEnabled = combine(
+        currentConfiguration = { _cameraConfiguration.value },
         cameraState,
         cameraMode,
-    ) { cameraState, cameraMode ->
-        cameraState == CameraState.IDLE || cameraMode == CameraMode.VIDEO
-    }
-        .flowOn(Dispatchers.IO)
-        .stateIn(
-            viewModelScope,
-            started = SharingStarted.WhileSubscribed(),
-            initialValue = false
-        )
+        preferencesRepository,
+        emitEvent = ::emitEvent,
+    )
+
+    val supportedFlashModes = flashController.supportedFlashModes
+
+    val flashMode = flashController.flashMode
+
+    val isFlashButtonEnabled = flashController.isFlashButtonEnabled
 
     /**
      * Grid mode.
@@ -468,23 +360,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             initialValue = false
         )
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val thermalStatus = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        powerManager.thermalStatusFlow().mapLatest { thermalStatus ->
-            when (thermalStatus) {
-                PowerManager.THERMAL_STATUS_NONE -> ThermalStatus.NONE
-                PowerManager.THERMAL_STATUS_LIGHT -> ThermalStatus.LIGHT
-                PowerManager.THERMAL_STATUS_MODERATE -> ThermalStatus.MODERATE
-                PowerManager.THERMAL_STATUS_SEVERE -> ThermalStatus.SEVERE
-                PowerManager.THERMAL_STATUS_CRITICAL -> ThermalStatus.CRITICAL
-                PowerManager.THERMAL_STATUS_EMERGENCY -> ThermalStatus.EMERGENCY
-                PowerManager.THERMAL_STATUS_SHUTDOWN -> ThermalStatus.SHUTDOWN
-                else -> error("Unknown thermal status: $thermalStatus")
-            }
-        }
-    } else {
-        flowOf(ThermalStatus.NONE)
-    }
+    val thermalStatus = deviceStateRepository.thermalStatus
         .flowOn(Dispatchers.IO)
         .stateIn(
             viewModelScope,
@@ -511,13 +387,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             replay = 1
         )
 
-    @Suppress("MissingPermission")
-    val location = locationManager.locationFlow(
-        LocationRequestCompat.Builder(1000)
-            .setMinUpdateDistanceMeters(1f)
-            .setQuality(LocationRequestCompat.QUALITY_BALANCED_POWER_ACCURACY)
-            .build()
-    )
+    val location = deviceStateRepository.location
         .flowOn(Dispatchers.IO)
         .stateIn(
             viewModelScope,
@@ -541,10 +411,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             initialValue = preferencesRepository.saveLocation,
         )
 
-    private val batteryIntent = applicationContext.broadcastReceiverFlow(
-        IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-    )
-        .onStart { emit(null) }
+    private val batteryIntent = deviceStateRepository.batteryIntent
         .flowOn(Dispatchers.IO)
         .stateIn(
             viewModelScope,
@@ -797,33 +664,28 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     val videoMicMode = MutableStateFlow(preferencesRepository.videoMicMode.value)
 
     /**
-     * Video [AudioConfig].
-     */
-    var videoAudioConfig: AudioConfig = AudioConfig.AUDIO_DISABLED
-
-    /**
      * Video [Recording].
      */
-    val videoRecording = MutableStateFlow<Recording?>(null)
+    val videoRecording = cameraXCapture.videoRecording
 
-    val isVideoMicButtonEnabled = combine(
+        val isVideoMicButtonEnabled = combine(
         cameraState,
         videoRecording,
     ) { cameraState, videoRecording ->
         cameraState == CameraState.IDLE || videoRecording?.isAudioSourceConfigured == true
     }
 
+    // QR
+
     /**
      * Video recording duration.
      */
-    val videoRecordingDuration = MutableStateFlow(0L)
+    val videoRecordingDuration = cameraXCapture.videoRecordingDuration
 
     /**
      * Video record event.
      */
-    val videoRecordEvent = MutableSharedFlow<VideoRecordEvent>()
-
-    // QR
+    val videoRecordEvent = cameraXCapture.videoRecordEvent
 
     /**
      * QR result.
@@ -859,69 +721,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         batteryIntent,
         thermalStatus,
     ) { cameraConfiguration, videoMicMode, batteryIntent, thermalStatus ->
-        buildList {
-            when (thermalStatus) {
-                ThermalStatus.NONE,
-                ThermalStatus.LIGHT -> Unit
-
-                ThermalStatus.MODERATE,
-                ThermalStatus.SEVERE -> add(
-                    IslandItem.ThermalThrottling(false)
-                )
-
-                ThermalStatus.CRITICAL,
-                ThermalStatus.EMERGENCY,
-                ThermalStatus.SHUTDOWN -> add(
-                    IslandItem.ThermalThrottling(true)
-                )
-            }
-
-            batteryIntent?.let {
-                val level = it.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
-                val scale = it.getIntExtra(BatteryManager.EXTRA_SCALE, -1)
-
-                val percentage = level.times(100).div(scale)
-
-                if (percentage <= 15) {
-                    add(
-                        IslandItem.LowBattery(
-                            isCharging = it.getIntExtra(
-                                BatteryManager.EXTRA_PLUGGED,
-                                0,
-                            ) != 0,
-                        )
-                    )
-                }
-
-                when (cameraConfiguration) {
-                    is CameraConfiguration.Photo -> {
-                        when (cameraConfiguration.photoOutputFormat) {
-                            PhotoOutputFormat.JPEG -> {}
-
-                            PhotoOutputFormat.JPEG_ULTRA_HDR -> add(
-                                IslandItem.PhotoJpegUltraHdr
-                            )
-
-                            PhotoOutputFormat.RAW -> add(
-                                IslandItem.PhotoRawEnabled(false)
-                            )
-
-                            PhotoOutputFormat.RAW_JPEG -> add(
-                                IslandItem.PhotoRawEnabled(true)
-                            )
-                        }
-                    }
-
-                    is CameraConfiguration.Video -> {
-                        if (!videoMicMode) {
-                            add(IslandItem.VideoMicMuted)
-                        }
-                    }
-
-                    is CameraConfiguration.Qr -> {}
-                }
-            }
-        }
+        islandItemsOf(cameraConfiguration, videoMicMode, batteryIntent, thermalStatus)
     }
         .flowOn(Dispatchers.IO)
         .stateIn(
@@ -964,7 +764,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
                     preferencesRepository.hotPixelMode,
                 ) { }.drop(1).collectLatest {
                     updateConfiguration<CameraConfiguration> { cameraConfiguration ->
-                        createInitialCameraConfiguration(
+                        cameraConfigurationFactory.create(
                             camera = cameraConfiguration.camera,
                             cameraMode = cameraConfiguration.cameraMode,
                         )
@@ -995,7 +795,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             cameraFacing = cameraFacing,
         ) ?: return false
 
-        val cameraConfiguration = createInitialCameraConfiguration(
+        val cameraConfiguration = cameraConfigurationFactory.create(
             camera = camera,
             cameraMode = cameraMode,
         )
@@ -1018,227 +818,17 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     fun selectCamera(
         camera: Camera,
     ) = updateConfiguration<CameraConfiguration> { cameraConfiguration ->
-        createInitialCameraConfiguration(
+        cameraConfigurationFactory.create(
             camera = camera,
             cameraMode = cameraConfiguration.cameraMode,
         )
     }
 
-    fun takePhoto() {
-        // Bail out if a photo is already being taken
-        if (cameraState.value == CameraState.TAKING_PHOTO) {
-            return
-        }
+    fun takePhoto() = cameraXCapture.takePhoto()
 
-        cameraState.value = CameraState.TAKING_PHOTO
+    fun captureVideo() = cameraXCapture.captureVideo()
 
-        val photoOutputStream = if (inSingleCaptureMode.value) {
-            ByteArrayOutputStream(SINGLE_CAPTURE_PHOTO_BUFFER_INITIAL_SIZE_BYTES)
-        } else {
-            null
-        }
-
-        val imageOutputFormat = cameraController.imageOutputFormat
-
-        val mimeType = when (imageOutputFormat) {
-            ImageCapture.OUTPUT_FORMAT_JPEG,
-            ImageCapture.OUTPUT_FORMAT_JPEG_ULTRA_HDR,
-            ImageCapture.OUTPUT_FORMAT_RAW_JPEG -> "image/jpeg"
-
-            ImageCapture.OUTPUT_FORMAT_RAW -> "image/x-adobe-dng"
-
-            else -> error("Unknown image output format")
-        }
-
-        val imageCount = AtomicInteger(
-            when (imageOutputFormat) {
-                ImageCapture.OUTPUT_FORMAT_RAW_JPEG -> 2
-                else -> 1
-            }
-        )
-
-        // Create output options object which contains file + metadata
-        val timestamp = System.currentTimeMillis()
-        val outputOptions = StorageUtils.getPhotoMediaStoreOutputOptions(
-            applicationContext.contentResolver,
-            ImageCapture.Metadata().apply {
-                if (!inSingleCaptureMode.value) {
-                    location = this@CameraViewModel.location.value
-                }
-                if (cameraFacing.value == CameraFacing.FRONT) {
-                    isReversedHorizontal = preferencesRepository.photoFfcMirror.value
-                }
-            },
-            mimeType,
-            timestamp,
-            photoOutputStream,
-        )
-
-        // Set up image capture listener, which is triggered after photo has
-        // been taken
-        val onImageSavedCallback = object : ImageCapture.OnImageSavedCallback {
-            override fun onCaptureStarted() {
-                emitEvent(Event.PhotoCaptureStatus.CaptureStarted)
-
-                cameraSoundsUtils.playShutterClick()
-            }
-
-            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                Log.d(
-                    LOG_TAG,
-                    "Photo capture succeeded: ${output.savedUri} format = ${output.imageFormat}"
-                )
-
-                if (!inSingleCaptureMode.value) {
-                    output.savedUri?.let {
-                        mediaRepository.broadcastNewPicture(it)
-                    }
-                }
-
-                if (imageCount.decrementAndGet() == 0) {
-                    cameraState.value = CameraState.IDLE
-                }
-
-                // We only care about JPEG-like formats
-                if (imageOutputFormat == ImageCapture.OUTPUT_FORMAT_RAW_JPEG
-                    && output.imageFormat in RAW_FORMATS
-                ) {
-                    return
-                }
-
-                emitEvent(
-                    Event.PhotoCaptureStatus.ImageSaved(
-                        output,
-                        photoOutputStream,
-                    )
-                )
-            }
-
-            override fun onError(exc: ImageCaptureException) {
-                emitEvent(Event.PhotoCaptureStatus.Error(exc))
-
-                Log.e(LOG_TAG, "Photo capture failed", exc)
-                cameraState.value = CameraState.IDLE
-            }
-        }
-
-        when (imageOutputFormat) {
-            ImageCapture.OUTPUT_FORMAT_RAW_JPEG -> {
-                // Create output options object which contains raw file + metadata
-                val rawOutputOptions = StorageUtils.getPhotoMediaStoreOutputOptions(
-                    applicationContext.contentResolver,
-                    ImageCapture.Metadata().apply {
-                        if (!inSingleCaptureMode.value) {
-                            location = this@CameraViewModel.location.value
-                        }
-                        if (cameraFacing.value == CameraFacing.FRONT) {
-                            isReversedHorizontal = preferencesRepository.photoFfcMirror.value
-                        }
-                    },
-                    "image/x-adobe-dng",
-                    timestamp,
-                )
-
-                cameraController.takePicture(
-                    rawOutputOptions,
-                    outputOptions,
-                    ContextCompat.getMainExecutor(applicationContext),
-                    onImageSavedCallback,
-                )
-            }
-
-            else -> cameraController.takePicture(
-                outputOptions,
-                ContextCompat.getMainExecutor(applicationContext),
-                onImageSavedCallback,
-            )
-        }
-    }
-
-    fun captureVideo() {
-        if (cameraState.value != CameraState.IDLE) {
-            if (cameraController.isRecording) {
-                // Stop the current recording session.
-                videoRecording.value?.stop()
-            }
-            return
-        }
-
-        // Disallow state changes while we are about to prepare for recording video
-        cameraState.value = CameraState.PRE_RECORDING_VIDEO
-
-        // Update duration text
-        videoRecordingDuration.value = 0L
-
-        // Create output options object which contains file + metadata
-        val outputOptions = StorageUtils.getVideoMediaStoreOutputOptions(
-            applicationContext.contentResolver,
-            System.currentTimeMillis(),
-            location.value.takeUnless { inSingleCaptureMode.value }
-        )
-
-        // Play shutter sound
-        val delayTime = if (cameraSoundsUtils.playStartVideoRecording()) 500L else 0L
-
-        viewModelScope.launch {
-            delay(delayTime)
-
-            // Start recording
-            videoRecording.value = cameraController.startRecording(
-                outputOptions,
-                videoAudioConfig,
-                cameraExecutor,
-            ) {
-                viewModelScope.launch {
-                    videoRecordEvent.emit(it)
-                }
-
-                when (it) {
-                    is VideoRecordEvent.Start -> {
-                        cameraState.value = CameraState.RECORDING_VIDEO
-                    }
-
-                    is VideoRecordEvent.Pause -> {
-                        cameraState.value = CameraState.RECORDING_VIDEO_PAUSED
-                    }
-
-                    is VideoRecordEvent.Resume -> {
-                        cameraState.value = CameraState.RECORDING_VIDEO
-                    }
-
-                    is VideoRecordEvent.Status -> {
-                        videoRecordingDuration.value = it.recordingStats.recordedDurationNanos
-                    }
-
-                    is VideoRecordEvent.Finalize -> {
-                        cameraSoundsUtils.playStopVideoRecording()
-                        if (it.error != VideoRecordEvent.Finalize.ERROR_NO_VALID_DATA) {
-                            Log.d(
-                                LOG_TAG,
-                                "Video capture succeeded: ${it.outputResults.outputUri}",
-                            )
-
-                            if (!inSingleCaptureMode.value) {
-                                mediaRepository.broadcastNewVideo(it.outputResults.outputUri)
-                            }
-                        }
-                        cameraState.value = CameraState.IDLE
-                        videoRecording.value = null
-                    }
-                }
-            }
-        }
-    }
-
-    fun onVideoRecordingStateButtonPress() {
-        when (cameraState.value) {
-            CameraState.RECORDING_VIDEO -> videoRecording.value?.pause()
-            CameraState.RECORDING_VIDEO_PAUSED -> videoRecording.value?.resume()
-            else -> error(
-                "videoRecordingStateButton clicked while in invalid state: ${cameraState.value}"
-            )
-        }
-    }
+    fun onVideoRecordingStateButtonPress() = cameraXCapture.onVideoRecordingStateButtonPress()
 
     /**
      * Flip the camera.
@@ -1263,7 +853,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
 
         emitEvent(Event.FlipCameraAnimation)
 
-        createInitialCameraConfiguration(
+        cameraConfigurationFactory.create(
             camera = camera,
             cameraMode = cameraConfiguration.cameraMode,
         )
@@ -1289,7 +879,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
 
             preferencesRepository.lastCameraMode.value = cameraMode
 
-            createInitialCameraConfiguration(
+            cameraConfigurationFactory.create(
                 camera = camera,
                 cameraMode = cameraMode,
             )
@@ -1306,64 +896,10 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      */
     fun nextCameraMode() = cameraMode.value.next()?.let { setCameraMode(it) }
 
-    /**
-     * Cycle flash mode
-     *
-     * @param forceTorch Whether force torch mode should be toggled
-     * @return true if the flash mode was changed, false otherwise
-     */
-    fun cycleFlashMode(forceTorch: Boolean): Boolean {
-        val cameraConfiguration = _cameraConfiguration.value ?: return false
+    fun cycleFlashMode(forceTorch: Boolean) = flashController.cycleFlashMode(forceTorch)
 
-        // Long-press is supported only on photo mode and if torch mode is available
-        val forceTorchAvailable = cameraConfiguration.cameraMode == CameraMode.PHOTO
-                && cameraConfiguration.camera.supportedFlashModes.contains(FlashMode.TORCH)
-        if (forceTorch && !forceTorchAvailable) {
-            this.forceTorch.value = false
-
-            return false
-        }
-
-        when (forceTorch) {
-            true -> {
-                this.forceTorch.value = this.forceTorch.value.not()
-            }
-
-            else -> when (this.forceTorch.value) {
-                true -> {
-                    // Just disable torch mode
-                    this.forceTorch.value = false
-                }
-
-                false -> supportedFlashModes.value.toList().next(flashMode.value)?.let {
-                    when (cameraConfiguration.cameraMode) {
-                        CameraMode.PHOTO -> preferencesRepository.photoFlashMode.value = it
-                        CameraMode.VIDEO -> preferencesRepository.videoFlashMode.value = it
-                        CameraMode.QR -> qrFlashMode.value = it
-                    }
-                }
-            }
-        }
-
-        // Check if we should show the force torch suggestion
-        if (!preferencesRepository.forceTorchHelpShown.value) {
-            if (forceTorch) {
-                // The user figured it out by themself
-                preferencesRepository.forceTorchHelpShown.value = true
-            } else {
-                emitEvent(Event.ShowForceTorchHelp)
-            }
-        }
-
-        return true
-    }
-
-    /**
-     * Set whether the force torch help has been shown.
-     */
-    fun setForceModeHelpShown(forceTorchHelpShown: Boolean) {
-        preferencesRepository.forceTorchHelpShown.value = forceTorchHelpShown
-    }
+    fun setForceModeHelpShown(forceTorchHelpShown: Boolean) =
+        flashController.setForceModeHelpShown(forceTorchHelpShown)
 
     /**
      * Cycle to the next grid mode.
@@ -1512,12 +1048,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      */
     @Suppress("MissingPermission")
     fun setVideoMicrophoneEnabled(videoMicrophoneEnabled: Boolean) {
-        videoAudioConfig = when (videoMicrophoneEnabled) {
-            true -> AudioConfig.create(true)
-            false -> AudioConfig.AUDIO_DISABLED
-        }
-
-        videoRecording.value?.mute(!videoMicrophoneEnabled)
+        cameraXCapture.setAudioEnabled(videoMicrophoneEnabled)
 
         this.videoMicMode.value = videoMicrophoneEnabled
 
@@ -1537,52 +1068,13 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         this.exposureCompensationLevel.value = exposureCompensationLevel
     }
 
-    /**
-     * Apply the specified zoom smoothly. The value will be automatically clamped
-     * between min and max.
-     * @param zoomRatio The zoom ratio to apply
-     */
-    fun smoothZoom(zoomRatio: Float) {
-        val acquired = zoomGestureMutex.tryLock()
-        if (!acquired) {
-            return
-        }
+    fun smoothZoom(zoomRatio: Float) = cameraXZoom.smoothZoom(zoomRatio)
 
-        val zoomState = zoomState.value ?: return
+    fun resetZoom() = cameraXZoom.resetZoom()
 
-        ValueAnimator.ofFloat(
-            zoomState.zoomRatio,
-            zoomRatio.coerceIn(zoomState.minZoomRatio, zoomState.maxZoomRatio)
-        ).apply {
-            addUpdateListener {
-                cameraController.setZoomRatio(it.animatedValue as Float)
-            }
-            addListener(
-                onEnd = {
-                    zoomGestureMutex.unlock()
-                }
-            )
-        }.start()
-    }
+    fun zoomIn() = cameraXZoom.zoomIn()
 
-    /**
-     * Reset the zoom to 1.0x (value relative to the lens, not of the FOV).
-     */
-    fun resetZoom() = smoothZoom(1f)
-
-    /**
-     * Zoom in by a power of 2.
-     */
-    fun zoomIn() = zoomState.value?.zoomRatio?.let {
-        smoothZoom(it.nextPowerOfTwo())
-    }
-
-    /**
-     * Zoom out by a power of 2.
-     */
-    fun zoomOut() = zoomState.value?.zoomRatio?.let {
-        smoothZoom(it.previousPowerOfTwo())
-    }
+    fun zoomOut() = cameraXZoom.zoomOut()
 
     fun setSaveLocation(saveLocation: Boolean?) {
         preferencesRepository.saveLocation.value = saveLocation
@@ -1641,194 +1133,6 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         } ?: compatibleCameras.firstOrNull()
     }
 
-    @androidx.annotation.OptIn(ExperimentalZeroShutterLag::class)
-    private fun createInitialCameraConfiguration(
-        camera: Camera,
-        cameraMode: CameraMode,
-    ) = when (cameraMode) {
-        CameraMode.PHOTO -> {
-            // Enable ZSL when requested by the user and supported by the camera
-            val photoCaptureMode = when (
-                val photoCaptureMode = preferencesRepository.photoCaptureMode.value
-            ) {
-                ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY -> when (
-                    preferencesRepository.enableZsl.value && camera.supportsZsl
-                ) {
-                    true -> ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG
-                    false -> ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY
-                }
-
-                else -> photoCaptureMode
-            }
-
-            val usePhotoJpegUltraHdr = preferencesRepository.usePhotoJpegUltraHdr.value
-            val enableRawImageCapture = preferencesRepository.enableRawImageCapture.value
-            val disableJpegWithRaw = preferencesRepository.disableJpegWithRaw.value
-            val photoOutputFormat = when {
-                inSingleCaptureMode.value -> PhotoOutputFormat.JPEG
-
-                enableRawImageCapture
-                        && disableJpegWithRaw
-                        && camera.supportedPhotoOutputFormats.contains(
-                    PhotoOutputFormat.RAW
-                ) -> PhotoOutputFormat.RAW
-
-                enableRawImageCapture && camera.supportedPhotoOutputFormats.contains(
-                    PhotoOutputFormat.RAW_JPEG
-                ) -> PhotoOutputFormat.RAW_JPEG
-
-                usePhotoJpegUltraHdr && camera.supportedPhotoOutputFormats.contains(
-                    PhotoOutputFormat.JPEG_ULTRA_HDR
-                ) -> PhotoOutputFormat.JPEG_ULTRA_HDR
-
-                else -> PhotoOutputFormat.JPEG
-            }
-
-            CameraConfiguration.Photo(
-                camera = camera,
-                extensionMode = preferencesRepository.photoEffect.value,
-                camera2Options = buildPhotoCamera2Options(camera, photoCaptureMode),
-                photoCaptureMode = photoCaptureMode,
-                photoAspectRatio = preferencesRepository.photoAspectRatio.value,
-                enableHighResolution = true,
-                photoOutputFormat = photoOutputFormat,
-            )
-        }
-
-        CameraMode.VIDEO -> {
-            val videoQuality = preferencesRepository.videoQuality.value.takeIf {
-                camera.supportedVideoQualities.contains(it)
-            } ?: camera.supportedVideoQualities.keys.firstOrNull() ?: error(
-                "Camera ${camera.cameraId} does not support any video quality"
-            )
-
-            val videoQualityInfo = camera.supportedVideoQualities[videoQuality] ?: error(
-                "Camera ${camera.cameraId} does not support video quality $videoQuality"
-            )
-
-            val videoFrameRate = preferencesRepository.videoFrameRate.value.takeIf {
-                videoQualityInfo.supportedFrameRates.contains(it)
-            } ?: videoQualityInfo.supportedFrameRates.firstOrNull()
-
-            val videoDynamicRange = preferencesRepository.videoDynamicRange.value.takeIf {
-                videoQualityInfo.supportedDynamicRanges.contains(it)
-            } ?: videoQualityInfo.supportedDynamicRanges.firstOrNull() ?: error(
-                "No video dynamic range supported by the camera"
-            )
-
-            CameraConfiguration.Video(
-                camera = camera,
-                camera2Options = buildVideoCamera2Options(camera),
-                videoQuality = videoQuality,
-                videoFrameRate = videoFrameRate,
-                videoDynamicRange = videoDynamicRange,
-                videoMirrorMode = preferencesRepository.videoMirrorMode.value,
-                enableVideoStabilization = preferencesRepository.videoStabilization.value,
-            )
-        }
-
-        CameraMode.QR -> CameraConfiguration.Qr(
-            camera = camera,
-        )
-    }
-
-    @androidx.annotation.OptIn(ExperimentalZeroShutterLag::class)
-    private fun buildPhotoCamera2Options(
-        camera: Camera,
-        photoCaptureMode: Int,
-    ) = CameraConfiguration.Camera2Options(
-        edgeMode = preferencesRepository.edgeMode.value?.takeIf {
-            camera.supportedEdgeModes.contains(it) && when (
-                photoCaptureMode
-            ) {
-                ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG ->
-                    EdgeMode.ALLOWED_MODES_ON_ZSL.contains(it)
-
-                else -> true
-            }
-        },
-        noiseReductionMode = preferencesRepository.noiseReductionMode.value?.takeIf {
-            camera.supportedNoiseReductionModes.contains(it) && when (
-                photoCaptureMode
-            ) {
-                ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG ->
-                    NoiseReductionMode.ALLOWED_MODES_ON_ZSL.contains(it)
-
-                else -> true
-            }
-        },
-        shadingMode = preferencesRepository.shadingMode.value?.takeIf {
-            camera.supportedShadingModes.contains(it) && when (
-                photoCaptureMode
-            ) {
-                ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG ->
-                    ShadingMode.ALLOWED_MODES_ON_ZSL.contains(it)
-
-                else -> true
-            }
-        },
-        colorCorrectionAberrationMode = preferencesRepository.colorCorrectionAberrationMode.value?.takeIf {
-            camera.supportedColorCorrectionAberrationModes.contains(it) && when (
-                photoCaptureMode
-            ) {
-                ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG ->
-                    ColorCorrectionAberrationMode.ALLOWED_MODES_ON_ZSL.contains(it)
-
-                else -> true
-            }
-        },
-        distortionCorrectionMode = preferencesRepository.distortionCorrectionMode.value?.takeIf {
-            camera.supportedDistortionCorrectionModes.contains(it) && when (
-                photoCaptureMode
-            ) {
-                ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG ->
-                    DistortionCorrectionMode.ALLOWED_MODES_ON_ZSL.contains(it)
-
-                else -> true
-            }
-        },
-        hotPixelMode = preferencesRepository.hotPixelMode.value?.takeIf {
-            camera.supportedHotPixelModes.contains(it) && when (
-                photoCaptureMode
-            ) {
-                ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG ->
-                    HotPixelMode.ALLOWED_MODES_ON_ZSL.contains(it)
-
-                else -> true
-            }
-        },
-    )
-
-    @androidx.annotation.OptIn(ExperimentalZeroShutterLag::class)
-    private fun buildVideoCamera2Options(
-        camera: Camera,
-    ) = CameraConfiguration.Camera2Options(
-        edgeMode = preferencesRepository.edgeMode.value?.takeIf {
-            camera.supportedEdgeModes.contains(it)
-                    && EdgeMode.ALLOWED_MODES_ON_VIDEO_MODE.contains(it)
-        },
-        noiseReductionMode = preferencesRepository.noiseReductionMode.value?.takeIf {
-            camera.supportedNoiseReductionModes.contains(it)
-                    && NoiseReductionMode.ALLOWED_MODES_ON_VIDEO_MODE.contains(it)
-        },
-        shadingMode = preferencesRepository.shadingMode.value?.takeIf {
-            camera.supportedShadingModes.contains(it)
-                    && ShadingMode.ALLOWED_MODES_ON_VIDEO_MODE.contains(it)
-        },
-        colorCorrectionAberrationMode = preferencesRepository.colorCorrectionAberrationMode.value?.takeIf {
-            camera.supportedColorCorrectionAberrationModes.contains(it)
-                    && ColorCorrectionAberrationMode.ALLOWED_MODES_ON_VIDEO_MODE.contains(it)
-        },
-        distortionCorrectionMode = preferencesRepository.distortionCorrectionMode.value?.takeIf {
-            camera.supportedDistortionCorrectionModes.contains(it)
-                    && DistortionCorrectionMode.ALLOWED_MODES_ON_VIDEO_MODE.contains(it)
-        },
-        hotPixelMode = preferencesRepository.hotPixelMode.value?.takeIf {
-            camera.supportedHotPixelModes.contains(it)
-                    && HotPixelMode.ALLOWED_MODES_ON_VIDEO_MODE.contains(it)
-        },
-    )
-
     /**
      * Reconfigure the camera session. This helper method will also handle concurrency.
      *
@@ -1866,8 +1170,6 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     companion object {
         private val LOG_TAG = CameraViewModel::class.simpleName!!
 
-        private const val SINGLE_CAPTURE_PHOTO_BUFFER_INITIAL_SIZE_BYTES = 8 * 1024 * 1024 // 8 MiB
-
         private val cameraFacingComparator = Comparator.comparingInt<CameraFacing> {
             when (it) {
                 CameraFacing.UNKNOWN -> 3
@@ -1876,12 +1178,5 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
                 CameraFacing.EXTERNAL -> 2
             }
         }
-
-        private val RAW_FORMATS = listOf(
-            ImageFormat.RAW10,
-            ImageFormat.RAW12,
-            ImageFormat.RAW_SENSOR,
-            ImageFormat.RAW_PRIVATE,
-        )
     }
 }
