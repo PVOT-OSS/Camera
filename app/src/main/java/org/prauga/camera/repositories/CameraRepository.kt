@@ -33,7 +33,6 @@ import org.prauga.camera.models.CameraFacing
 class CameraRepository(
     private val context: Context,
     coroutineScope: CoroutineScope,
-    private val overlaysRepository: OverlaysRepository,
 ) {
     /**
      * CameraX's [ProcessCameraProvider].
@@ -112,32 +111,14 @@ class CameraRepository(
         camera.cameraSelector, mode
     )
 
-    private fun CameraInfo.isInternalCameraAllowed(): Boolean {
-        val camera2CameraInfo = Camera2CameraInfo.from(this)
-
-        return when (camera2CameraInfo.cameraId) {
-            in mainCameraIds -> true
-
-            else -> {
-                val isIgnoredAuxCamera = overlaysRepository.ignoredAuxCameraIds.contains(
-                    camera2CameraInfo.cameraId
-                )
-                val isIgnoredLogicalCamera = overlaysRepository.ignoreLogicalAuxCameras
-                        && physicalCameraInfos.size > 1
-
-                overlaysRepository.enableAuxCameras
-                        && !isIgnoredAuxCamera
-                        && !isIgnoredLogicalCamera
-            }
-        }
-    }
+    private fun CameraInfo.isInternalCameraAllowed() =
+        Camera2CameraInfo.from(this).cameraId in mainCameraIds
 
     private fun List<CameraInfo>.mapToCamera() = map { it.toCamera() }.sortedBy { it.cameraId }
 
     private fun CameraInfo.toCamera() = Camera.fromCameraX(
         this,
         extensionsManager,
-        overlaysRepository,
     )
 
     private fun requireCameraPermission() = require(

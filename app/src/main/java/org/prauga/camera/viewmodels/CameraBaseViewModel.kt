@@ -17,7 +17,6 @@ abstract class CameraBaseViewModel(application: Application) : AndroidViewModel(
 
     protected val cameraRepository = cameraApplication.cameraRepository
     protected val mediaRepository = cameraApplication.mediaRepository
-    protected val overlaysRepository = cameraApplication.overlaysRepository
     protected val preferencesRepository = cameraApplication.preferencesRepository
 
     @Suppress("EmptyMethod")

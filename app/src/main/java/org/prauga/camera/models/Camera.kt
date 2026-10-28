@@ -23,7 +23,6 @@ import androidx.camera.video.Recorder
 import androidx.core.util.toClosedRange
 import androidx.lifecycle.asFlow
 import org.prauga.camera.ext.getSupportedModes
-import org.prauga.camera.repositories.OverlaysRepository
 import java.util.SortedMap
 import kotlin.reflect.safeCast
 
@@ -280,26 +279,15 @@ class Camera private constructor(
         fun fromCameraX(
             cameraXCameraInfo: CameraInfo,
             extensionsManager: ExtensionsManager,
-            overlaysRepository: OverlaysRepository,
         ): Camera {
-            val cameraId = Camera2CameraInfo.from(cameraXCameraInfo).cameraId
-
-            val logicalZoomRatios = buildMap {
-                put(1f, 1f)
-                overlaysRepository.logicalZoomRatios[cameraId]?.let {
-                    putAll(it)
-                }
-            }.toSortedMap()
-            val additionalVideoFrameRates =
-                overlaysRepository.additionalVideoConfigurations[cameraId].orEmpty()
             val supportedExtensionModes = extensionsManager.getSupportedModes(
                 cameraXCameraInfo.cameraSelector
             )
 
             return Camera(
                 cameraXCameraInfo,
-                logicalZoomRatios,
-                additionalVideoFrameRates,
+                sortedMapOf(1f to 1f),
+                mapOf(),
                 supportedExtensionModes,
             )
         }

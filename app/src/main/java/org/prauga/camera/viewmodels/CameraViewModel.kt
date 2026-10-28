@@ -1690,7 +1690,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
                 camera2Options = buildPhotoCamera2Options(camera, photoCaptureMode),
                 photoCaptureMode = photoCaptureMode,
                 photoAspectRatio = preferencesRepository.photoAspectRatio.value,
-                enableHighResolution = overlaysRepository.enableHighResolution,
+                enableHighResolution = true,
                 photoOutputFormat = photoOutputFormat,
             )
         }
