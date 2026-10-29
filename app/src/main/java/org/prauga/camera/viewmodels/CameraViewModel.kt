@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
@@ -58,6 +59,7 @@ import org.prauga.camera.models.CameraState
 import org.prauga.camera.models.Event
 import org.prauga.camera.models.GridMode
 import org.prauga.camera.models.HardwareKey
+import org.prauga.camera.models.LaunchRequest
 import org.prauga.camera.models.Rotation
 import org.prauga.camera.models.ThermalStatus
 import org.prauga.camera.models.TimerMode
@@ -142,20 +144,14 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      */
     val event = _event.asSharedFlow()
 
-    /**
-     * The initial camera mode.
-     */
-    var initialCameraMode = preferencesRepository.lastCameraMode.value
+    private var launchRequest = LaunchRequest()
 
-    /**
-     * The initial camera facing.
-     */
-    var initialCameraFacing = preferencesRepository.lastCameraFacing.value
+    private val _inSingleCaptureMode = MutableStateFlow(false)
 
     /**
      * Whether the current session is in single capture mode.
      */
-    val inSingleCaptureMode = MutableStateFlow(false)
+    val inSingleCaptureMode = _inSingleCaptureMode.asStateFlow()
 
     private val _cameraConfiguration = MutableStateFlow<CameraConfiguration?>(null)
     val cameraConfiguration = _cameraConfiguration
@@ -782,18 +778,31 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         cameraSoundsUtils.release()
     }
 
+    fun onLaunch(launchRequest: LaunchRequest) {
+        this.launchRequest = launchRequest
+        _inSingleCaptureMode.value = launchRequest.singleCapture
+    }
+
     /**
      * Initialize [cameraConfiguration].
-     * [initialCameraMode] and [initialCameraFacing] must be initialized.
      */
-    suspend fun initializeCameraConfiguration(): Boolean {
-        val cameraMode = initialCameraMode
-        val cameraFacing = initialCameraFacing
+    suspend fun initializeCameraConfiguration(): InitializationResult {
+        var cameraMode = launchRequest.cameraMode ?: preferencesRepository.lastCameraMode.value
+        val cameraFacing = launchRequest.cameraFacing ?: preferencesRepository.lastCameraFacing.value
+
+        if (cameraMode == CameraMode.VIDEO && !isVideoRecordingAvailable()) {
+            // If an app asked for a video we have to bail out
+            if (inSingleCaptureMode.value) {
+                return InitializationResult.VIDEO_UNSUPPORTED
+            }
+            // Fallback to photo mode
+            cameraMode = CameraMode.PHOTO
+        }
 
         val camera = getSuitableCamera(
             cameraMode = cameraMode,
             cameraFacing = cameraFacing,
-        ) ?: return false
+        ) ?: return InitializationResult.NO_CAMERA
 
         val cameraConfiguration = cameraConfigurationFactory.create(
             camera = camera,
@@ -802,7 +811,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
 
         _cameraConfiguration.value = cameraConfiguration
 
-        return true
+        return InitializationResult.INITIALIZED
     }
 
     /**
@@ -1101,7 +1110,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Get whether or not any camera currently supports video mode.
      */
-    suspend fun isVideoRecordingAvailable() = cameraRepository.cameras.first().any {
+    private suspend fun isVideoRecordingAvailable() = cameraRepository.cameras.first().any {
         it.supportsCameraMode(CameraMode.VIDEO)
     }
 
@@ -1165,6 +1174,12 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         } finally {
             rebindMutex.unlock()
         }
+    }
+
+    enum class InitializationResult {
+        INITIALIZED,
+        NO_CAMERA,
+        VIDEO_UNSUPPORTED,
     }
 
     companion object {

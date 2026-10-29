@@ -193,11 +193,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         // Register shortcuts
         ShortcutsUtils.registerShortcuts(this)
 
-        launchRequest.cameraMode?.let { viewModel.initialCameraMode = it }
-        launchRequest.cameraFacing?.let { viewModel.initialCameraFacing = it }
-        if (launchRequest.singleCapture) {
-            viewModel.inSingleCaptureMode.value = true
-        }
+        viewModel.onLaunch(launchRequest)
 
         // Setup window insets
         ViewCompat.setOnApplyWindowInsetsListener(mainLayout) { _, windowInsets ->
@@ -458,10 +454,12 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                 screenFlashView.setController(viewModel.cameraController)
                 screenFlashView.setScreenFlashWindow(window)
 
-                val videoRecordingAvailable = viewModel.isVideoRecordingAvailable()
-                if (viewModel.initialCameraMode == CameraMode.VIDEO && !videoRecordingAvailable) {
-                    // If an app asked for a video we have to bail out
-                    if (viewModel.inSingleCaptureMode.value) {
+                when (viewModel.initializeCameraConfiguration()) {
+                    CameraViewModel.InitializationResult.INITIALIZED -> {}
+
+                    CameraViewModel.InitializationResult.NO_CAMERA -> noCamera()
+
+                    CameraViewModel.InitializationResult.VIDEO_UNSUPPORTED -> {
                         Toast.makeText(
                             this@CameraActivity,
                             R.string.camcorder_unsupported_toast,
@@ -470,12 +468,6 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                         finish()
                         return@collect
                     }
-                    // Fallback to photo mode
-                    viewModel.initialCameraMode = CameraMode.PHOTO
-                }
-
-                if (!viewModel.initializeCameraConfiguration()) {
-                    noCamera()
                 }
 
                 initialized = true
