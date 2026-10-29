@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.prauga.camera.R
 import org.prauga.camera.ext.px
+import org.prauga.camera.ext.select
 import org.prauga.camera.ext.smoothRotate
 import org.prauga.camera.models.CameraMode
 import org.prauga.camera.models.CameraState
@@ -178,19 +179,19 @@ class PrimaryBar(
 
     fun CoroutineScope.bind() {
         launch {
-            viewModel.cameraMode.collectLatest { cameraMode ->
+            viewModel.uiState.select { it.cameraMode }.collectLatest { cameraMode ->
                 shutterButton.isInvisible = cameraMode == CameraMode.QR
             }
         }
 
         launch {
-            viewModel.inSingleCaptureMode.collectLatest { inSingleCaptureMode ->
+            viewModel.uiState.select { it.inSingleCaptureMode }.collectLatest { inSingleCaptureMode ->
                 galleryButtonCardView.isInvisible = inSingleCaptureMode
             }
         }
 
         launch {
-            viewModel.cameraState.collectLatest { cameraState ->
+            viewModel.uiState.select { it.cameraState }.collectLatest { cameraState ->
                 galleryButtonCardView.isEnabled = cameraState == CameraState.IDLE
                 // Shutter button must stay enabled
                 flipCameraButton.isEnabled = cameraState == CameraState.IDLE
@@ -199,7 +200,7 @@ class PrimaryBar(
         }
 
         launch {
-            viewModel.screenRotation.collectLatest { screenRotation ->
+            viewModel.uiState.select { it.screenRotation }.collectLatest { screenRotation ->
                 val compensationValue = screenRotation.compensationValue.toFloat()
 
                 galleryButtonCardView.smoothRotate(compensationValue)
@@ -263,19 +264,19 @@ class PrimaryBar(
         }
 
         launch {
-            viewModel.capturedMedia.collectLatest { capturedMedia ->
+            viewModel.uiState.select { it.capturedMedia }.collectLatest { capturedMedia ->
                 updateGalleryButton(capturedMedia.firstOrNull(), false)
             }
         }
 
         launch {
-            viewModel.isShutterButtonEnabled.collectLatest { isShutterButtonEnabled ->
+            viewModel.uiState.select { it.isShutterButtonEnabled }.collectLatest { isShutterButtonEnabled ->
                 shutterButton.isEnabled = isShutterButtonEnabled
             }
         }
 
         launch {
-            viewModel.canFlipCamera.collectLatest { canFlipCamera ->
+            viewModel.uiState.select { it.canFlipCamera }.collectLatest { canFlipCamera ->
                 flipCameraButton.isInvisible = !canFlipCamera
             }
         }

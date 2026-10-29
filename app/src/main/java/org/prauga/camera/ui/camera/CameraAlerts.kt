@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.prauga.camera.R
+import org.prauga.camera.ext.select
 import org.prauga.camera.models.ThermalStatus
 import org.prauga.camera.viewmodels.CameraViewModel
 
@@ -129,7 +130,7 @@ class CameraAlerts(
         }
 
         launch {
-            viewModel.thermalStatus.collectLatest { thermalStatus ->
+            viewModel.uiState.select { it.thermalStatus }.collectLatest { thermalStatus ->
                 val showSnackBar = { stringId: Int ->
                     Snackbar.make(
                         secondaryBottomBarLayout,

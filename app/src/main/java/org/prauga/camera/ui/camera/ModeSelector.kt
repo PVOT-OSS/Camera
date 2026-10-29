@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.prauga.camera.R
+import org.prauga.camera.ext.select
 import org.prauga.camera.ui.views.CameraModeSelectorLayout
 import org.prauga.camera.viewmodels.CameraViewModel
 
@@ -27,25 +28,25 @@ class ModeSelector(
 
     fun CoroutineScope.bind() {
         launch {
-            viewModel.cameraMode.collectLatest { cameraMode ->
+            viewModel.uiState.select { it.cameraMode }.collectLatest { cameraMode ->
                 cameraModeSelectorLayout.setCurrentCameraMode(cameraMode)
             }
         }
 
         launch {
-            viewModel.inSingleCaptureMode.collectLatest { inSingleCaptureMode ->
+            viewModel.uiState.select { it.inSingleCaptureMode }.collectLatest { inSingleCaptureMode ->
                 cameraModeSelectorLayout.setInSingleCaptureMode(inSingleCaptureMode)
             }
         }
 
         launch {
-            viewModel.cameraState.collectLatest { cameraState ->
+            viewModel.uiState.select { it.cameraState }.collectLatest { cameraState ->
                 cameraModeSelectorLayout.setCameraState(cameraState)
             }
         }
 
         launch {
-            viewModel.videoRecordingDuration.collectLatest { videoRecordingDuration ->
+            viewModel.uiState.select { it.videoRecordingDuration }.collectLatest { videoRecordingDuration ->
                 cameraModeSelectorLayout.setVideoRecordingDuration(videoRecordingDuration)
             }
         }

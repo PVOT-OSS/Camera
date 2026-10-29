@@ -44,6 +44,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.prauga.camera.ext.select
 import org.prauga.camera.ext.slide
 import org.prauga.camera.ext.slideDown
 import org.prauga.camera.ext.updateBarsVisibility
@@ -365,7 +366,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                         }
 
                         is Event.PhotoCaptureStatus.ImageSaved -> {
-                            if (!viewModel.inSingleCaptureMode.value) {
+                            if (!viewModel.uiState.value.inSingleCaptureMode) {
                                 onCapturedMedia(event.output.savedUri)
                             } else {
                                 event.output.savedUri?.let {
@@ -396,14 +397,14 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         }
 
         launch {
-            viewModel.screenRotation.collectLatest { screenRotation ->
+            viewModel.uiState.select { it.screenRotation }.collectLatest { screenRotation ->
                 // Rotate capture preview
                 capturePreviewLayout.setScreenRotation(screenRotation)
             }
         }
 
         launch {
-            viewModel.fullScreenBrightness.collectLatest { fullScreenBrightness ->
+            viewModel.uiState.select { it.fullScreenBrightness }.collectLatest { fullScreenBrightness ->
                 window.attributes = window.attributes.apply {
                     screenBrightness = when (fullScreenBrightness) {
                         true -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
@@ -418,7 +419,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                 when (videoRecordEvent) {
                     is VideoRecordEvent.Finalize -> {
                         if (videoRecordEvent.error != VideoRecordEvent.Finalize.ERROR_NO_VALID_DATA) {
-                            if (!viewModel.inSingleCaptureMode.value) {
+                            if (!viewModel.uiState.value.inSingleCaptureMode) {
                                 onCapturedMedia(videoRecordEvent.outputResults.outputUri)
                             } else {
                                 openCapturePreview(
@@ -479,7 +480,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
      * Rebind cameraProvider use cases
      */
     private fun bindCameraUseCases(cameraConfiguration: CameraConfiguration) {
-        require(viewModel.cameraState.value == CameraState.IDLE) {
+        require(viewModel.canRestartCamera()) {
             "Trying to rebind camera while camera is not in IDLE state"
         }
 
@@ -488,7 +489,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         viewModel.cameraXBinder.bind(cameraConfiguration, this)
 
         // Restore settings that can be set on the fly
-        viewModel.setVideoMicrophoneEnabled(viewModel.videoMicMode.value)
+        viewModel.setVideoMicrophoneEnabled(viewModel.uiState.value.videoMicMode)
 
         // Reset exposure level
         viewModel.setExposureCompensationLevel(0.5f)
@@ -520,7 +521,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
     private fun onShutter() {
         // Shutter animation
-        when (viewModel.cameraMode.value) {
+        when (viewModel.uiState.value.cameraMode) {
             CameraMode.PHOTO -> primaryBar.startShutterAnimation(PrimaryBar.ShutterAnimation.PhotoCapture)
             CameraMode.VIDEO -> {
                 if (viewfinderOverlays.cancelCountDown()) {
@@ -528,7 +529,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                     primaryBar.startShutterAnimation(PrimaryBar.ShutterAnimation.VideoEnd)
                     return
                 }
-                if (viewModel.cameraState.value == CameraState.IDLE) {
+                if (viewModel.uiState.value.cameraState == CameraState.IDLE) {
                     primaryBar.startShutterAnimation(PrimaryBar.ShutterAnimation.VideoStart)
                 }
             }
@@ -537,7 +538,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         }
 
         startTimerAndRun {
-            when (viewModel.cameraMode.value) {
+            when (viewModel.uiState.value.cameraMode) {
                 CameraMode.PHOTO -> viewModel.takePhoto()
                 CameraMode.VIDEO -> viewModel.captureVideo()
                 else -> {}
@@ -553,7 +554,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     private fun startTimerAndRun(runnable: () -> Unit) {
         // Allow forcing timer if requested by the assistant
         val timerModeSeconds =
-            launchRequest.timerDurationSeconds ?: viewModel.timerMode.value.seconds
+            launchRequest.timerDurationSeconds ?: viewModel.uiState.value.timerMode.seconds
 
         if (timerModeSeconds <= 0 || !viewModel.canRestartCamera()) {
             runnable()

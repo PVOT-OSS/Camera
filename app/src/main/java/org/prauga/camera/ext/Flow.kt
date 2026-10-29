@@ -7,9 +7,12 @@ package org.prauga.camera.ext
 
 import android.database.Cursor
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
 fun <T> Flow<Cursor?>.mapEachRow(
     projection: Array<String>,
     mapping: (Cursor, Array<Int>) -> T,
 ) = map { it.mapEachRow(projection, mapping) }
+
+fun <T, R> Flow<T>.select(selector: (T) -> R) = map(selector).distinctUntilChanged()

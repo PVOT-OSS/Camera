@@ -24,6 +24,7 @@ import java.util.concurrent.Executors
 import kotlin.reflect.safeCast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -152,7 +153,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Whether the current session is in single capture mode.
      */
-    val inSingleCaptureMode = _inSingleCaptureMode.asStateFlow()
+    private val inSingleCaptureMode = _inSingleCaptureMode.asStateFlow()
 
     private val _cameraConfiguration = MutableStateFlow<CameraConfiguration?>(null)
     val cameraConfiguration = _cameraConfiguration
@@ -190,7 +191,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      * The current camera mode.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val cameraMode = cameraConfiguration
+    private val cameraMode = cameraConfiguration
         .mapLatest { cameraConfiguration -> cameraConfiguration.cameraMode }
         .flowOn(Dispatchers.IO)
         .stateIn(
@@ -232,7 +233,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Pair of active camera to the available cameras.
      */
-    val lenses = combine(
+    private val lenses = combine(
         cameraRepository.cameras,
         camera,
         cameraMode,
@@ -268,13 +269,13 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Current camera state.
      */
-    val cameraState = captureStateMachine.state
+    private val cameraState = captureStateMachine.state
 
     /**
      * Current screen rotation.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val screenRotation = orientation
+    private val screenRotation = orientation
         .filter { it != OrientationEventListener.ORIENTATION_UNKNOWN }
         .mapLatest { orientation ->
             Rotation.fromDegreesInAperture(orientation)
@@ -289,7 +290,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Captured media [Uri]s
      */
-    val capturedMedia = mediaRepository.capturedMedia()
+    private val capturedMedia = mediaRepository.capturedMedia()
         .flowOn(Dispatchers.IO)
         .stateIn(
             viewModelScope,
@@ -307,16 +308,16 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         emitEvent = ::emitEvent,
     )
 
-    val supportedFlashModes = flashController.supportedFlashModes
+    private val supportedFlashModes = flashController.supportedFlashModes
 
-    val flashMode = flashController.flashMode
+    private val flashMode = flashController.flashMode
 
-    val isFlashButtonEnabled = flashController.isFlashButtonEnabled
+    private val isFlashButtonEnabled = flashController.isFlashButtonEnabled
 
     /**
      * Grid mode.
      */
-    val gridMode = combine(
+    private val gridMode = combine(
         preferencesRepository.lastGridMode,
         cameraConfiguration,
     ) { gridMode, cameraConfiguration ->
@@ -332,7 +333,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Timer mode.
      */
-    val timerMode = preferencesRepository.timerMode
+    private val timerMode = preferencesRepository.timerMode
         .stateIn(
             viewModelScope,
             started = SharingStarted.WhileSubscribed(),
@@ -342,7 +343,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Whether the leveler is enabled.
      */
-    val levelerEnabled = preferencesRepository.leveler
+    private val levelerEnabled = preferencesRepository.leveler
         .stateIn(
             viewModelScope,
             started = SharingStarted.WhileSubscribed(),
@@ -352,14 +353,14 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Whether screen brightness should be forced to full.
      */
-    val fullScreenBrightness = preferencesRepository.brightScreen
+    private val fullScreenBrightness = preferencesRepository.brightScreen
         .stateIn(
             viewModelScope,
             started = SharingStarted.WhileSubscribed(),
             initialValue = false
         )
 
-    val thermalStatus = deviceStateRepository.thermalStatus
+    private val thermalStatus = deviceStateRepository.thermalStatus
         .flowOn(Dispatchers.IO)
         .stateIn(
             viewModelScope,
@@ -370,7 +371,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * The current zoom state.
      */
-    val zoomState = cameraController.zoomState.asFlow()
+    private val zoomState = cameraController.zoomState.asFlow()
         .flowOn(Dispatchers.IO)
         .stateIn(
             viewModelScope,
@@ -433,21 +434,22 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             replay = 1
         )
 
-    val exposureCompensationRangeToLevel = combine(
+    private val exposureCompensationRangeToLevel = combine(
         exposureCompensationLevel,
         exposureCompensationRange,
     ) { exposureCompensationLevel, exposureCompensationRange ->
         exposureCompensationRange to exposureCompensationLevel
     }
         .flowOn(Dispatchers.IO)
-        .shareIn(
+        .stateIn(
             viewModelScope,
             started = SharingStarted.WhileSubscribed(),
-            replay = 1
+            initialValue = null
         )
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val exposureCompensationIndex = exposureCompensationRangeToLevel
+        .filterNotNull()
         .mapLatest { (exposureCompensationLevel, exposureCompensationRange) ->
             Int.mapToRange(exposureCompensationLevel, exposureCompensationRange)
         }
@@ -458,7 +460,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             replay = 1
         )
 
-    val isShutterButtonEnabled = combine(
+    private val isShutterButtonEnabled = combine(
         cameraMode,
         cameraState,
     ) { cameraMode, cameraState ->
@@ -504,7 +506,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      * @see AspectRatio.Ratio
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val photoAspectRatio = cameraConfiguration
+    private val photoAspectRatio = cameraConfiguration
         .mapLatest { cameraConfiguration ->
             when (cameraConfiguration) {
                 is CameraConfiguration.Photo -> cameraConfiguration.photoAspectRatio
@@ -523,7 +525,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      * @see ExtensionMode.Mode
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val photoEffect = cameraConfiguration
+    private val photoEffect = cameraConfiguration
         .mapLatest { cameraConfiguration ->
             cameraConfiguration.extensionMode
         }
@@ -538,7 +540,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      * Whether the user should be able to select a photo effect.
      */
     @androidx.annotation.OptIn(ExperimentalZeroShutterLag::class)
-    val isPhotoEffectButtonVisible = combine(
+    private val isPhotoEffectButtonVisible = combine(
         cameraConfiguration,
         cameraMode,
         photoCaptureMode,
@@ -547,6 +549,12 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
                 photoCaptureMode != ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG &&
                 cameraConfiguration.camera.supportedExtensionModes.size > 1
     }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = false,
+        )
 
     // Video
 
@@ -554,7 +562,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      * Video quality.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val videoQuality = cameraConfiguration
+    private val videoQuality = cameraConfiguration
         .mapLatest { cameraConfiguration ->
             when (cameraConfiguration) {
                 is CameraConfiguration.Video -> cameraConfiguration.videoQuality
@@ -568,7 +576,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             initialValue = preferencesRepository.videoQuality.value,
         )
 
-    val isVideoQualityButtonEnabled = combine(
+    private val isVideoQualityButtonEnabled = combine(
         camera,
         cameraState,
     ) { camera, cameraState ->
@@ -585,7 +593,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      * Video frame rate.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val videoFrameRate = cameraConfiguration
+    private val videoFrameRate = cameraConfiguration
         .mapLatest { cameraConfiguration ->
             when (cameraConfiguration) {
                 is CameraConfiguration.Video -> cameraConfiguration.videoFrameRate
@@ -599,7 +607,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             initialValue = preferencesRepository.videoFrameRate.value,
         )
 
-    val isVideoFrameRateButtonEnabled = combine(
+    private val isVideoFrameRateButtonEnabled = combine(
         cameraConfiguration,
         cameraState,
     ) { cameraConfiguration, cameraState ->
@@ -626,7 +634,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      * Video dynamic range.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val videoDynamicRange = cameraConfiguration
+    private val videoDynamicRange = cameraConfiguration
         .mapLatest { cameraConfiguration ->
             when (cameraConfiguration) {
                 is CameraConfiguration.Video -> cameraConfiguration.videoDynamicRange
@@ -640,7 +648,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             initialValue = preferencesRepository.videoDynamicRange.value,
         )
 
-    val isVideoDynamicRangeButtonEnabled = combine(
+    private val isVideoDynamicRangeButtonEnabled = combine(
         cameraConfiguration,
         cameraState,
     ) { cameraConfiguration, cameraState ->
@@ -656,30 +664,42 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             else -> false
         }
     }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = false,
+        )
 
     /**
      * Video mic mode.
      */
-    val videoMicMode = MutableStateFlow(preferencesRepository.videoMicMode.value)
+    private val videoMicMode = MutableStateFlow(preferencesRepository.videoMicMode.value)
 
     /**
      * Video [Recording].
      */
     val videoRecording = cameraXCapture.videoRecording
 
-        val isVideoMicButtonEnabled = combine(
+    private val isVideoMicButtonEnabled = combine(
         cameraState,
         videoRecording,
     ) { cameraState, videoRecording ->
         cameraState == CameraState.IDLE || videoRecording?.isAudioSourceConfigured == true
     }
+        .flowOn(Dispatchers.IO)
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = false,
+        )
 
     // QR
 
     /**
      * Video recording duration.
      */
-    val videoRecordingDuration = cameraXCapture.videoRecordingDuration
+    private val videoRecordingDuration = cameraXCapture.videoRecordingDuration
 
     /**
      * Video record event.
@@ -698,7 +718,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Whether the camera can be flipped.
      */
-    val canFlipCamera = combine(
+    private val canFlipCamera = combine(
         camerasForCycling,
         cameraState,
     ) { camerasForCycling, cameraState ->
@@ -714,7 +734,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Island items.
      */
-    val islandItems = combine(
+    private val islandItems = combine(
         cameraConfiguration,
         videoMicMode,
         batteryIntent,
@@ -727,6 +747,47 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(),
             initialValue = listOf(),
+        )
+
+    val uiState = combine(
+        listOf<Flow<Any?>>(
+            cameraMode,
+            cameraState,
+            inSingleCaptureMode,
+            screenRotation,
+            lenses,
+            capturedMedia,
+            supportedFlashModes,
+            flashMode,
+            isFlashButtonEnabled,
+            gridMode,
+            timerMode,
+            levelerEnabled,
+            fullScreenBrightness,
+            thermalStatus,
+            zoomState,
+            exposureCompensationRangeToLevel,
+            isShutterButtonEnabled,
+            photoAspectRatio,
+            photoEffect,
+            isPhotoEffectButtonVisible,
+            videoQuality,
+            isVideoQualityButtonEnabled,
+            videoFrameRate,
+            isVideoFrameRateButtonEnabled,
+            videoDynamicRange,
+            isVideoDynamicRangeButtonEnabled,
+            videoMicMode,
+            isVideoMicButtonEnabled,
+            videoRecordingDuration,
+            canFlipCamera,
+            islandItems,
+        )
+    ) { currentUiState() }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = currentUiState(),
         )
 
     init {
@@ -1120,6 +1181,40 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     private suspend fun isVideoRecordingAvailable() = cameraRepository.cameras.first().any {
         it.supportsCameraMode(CameraMode.VIDEO)
     }
+
+    private fun currentUiState() = CameraUiState(
+        cameraMode = cameraMode.value,
+        cameraState = cameraState.value,
+        inSingleCaptureMode = inSingleCaptureMode.value,
+        screenRotation = screenRotation.value,
+        lenses = lenses.value,
+        capturedMedia = capturedMedia.value,
+        supportedFlashModes = supportedFlashModes.value,
+        flashMode = flashMode.value,
+        isFlashButtonEnabled = isFlashButtonEnabled.value,
+        gridMode = gridMode.value,
+        timerMode = timerMode.value,
+        levelerEnabled = levelerEnabled.value,
+        fullScreenBrightness = fullScreenBrightness.value,
+        thermalStatus = thermalStatus.value,
+        zoomState = zoomState.value,
+        exposureCompensationRangeToLevel = exposureCompensationRangeToLevel.value,
+        isShutterButtonEnabled = isShutterButtonEnabled.value,
+        photoAspectRatio = photoAspectRatio.value,
+        photoEffect = photoEffect.value,
+        isPhotoEffectButtonVisible = isPhotoEffectButtonVisible.value,
+        videoQuality = videoQuality.value,
+        isVideoQualityButtonEnabled = isVideoQualityButtonEnabled.value,
+        videoFrameRate = videoFrameRate.value,
+        isVideoFrameRateButtonEnabled = isVideoFrameRateButtonEnabled.value,
+        videoDynamicRange = videoDynamicRange.value,
+        isVideoDynamicRangeButtonEnabled = isVideoDynamicRangeButtonEnabled.value,
+        videoMicMode = videoMicMode.value,
+        isVideoMicButtonEnabled = isVideoMicButtonEnabled.value,
+        videoRecordingDuration = videoRecordingDuration.value,
+        canFlipCamera = canFlipCamera.value,
+        islandItems = islandItems.value,
+    )
 
     /**
      * Emit a new event to let the activity handle it.

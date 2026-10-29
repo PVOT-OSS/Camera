@@ -18,10 +18,12 @@ import androidx.camera.view.PreviewView
 import androidx.core.view.isVisible
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.prauga.camera.R
 import org.prauga.camera.ext.mapToRange
 import org.prauga.camera.ext.px
+import org.prauga.camera.ext.select
 import org.prauga.camera.ext.setPadding
 import org.prauga.camera.ui.views.CountDownView
 import org.prauga.camera.ui.views.GridView
@@ -72,7 +74,7 @@ class ViewfinderOverlays(
             viewModel.cameraController.setLinearZoom(it)
         }
         zoomLevel.textFormatter = {
-            "%.1fx".format(viewModel.zoomState.value?.zoomRatio)
+            "%.1fx".format(viewModel.uiState.value.zoomState?.zoomRatio)
         }
 
         // Set expose level callback & text formatter
@@ -119,7 +121,7 @@ class ViewfinderOverlays(
 
     fun CoroutineScope.bind() {
         launch {
-            viewModel.screenRotation.collectLatest { screenRotation ->
+            viewModel.uiState.select { it.screenRotation }.collectLatest { screenRotation ->
                 // Rotate sliders
                 exposureLevel.screenRotation = screenRotation
                 zoomLevel.screenRotation = screenRotation
@@ -133,24 +135,24 @@ class ViewfinderOverlays(
         }
 
         launch {
-            viewModel.gridMode.collectLatest { gridMode ->
+            viewModel.uiState.select { it.gridMode }.collectLatest { gridMode ->
                 gridView.mode = gridMode
             }
         }
 
         launch {
-            viewModel.levelerEnabled.collectLatest { levelerEnabled ->
+            viewModel.uiState.select { it.levelerEnabled }.collectLatest { levelerEnabled ->
                 levelerView.isVisible = levelerEnabled
             }
         }
 
         launch {
-            viewModel.islandItems.collectLatest { islandItems ->
+            viewModel.uiState.select { it.islandItems }.collectLatest { islandItems ->
                 islandView.setItems(islandItems)
             }
         }
         launch {
-            viewModel.zoomState.collectLatest { zoomState ->
+            viewModel.uiState.select { it.zoomState }.collectLatest { zoomState ->
                 zoomState?.takeIf { it.minZoomRatio != it.maxZoomRatio }?.let {
                     zoomLevel.progress = it.linearZoom
                     zoomLevel.isVisible = true
@@ -193,7 +195,7 @@ class ViewfinderOverlays(
         }
 
         launch {
-            viewModel.exposureCompensationRangeToLevel.collectLatest { (range, level) ->
+            viewModel.uiState.select { it.exposureCompensationRangeToLevel }.filterNotNull().collectLatest { (range, level) ->
                 exposureLevel.steps = range.endInclusive - range.start
                 exposureLevel.progress = level
                 exposureLevel.textFormatter = {

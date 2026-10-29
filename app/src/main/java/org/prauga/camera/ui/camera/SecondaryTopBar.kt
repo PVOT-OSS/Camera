@@ -21,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.prauga.camera.R
+import org.prauga.camera.ext.select
 import org.prauga.camera.ext.slide
 import org.prauga.camera.ext.slideDown
 import org.prauga.camera.ext.smoothRotate
@@ -71,7 +72,7 @@ class SecondaryTopBar(
 
     fun CoroutineScope.bind() {
         launch {
-            viewModel.cameraMode.collectLatest { cameraMode ->
+            viewModel.uiState.select { it.cameraMode }.collectLatest { cameraMode ->
                 // Hide secondary top bar
                 secondaryTopBarLayout.isVisible = false
 
@@ -85,7 +86,7 @@ class SecondaryTopBar(
         }
 
         launch {
-            viewModel.cameraState.collectLatest { cameraState ->
+            viewModel.uiState.select { it.cameraState }.collectLatest { cameraState ->
                 timerButton.isEnabled = cameraState == CameraState.IDLE
                 aspectRatioButton.isEnabled = cameraState == CameraState.IDLE
                 effectButton.isEnabled = cameraState == CameraState.IDLE
@@ -94,7 +95,7 @@ class SecondaryTopBar(
         }
 
         launch {
-            viewModel.screenRotation.collectLatest { screenRotation ->
+            viewModel.uiState.select { it.screenRotation }.collectLatest { screenRotation ->
                 val compensationValue = screenRotation.compensationValue.toFloat()
 
                 ConstraintLayout::class.safeCast(
@@ -125,7 +126,7 @@ class SecondaryTopBar(
         }
 
         launch {
-            viewModel.gridMode.collectLatest { gridMode ->
+            viewModel.uiState.select { it.gridMode }.collectLatest { gridMode ->
                 // Update secondary bar buttons
                 gridButton.setCompoundDrawablesWithIntrinsicBounds(
                     0,
@@ -150,7 +151,7 @@ class SecondaryTopBar(
         }
 
         launch {
-            viewModel.timerMode.collectLatest { timerMode ->
+            viewModel.uiState.select { it.timerMode }.collectLatest { timerMode ->
                 // Update secondary bar buttons
                 timerButton.setCompoundDrawablesWithIntrinsicBounds(
                     0,
@@ -173,7 +174,7 @@ class SecondaryTopBar(
         }
 
         launch {
-            viewModel.photoAspectRatio.collectLatest { photoAspectRatio ->
+            viewModel.uiState.select { it.photoAspectRatio }.collectLatest { photoAspectRatio ->
                 // Update secondary bar buttons
                 aspectRatioButton.setText(
                     when (photoAspectRatio) {
@@ -186,7 +187,7 @@ class SecondaryTopBar(
         }
 
         launch {
-            viewModel.photoEffect.collectLatest { photoEffect ->
+            viewModel.uiState.select { it.photoEffect }.collectLatest { photoEffect ->
                 // Update secondary bar buttons
                 effectButton.setCompoundDrawablesWithIntrinsicBounds(
                     0,
@@ -217,13 +218,13 @@ class SecondaryTopBar(
         }
 
         launch {
-            viewModel.isPhotoEffectButtonVisible.collectLatest { isPhotoEffectButtonVisible ->
+            viewModel.uiState.select { it.isPhotoEffectButtonVisible }.collectLatest { isPhotoEffectButtonVisible ->
                 effectButton.isVisible = isPhotoEffectButtonVisible
             }
         }
 
         launch {
-            viewModel.videoQuality.collectLatest { videoQuality ->
+            viewModel.uiState.select { it.videoQuality }.collectLatest { videoQuality ->
                 // Update secondary bar buttons
                 videoQualityButton.setCompoundDrawablesWithIntrinsicBounds(
                     0,
@@ -252,13 +253,13 @@ class SecondaryTopBar(
         }
 
         launch {
-            viewModel.isVideoQualityButtonEnabled.collectLatest { isVideoQualityButtonEnabled ->
+            viewModel.uiState.select { it.isVideoQualityButtonEnabled }.collectLatest { isVideoQualityButtonEnabled ->
                 videoQualityButton.isEnabled = isVideoQualityButtonEnabled
             }
         }
 
         launch {
-            viewModel.videoFrameRate.collectLatest { videoFrameRate ->
+            viewModel.uiState.select { it.videoFrameRate }.collectLatest { videoFrameRate ->
                 // Update secondary bar buttons
                 videoFrameRateButton.text = videoFrameRate?.let {
                     resources.getString(R.string.video_framerate_value, it.value)
@@ -267,13 +268,13 @@ class SecondaryTopBar(
         }
 
         launch {
-            viewModel.isVideoFrameRateButtonEnabled.collectLatest { isVideoFrameRateButtonEnabled ->
+            viewModel.uiState.select { it.isVideoFrameRateButtonEnabled }.collectLatest { isVideoFrameRateButtonEnabled ->
                 videoFrameRateButton.isEnabled = isVideoFrameRateButtonEnabled
             }
         }
 
         launch {
-            viewModel.videoDynamicRange.collectLatest { videoDynamicRange ->
+            viewModel.uiState.select { it.videoDynamicRange }.collectLatest { videoDynamicRange ->
                 // Update secondary bar buttons
                 videoDynamicRangeButton.setCompoundDrawablesWithIntrinsicBounds(
                     0,
@@ -302,13 +303,13 @@ class SecondaryTopBar(
         }
 
         launch {
-            viewModel.isVideoDynamicRangeButtonEnabled.collectLatest { isVideoDynamicRangeButtonEnabled ->
+            viewModel.uiState.select { it.isVideoDynamicRangeButtonEnabled }.collectLatest { isVideoDynamicRangeButtonEnabled ->
                 videoDynamicRangeButton.isEnabled = isVideoDynamicRangeButtonEnabled
             }
         }
 
         launch {
-            viewModel.videoMicMode.collectLatest { videoMicMode ->
+            viewModel.uiState.select { it.videoMicMode }.collectLatest { videoMicMode ->
                 micButton.setCompoundDrawablesWithIntrinsicBounds(
                     0,
                     when (videoMicMode) {
@@ -328,7 +329,7 @@ class SecondaryTopBar(
         }
 
         launch {
-            viewModel.isVideoMicButtonEnabled.collectLatest { isVideoMicButtonEnabled ->
+            viewModel.uiState.select { it.isVideoMicButtonEnabled }.collectLatest { isVideoMicButtonEnabled ->
                 micButton.isEnabled = isVideoMicButtonEnabled
             }
         }

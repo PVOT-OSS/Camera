@@ -43,8 +43,8 @@ class HardwareKeyHandler(
 
         when (gestureAction) {
             GestureAction.SHUTTER -> {
-                if (viewModel.cameraMode.value == CameraMode.VIDEO
-                    && viewModel.isShutterButtonEnabled.value
+                if (viewModel.uiState.value.cameraMode == CameraMode.VIDEO
+                    && viewModel.uiState.value.isShutterButtonEnabled
                     && event?.repeatCount == 0
                 ) {
                     onShutter()
@@ -60,7 +60,7 @@ class HardwareKeyHandler(
             }
 
             GestureAction.MIC_MUTE -> {
-                if (viewModel.cameraMode.value == CameraMode.VIDEO && isMicButtonEnabled() &&
+                if (viewModel.uiState.value.cameraMode == CameraMode.VIDEO && isMicButtonEnabled() &&
                     event?.repeatCount == 0
                 ) {
                     viewModel.toggleVideoMicrophoneEnabled()
@@ -95,8 +95,8 @@ class HardwareKeyHandler(
 
         when (gestureAction) {
             GestureAction.SHUTTER -> {
-                if (viewModel.cameraMode.value != CameraMode.QR
-                    && viewModel.isShutterButtonEnabled.value
+                if (viewModel.uiState.value.cameraMode != CameraMode.QR
+                    && viewModel.uiState.value.isShutterButtonEnabled
                 ) {
                     onShutter()
                 }

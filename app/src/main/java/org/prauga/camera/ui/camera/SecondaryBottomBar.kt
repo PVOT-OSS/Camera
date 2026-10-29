@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.prauga.camera.R
 import org.prauga.camera.ext.flashMode
+import org.prauga.camera.ext.select
 import org.prauga.camera.ext.smoothRotate
 import org.prauga.camera.models.CameraMode
 import org.prauga.camera.models.FlashMode
@@ -47,19 +48,19 @@ class SecondaryBottomBar(
 
     fun CoroutineScope.bind() {
         launch {
-            viewModel.cameraMode.collectLatest { cameraMode ->
+            viewModel.uiState.select { it.cameraMode }.collectLatest { cameraMode ->
                 proButton.isVisible = cameraMode != CameraMode.QR
             }
         }
 
         launch {
-            viewModel.cameraState.collectLatest { cameraState ->
+            viewModel.uiState.select { it.cameraState }.collectLatest { cameraState ->
                 lensSelectorLayout.setCameraState(cameraState)
             }
         }
 
         launch {
-            viewModel.screenRotation.collectLatest { screenRotation ->
+            viewModel.uiState.select { it.screenRotation }.collectLatest { screenRotation ->
                 val compensationValue = screenRotation.compensationValue.toFloat()
 
                 proButton.smoothRotate(compensationValue)
@@ -69,7 +70,7 @@ class SecondaryBottomBar(
         }
 
         launch {
-            viewModel.zoomState.collectLatest { zoomState ->
+            viewModel.uiState.select { it.zoomState }.collectLatest { zoomState ->
                 zoomState?.takeIf { it.minZoomRatio != it.maxZoomRatio }?.let {
                     lensSelectorLayout.onZoomRatioChanged(it.zoomRatio)
                 }
@@ -77,7 +78,7 @@ class SecondaryBottomBar(
         }
 
         launch {
-            viewModel.lenses.collectLatest { (activeCamera, availableCameras) ->
+            viewModel.uiState.select { it.lenses }.collectLatest { (activeCamera, availableCameras) ->
                 // Update lens selector
                 activeCamera?.let {
                     lensSelectorLayout.setCamera(
@@ -89,7 +90,7 @@ class SecondaryBottomBar(
         }
 
         launch {
-            viewModel.supportedFlashModes.collectLatest { supportedFlashModes ->
+            viewModel.uiState.select { it.supportedFlashModes }.collectLatest { supportedFlashModes ->
                 // Hide the button if the only available mode is off,
                 // we want the user to know if any other mode is being used
                 flashButton.isVisible = supportedFlashModes.size != 1
@@ -98,7 +99,7 @@ class SecondaryBottomBar(
         }
 
         launch {
-            viewModel.flashMode.collectLatest { flashMode ->
+            viewModel.uiState.select { it.flashMode }.collectLatest { flashMode ->
                 // Update secondary bar buttons
                 flashButton.setImageResource(
                     when (flashMode) {
@@ -113,7 +114,7 @@ class SecondaryBottomBar(
         }
 
         launch {
-            viewModel.isFlashButtonEnabled.collectLatest { isFlashButtonEnabled ->
+            viewModel.uiState.select { it.isFlashButtonEnabled }.collectLatest { isFlashButtonEnabled ->
                 flashButton.isEnabled = isFlashButtonEnabled
             }
         }
