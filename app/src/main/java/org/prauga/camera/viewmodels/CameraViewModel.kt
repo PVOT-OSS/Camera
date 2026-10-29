@@ -14,13 +14,11 @@ import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionMode
 import androidx.camera.video.Quality
-import androidx.camera.video.Recording
-import androidx.camera.view.LifecycleCameraController
+import androidx.camera.view.PreviewView
+import androidx.camera.view.ScreenFlashView
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
 import kotlin.reflect.safeCast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -44,12 +42,10 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import org.prauga.camera.camerax.CameraXBinder
-import org.prauga.camera.camerax.CameraXCapture
-import org.prauga.camera.camerax.CameraXZoom
+import org.prauga.camera.camerax.CameraXSession
+import org.prauga.camera.capture.CameraSession
 import org.prauga.camera.capture.CaptureStateMachine
 import org.prauga.camera.ext.applicationContext
-import org.prauga.camera.ext.flashMode
 import org.prauga.camera.ext.mapToRange
 import org.prauga.camera.ext.next
 import org.prauga.camera.ext.previous
@@ -86,35 +82,25 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         )
 
     /**
-     * [ExecutorService] for camera related operations.
-     */
-    val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
-
-    /**
-     * CameraX's [LifecycleCameraController].
-     */
-    val cameraController = LifecycleCameraController(applicationContext)
-
-    /**
      * Mutex used to rebind the camera.
      */
-    val rebindMutex = Mutex()
+    private val rebindMutex = Mutex()
 
     /**
      * QR image analyzer.
      */
-    val qrImageAnalyzer = QrImageAnalyzer(applicationContext, viewModelScope)
+    private val qrImageAnalyzer = QrImageAnalyzer(applicationContext, viewModelScope)
 
-    private val cameraXCapture by lazy {
-        CameraXCapture(
+    private val cameraSession: CameraSession by lazy {
+        CameraXSession(
             applicationContext,
-            cameraController,
-            cameraExecutor,
             viewModelScope,
             mediaRepository,
             cameraSoundsUtils,
             captureStateMachine,
             inSingleCaptureMode,
+            qrImageAnalyzer,
+            cameraRepository::getExtensionEnabledCameraSelector,
             location = { location.value },
             cameraFacing = { cameraFacing.value },
             photoFfcMirror = { preferencesRepository.photoFfcMirror.value },
@@ -122,18 +108,9 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         )
     }
 
-    private val cameraXZoom by lazy { CameraXZoom(cameraController) { zoomState.value } }
-
     private val cameraConfigurationFactory = CameraConfigurationFactory(
         preferencesRepository,
         inSingleCaptureMode = { inSingleCaptureMode.value },
-    )
-
-    val cameraXBinder = CameraXBinder(
-        cameraController,
-        cameraExecutor,
-        qrImageAnalyzer,
-        cameraRepository::getExtensionEnabledCameraSelector,
     )
 
     /**
@@ -371,7 +348,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * The current zoom state.
      */
-    private val zoomState = cameraController.zoomState.asFlow()
+    private val zoomState = cameraSession.zoomState
         .flowOn(Dispatchers.IO)
         .stateIn(
             viewModelScope,
@@ -379,7 +356,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             initialValue = null
         )
 
-    val tapToFocusInfoState = cameraController.tapToFocusInfoState.asFlow()
+    val tapToFocusInfoState = cameraSession.tapToFocusInfoState
         .flowOn(Dispatchers.IO)
         .shareIn(
             viewModelScope,
@@ -676,16 +653,11 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      */
     private val videoMicMode = MutableStateFlow(preferencesRepository.videoMicMode.value)
 
-    /**
-     * Video [Recording].
-     */
-    val videoRecording = cameraXCapture.videoRecording
-
     private val isVideoMicButtonEnabled = combine(
         cameraState,
-        videoRecording,
-    ) { cameraState, videoRecording ->
-        cameraState == CameraState.IDLE || videoRecording?.isAudioSourceConfigured == true
+        cameraSession.isRecordingAudioSourceConfigured,
+    ) { cameraState, isRecordingAudioSourceConfigured ->
+        cameraState == CameraState.IDLE || isRecordingAudioSourceConfigured
     }
         .flowOn(Dispatchers.IO)
         .stateIn(
@@ -699,12 +671,12 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Video recording duration.
      */
-    private val videoRecordingDuration = cameraXCapture.videoRecordingDuration
+    private val videoRecordingDuration = cameraSession.videoRecordingDuration
 
     /**
      * Video record event.
      */
-    val videoRecordEvent = cameraXCapture.videoRecordEvent
+    val videoRecordEvent = cameraSession.videoRecordEvent
 
     /**
      * QR result.
@@ -794,15 +766,13 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         viewModelScope.launch {
             launch {
                 flashMode.collectLatest { flashMode ->
-                    cameraController.flashMode = flashMode
+                    cameraSession.setFlashMode(flashMode)
                 }
             }
 
             launch {
                 exposureCompensationIndex.collectLatest { exposureCompensationIndex ->
-                    cameraController.cameraControl?.setExposureCompensationIndex(
-                        exposureCompensationIndex
-                    )
+                    cameraSession.setExposureCompensationIndex(exposureCompensationIndex)
                 }
             }
 
@@ -835,9 +805,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     }
 
     override fun onCleared() {
-        cameraController.unbind()
-
-        cameraExecutor.shutdown()
+        cameraSession.close()
 
         cameraSoundsUtils.release()
     }
@@ -901,11 +869,17 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         )
     }
 
-    fun takePhoto() = cameraXCapture.takePhoto()
+    fun attachPreview(previewView: PreviewView, screenFlashView: ScreenFlashView) =
+        cameraSession.attachPreview(previewView, screenFlashView)
 
-    fun captureVideo() = cameraXCapture.captureVideo()
+    fun bindCamera(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner) =
+        cameraSession.configure(cameraConfiguration, lifecycleOwner)
 
-    fun onVideoRecordingStateButtonPress() = cameraXCapture.onVideoRecordingStateButtonPress()
+    fun takePhoto() = cameraSession.takePhoto()
+
+    fun captureVideo() = cameraSession.captureVideo()
+
+    fun onVideoRecordingStateButtonPress() = cameraSession.toggleRecordingPause()
 
     /**
      * Flip the camera.
@@ -1125,7 +1099,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      */
     @Suppress("MissingPermission")
     fun setVideoMicrophoneEnabled(videoMicrophoneEnabled: Boolean) {
-        cameraXCapture.setAudioEnabled(videoMicrophoneEnabled)
+        cameraSession.setAudioEnabled(videoMicrophoneEnabled)
 
         this.videoMicMode.value = videoMicrophoneEnabled
 
@@ -1145,13 +1119,17 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         this.exposureCompensationLevel.value = exposureCompensationLevel
     }
 
-    fun smoothZoom(zoomRatio: Float) = cameraXZoom.smoothZoom(zoomRatio)
+    fun setLinearZoom(linearZoom: Float) = cameraSession.setLinearZoom(linearZoom)
 
-    fun resetZoom() = cameraXZoom.resetZoom()
+    fun pinchToZoom(scaleFactor: Float) = cameraSession.pinchToZoom(scaleFactor)
 
-    fun zoomIn() = cameraXZoom.zoomIn()
+    fun smoothZoom(zoomRatio: Float) = cameraSession.smoothZoom(zoomRatio)
 
-    fun zoomOut() = cameraXZoom.zoomOut()
+    fun resetZoom() = cameraSession.resetZoom()
+
+    fun zoomIn() = cameraSession.zoomIn()
+
+    fun zoomOut() = cameraSession.zoomOut()
 
     fun setSaveLocation(saveLocation: Boolean?) {
         preferencesRepository.saveLocation.value = saveLocation

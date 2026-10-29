@@ -71,7 +71,7 @@ class ViewfinderOverlays(
         previewBlurView.previewView = viewFinder
 
         zoomLevel.onProgressChangedByUser = {
-            viewModel.cameraController.setLinearZoom(it)
+            viewModel.setLinearZoom(it)
         }
         zoomLevel.textFormatter = {
             "%.1fx".format(viewModel.uiState.value.zoomState?.zoomRatio)

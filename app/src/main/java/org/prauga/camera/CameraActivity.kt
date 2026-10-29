@@ -24,7 +24,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.video.VideoRecordEvent
-import androidx.camera.view.CameraController
 import androidx.camera.view.PreviewView
 import androidx.camera.view.ScreenFlashView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -448,11 +447,8 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
         permissionsManager.permissionStateFlow(Permission.CAMERA).collect { permissionState ->
             if (permissionState == PermissionState.GRANTED && !initialized) {
-                // Attach CameraController to PreviewView
-                viewFinder.controller = viewModel.cameraController
-
-                // Attach CameraController to ScreenFlashView
-                screenFlashView.setController(viewModel.cameraController)
+                // Attach CameraController to PreviewView and ScreenFlashView
+                viewModel.attachPreview(viewFinder, screenFlashView)
                 screenFlashView.setScreenFlashWindow(window)
 
                 when (viewModel.initializeCameraConfiguration()) {
@@ -486,7 +482,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
         viewfinderOverlays.onRebind()
 
-        viewModel.cameraXBinder.bind(cameraConfiguration, this)
+        viewModel.bindCamera(cameraConfiguration, this)
 
         // Restore settings that can be set on the fly
         viewModel.setVideoMicrophoneEnabled(viewModel.uiState.value.videoMicMode)

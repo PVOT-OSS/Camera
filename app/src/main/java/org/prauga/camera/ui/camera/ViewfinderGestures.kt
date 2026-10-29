@@ -59,7 +59,7 @@ class ViewfinderGestures(
                 }
 
                 is ZoomGestureDetector.ZoomEvent.Move -> {
-                    viewModel.cameraController.onPinchToZoom(it.incrementalScaleFactor)
+                    viewModel.pinchToZoom(it.incrementalScaleFactor)
                     handler.removeMessages(MSG_ON_PINCH_TO_ZOOM)
                     handler.sendMessageDelayed(handler.obtainMessage(MSG_ON_PINCH_TO_ZOOM), 500)
                 }
