@@ -46,6 +46,7 @@ import kotlinx.coroutines.sync.Mutex
 import org.prauga.camera.camerax.CameraXBinder
 import org.prauga.camera.camerax.CameraXCapture
 import org.prauga.camera.camerax.CameraXZoom
+import org.prauga.camera.capture.CaptureStateMachine
 import org.prauga.camera.ext.applicationContext
 import org.prauga.camera.ext.flashMode
 import org.prauga.camera.ext.mapToRange
@@ -111,7 +112,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             viewModelScope,
             mediaRepository,
             cameraSoundsUtils,
-            cameraState,
+            captureStateMachine,
             inSingleCaptureMode,
             location = { location.value },
             cameraFacing = { cameraFacing.value },
@@ -262,10 +263,12 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             replay = 1
         )
 
+    private val captureStateMachine = CaptureStateMachine()
+
     /**
      * Current camera state.
      */
-    val cameraState = MutableStateFlow(CameraState.IDLE)
+    val cameraState = captureStateMachine.state
 
     /**
      * Current screen rotation.
@@ -817,7 +820,11 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Get whether we can restart the camera.
      */
-    fun canRestartCamera() = cameraState.value == CameraState.IDLE
+    fun canRestartCamera() = captureStateMachine.isIdle
+
+    fun startCountdown() = captureStateMachine.startCountdown()
+
+    fun endCountdown() = captureStateMachine.endCountdown()
 
     /**
      * Select another camera.

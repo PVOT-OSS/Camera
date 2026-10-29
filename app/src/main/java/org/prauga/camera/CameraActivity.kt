@@ -524,7 +524,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
             CameraMode.PHOTO -> primaryBar.startShutterAnimation(PrimaryBar.ShutterAnimation.PhotoCapture)
             CameraMode.VIDEO -> {
                 if (viewfinderOverlays.cancelCountDown()) {
-                    viewModel.cameraState.value = CameraState.IDLE
+                    viewModel.endCountdown()
                     primaryBar.startShutterAnimation(PrimaryBar.ShutterAnimation.VideoEnd)
                     return
                 }
@@ -560,11 +560,10 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
             return
         }
 
-        val previousCameraState = viewModel.cameraState.value
-        viewModel.cameraState.value = CameraState.COUNTDOWN
+        viewModel.startCountdown()
 
         viewfinderOverlays.startCountDown(timerModeSeconds) {
-            viewModel.cameraState.value = previousCameraState
+            viewModel.endCountdown()
             runnable()
         }
     }

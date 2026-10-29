@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.prauga.camera.camerax.CameraXCapture
+import org.prauga.camera.capture.CaptureStateMachine
 import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.CameraState
 import org.prauga.camera.models.Event
@@ -40,7 +41,7 @@ class CameraXCapture(
     private val scope: CoroutineScope,
     private val mediaRepository: MediaRepository,
     private val cameraSoundsUtils: CameraSoundsUtils,
-    private val cameraState: MutableStateFlow<CameraState>,
+    private val captureStateMachine: CaptureStateMachine,
     private val inSingleCaptureMode: StateFlow<Boolean>,
     private val location: () -> Location?,
     private val cameraFacing: () -> CameraFacing,
@@ -69,11 +70,9 @@ class CameraXCapture(
 
     fun takePhoto() {
         // Bail out if a photo is already being taken
-        if (cameraState.value == CameraState.TAKING_PHOTO) {
+        if (!captureStateMachine.startPhoto()) {
             return
         }
-
-        cameraState.value = CameraState.TAKING_PHOTO
 
         val photoOutputStream = if (inSingleCaptureMode.value) {
             ByteArrayOutputStream(SINGLE_CAPTURE_PHOTO_BUFFER_INITIAL_SIZE_BYTES)
@@ -139,7 +138,7 @@ class CameraXCapture(
                 }
 
                 if (imageCount.decrementAndGet() == 0) {
-                    cameraState.value = CameraState.IDLE
+                    captureStateMachine.endPhoto()
                 }
 
                 // We only care about JPEG-like formats
@@ -161,7 +160,7 @@ class CameraXCapture(
                 emitEvent(Event.PhotoCaptureStatus.Error(exc))
 
                 Log.e(LOG_TAG, "Photo capture failed", exc)
-                cameraState.value = CameraState.IDLE
+                captureStateMachine.endPhoto()
             }
         }
 
@@ -199,16 +198,14 @@ class CameraXCapture(
     }
 
     fun captureVideo() {
-        if (cameraState.value != CameraState.IDLE) {
+        // Disallow state changes while we are about to prepare for recording video
+        if (!captureStateMachine.prepareRecording()) {
             if (cameraController.isRecording) {
                 // Stop the current recording session.
                 videoRecording.value?.stop()
             }
             return
         }
-
-        // Disallow state changes while we are about to prepare for recording video
-        cameraState.value = CameraState.PRE_RECORDING_VIDEO
 
         // Update duration text
         videoRecordingDuration.value = 0L
@@ -238,15 +235,15 @@ class CameraXCapture(
 
                 when (it) {
                     is VideoRecordEvent.Start -> {
-                        cameraState.value = CameraState.RECORDING_VIDEO
+                        captureStateMachine.onRecordingStarted()
                     }
 
                     is VideoRecordEvent.Pause -> {
-                        cameraState.value = CameraState.RECORDING_VIDEO_PAUSED
+                        captureStateMachine.onRecordingPaused()
                     }
 
                     is VideoRecordEvent.Resume -> {
-                        cameraState.value = CameraState.RECORDING_VIDEO
+                        captureStateMachine.onRecordingResumed()
                     }
 
                     is VideoRecordEvent.Status -> {
@@ -265,7 +262,7 @@ class CameraXCapture(
                                 mediaRepository.broadcastNewVideo(it.outputResults.outputUri)
                             }
                         }
-                        cameraState.value = CameraState.IDLE
+                        captureStateMachine.endRecording()
                         videoRecording.value = null
                     }
                 }
@@ -274,11 +271,11 @@ class CameraXCapture(
     }
 
     fun onVideoRecordingStateButtonPress() {
-        when (cameraState.value) {
+        when (val cameraState = captureStateMachine.state.value) {
             CameraState.RECORDING_VIDEO -> videoRecording.value?.pause()
             CameraState.RECORDING_VIDEO_PAUSED -> videoRecording.value?.resume()
             else -> error(
-                "videoRecordingStateButton clicked while in invalid state: ${cameraState.value}"
+                "videoRecordingStateButton clicked while in invalid state: $cameraState"
             )
         }
     }
