@@ -15,5 +15,7 @@ dependencies {
     api(project(":camera"))
     api(project(":device"))
 
+    implementation(libs.androidx.core.ktx)
+
     testImplementation(libs.junit)
 }

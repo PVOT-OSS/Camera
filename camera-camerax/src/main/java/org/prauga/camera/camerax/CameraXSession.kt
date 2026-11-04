@@ -108,6 +108,10 @@ class CameraXSession(
         lifecycleOwner: LifecycleOwner,
     ) = binder.bind(cameraConfiguration, lifecycleOwner)
 
+    override fun release() {
+        cameraController.unbind()
+    }
+
     override fun close() {
         cameraController.unbind()
 

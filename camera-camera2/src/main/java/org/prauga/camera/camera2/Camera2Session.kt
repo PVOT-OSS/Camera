@@ -22,7 +22,10 @@ import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.TextureView
+import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.children
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
@@ -49,6 +52,7 @@ class Camera2Session(
 
     private var container: ViewGroup? = null
     private var textureView: TextureView? = null
+    private val hiddenViews = mutableListOf<View>()
 
     private var cameraConfiguration: CameraConfiguration.Photo? = null
     private var lifecycleOwner: LifecycleOwner? = null
@@ -110,6 +114,10 @@ class Camera2Session(
         this.lifecycleOwner = lifecycleOwner
 
         val container = container ?: error("No preview target attached")
+        container.children.filter { it.isVisible }.forEach {
+            it.isVisible = false
+            hiddenViews.add(it)
+        }
         textureView = TextureView(container.context).also {
             it.surfaceTextureListener = surfaceTextureListener
             container.addView(
@@ -125,7 +133,7 @@ class Camera2Session(
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
     }
 
-    fun release() {
+    override fun release() {
         lifecycleOwner?.lifecycle?.removeObserver(lifecycleObserver)
         lifecycleOwner = null
 
@@ -133,6 +141,9 @@ class Camera2Session(
 
         textureView?.let { container?.removeView(it) }
         textureView = null
+
+        hiddenViews.forEach { it.isVisible = true }
+        hiddenViews.clear()
     }
 
     override fun close() {

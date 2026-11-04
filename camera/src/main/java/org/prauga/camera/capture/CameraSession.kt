@@ -22,6 +22,7 @@ interface CameraSession {
 
     fun attachPreview(target: PreviewTarget)
     fun configure(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner)
+    fun release()
     fun close()
 
     fun takePhoto()
