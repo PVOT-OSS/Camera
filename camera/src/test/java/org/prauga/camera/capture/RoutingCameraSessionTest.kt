@@ -121,6 +121,26 @@ class RoutingCameraSessionTest {
     }
 
     @Test
+    fun fallsBackToThePrimarySession() {
+        session.setFlashMode(FlashMode.ON)
+        session.configure(photoConfiguration, lifecycleOwner)
+
+        session.fallBackToPrimary()
+
+        assertSame(primary, session.active)
+        assertEquals(listOf("configure", "release"), photo.calls)
+        assertEquals(photoConfiguration, primary.configuration)
+        assertEquals(FlashMode.ON, primary.lastFlashMode)
+    }
+
+    @Test
+    fun ignoresAFallBackWhenAlreadyPrimary() {
+        session.fallBackToPrimary()
+
+        assertTrue(primary.calls.isEmpty())
+    }
+
+    @Test
     fun videoCallsStayOnThePrimarySession() {
         session.configure(photoConfiguration, lifecycleOwner)
         session.setAudioEnabled(true)

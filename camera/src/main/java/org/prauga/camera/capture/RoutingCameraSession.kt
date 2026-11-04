@@ -32,6 +32,8 @@ class RoutingCameraSession(
     val active: CameraSession
         get() = _active.value
 
+    private var cameraConfiguration: CameraConfiguration? = null
+    private var lifecycleOwner: LifecycleOwner? = null
     private var flashMode: FlashMode? = null
     private var exposureCompensationIndex: Int? = null
 
@@ -64,10 +66,30 @@ class RoutingCameraSession(
             _active.value = next
         }
 
+        this.cameraConfiguration = cameraConfiguration
+        this.lifecycleOwner = lifecycleOwner
+
         next.configure(cameraConfiguration, lifecycleOwner)
 
         flashMode?.let(next::setFlashMode)
         exposureCompensationIndex?.let(next::setExposureCompensationIndex)
+    }
+
+    fun fallBackToPrimary() {
+        if (active !== photo) {
+            return
+        }
+
+        photo.release()
+        _active.value = primary
+
+        val cameraConfiguration = cameraConfiguration ?: return
+        val lifecycleOwner = lifecycleOwner ?: return
+
+        primary.configure(cameraConfiguration, lifecycleOwner)
+
+        flashMode?.let(primary::setFlashMode)
+        exposureCompensationIndex?.let(primary::setExposureCompensationIndex)
     }
 
     override fun release() = active.release()

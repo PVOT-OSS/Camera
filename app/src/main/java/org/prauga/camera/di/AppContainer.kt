@@ -7,9 +7,12 @@ package org.prauga.camera.di
 
 import android.content.Context
 import android.location.Location
+import android.os.Handler
+import android.os.Looper
 import androidx.camera.core.ImageAnalysis
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
+import org.prauga.camera.camera2.Camera2Health
 import org.prauga.camera.camera2.Camera2Session
 import org.prauga.camera.camerax.CameraXDevices
 import org.prauga.camera.camerax.CameraXSession
@@ -43,6 +46,9 @@ class AppContainer(
     val mediaRepository by lazy { MediaRepository(context) }
     val preferencesRepository by lazy { PreferencesRepository(context, coroutineScope) }
 
+    private val camera2Health by lazy { Camera2Health(context) }
+    private val mainHandler = Handler(Looper.getMainLooper())
+
     fun createCameraSession(
         scope: CoroutineScope,
         captureSounds: CaptureSounds,
@@ -53,35 +59,46 @@ class AppContainer(
         cameraFacing: () -> CameraFacing,
         photoFfcMirror: () -> Boolean,
         onPhotoCaptureStatus: (PhotoCaptureStatus) -> Unit,
-    ): CameraSession = RoutingCameraSession(
-        scope,
-        CameraXSession(
-            context,
+    ): CameraSession {
+        lateinit var session: RoutingCameraSession
+
+        session = RoutingCameraSession(
             scope,
-            captureSounds,
-            captureStateMachine,
-            inSingleCaptureMode,
-            qrImageAnalyzer,
-            cameraXDevices::getExtensionEnabledCameraSelector,
-            location = location,
-            cameraFacing = cameraFacing,
-            photoFfcMirror = photoFfcMirror,
-            onPhotoCaptureStatus = onPhotoCaptureStatus,
-            onNewPicture = mediaRepository::broadcastNewPicture,
-            onNewVideo = mediaRepository::broadcastNewVideo,
-        ),
-        Camera2Session(
-            context,
-            scope,
-            captureSounds,
-            captureStateMachine,
-            inSingleCaptureMode,
-            location = location,
-            onPhotoCaptureStatus = onPhotoCaptureStatus,
-            onNewPicture = mediaRepository::broadcastNewPicture,
-        ),
-    ) {
-        preferencesRepository.cameraEngine.value == CameraEngine.CAMERA2
-                && Camera2Session.supports(it)
+            CameraXSession(
+                context,
+                scope,
+                captureSounds,
+                captureStateMachine,
+                inSingleCaptureMode,
+                qrImageAnalyzer,
+                cameraXDevices::getExtensionEnabledCameraSelector,
+                location = location,
+                cameraFacing = cameraFacing,
+                photoFfcMirror = photoFfcMirror,
+                onPhotoCaptureStatus = onPhotoCaptureStatus,
+                onNewPicture = mediaRepository::broadcastNewPicture,
+                onNewVideo = mediaRepository::broadcastNewVideo,
+            ),
+            Camera2Session(
+                context,
+                scope,
+                captureSounds,
+                captureStateMachine,
+                inSingleCaptureMode,
+                location = location,
+                onPhotoCaptureStatus = onPhotoCaptureStatus,
+                onNewPicture = mediaRepository::broadcastNewPicture,
+                onFailure = { cameraId ->
+                    camera2Health.markFailed(cameraId)
+                    mainHandler.post { session.fallBackToPrimary() }
+                },
+            ),
+        ) {
+            preferencesRepository.cameraEngine.value == CameraEngine.CAMERA2
+                    && Camera2Session.supports(it)
+                    && camera2Health.isHealthy(it.camera.cameraId)
+        }
+
+        return session
     }
 }

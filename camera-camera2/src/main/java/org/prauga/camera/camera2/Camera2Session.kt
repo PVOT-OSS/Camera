@@ -74,6 +74,7 @@ class Camera2Session(
     private val location: () -> Location?,
     private val onPhotoCaptureStatus: (PhotoCaptureStatus) -> Unit,
     private val onNewPicture: (Uri) -> Unit,
+    private val onFailure: (cameraId: String) -> Unit,
 ) : CameraSession {
     private val cameraManager = context.getSystemService(CameraManager::class.java)
     private val contentResolver = context.contentResolver
@@ -496,8 +497,21 @@ class Camera2Session(
         updatePreview()
     }
 
-    @SuppressLint("MissingPermission")
     private fun openCamera() {
+        try {
+            startCamera()
+        } catch (e: Exception) {
+            Log.e(LOG_TAG, "Unable to open the camera", e)
+            fail()
+        }
+    }
+
+    private fun fail() {
+        cameraConfiguration?.camera?.cameraId?.let(onFailure)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun startCamera() {
         val cameraConfiguration = cameraConfiguration ?: return
         if (cameraDevice != null) {
             return
@@ -567,6 +581,9 @@ class Camera2Session(
                 if (cameraDevice == camera) {
                     cameraDevice = null
                 }
+                if (error == ERROR_CAMERA_DEVICE || error == ERROR_CAMERA_SERVICE) {
+                    fail()
+                }
             }
         }, cameraHandler)
     }
@@ -591,6 +608,7 @@ class Camera2Session(
 
                 override fun onConfigureFailed(session: CameraCaptureSession) {
                     Log.e(LOG_TAG, "Session configuration failed")
+                    fail()
                 }
             },
             cameraHandler,
