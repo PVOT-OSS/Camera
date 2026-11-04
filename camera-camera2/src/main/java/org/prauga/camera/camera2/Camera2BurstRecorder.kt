@@ -81,7 +81,7 @@ private constructor(
         val name = SimpleDateFormat(DIRECTORY_FORMAT, Locale.US).format(System.currentTimeMillis())
         val directory = File(outputDirectory, name).apply { mkdirs() }
 
-        burst = Burst(directory, exifOrientation(jpegOrientation))
+        burst = Burst(directory, Camera2RawCapture.exifOrientation(jpegOrientation))
 
         gyroscope?.let {
             try {
@@ -232,13 +232,6 @@ private constructor(
             }
         }
 
-    private fun exifOrientation(jpegOrientation: Int) =
-        when (jpegOrientation) {
-            90 -> 6
-            180 -> 3
-            270 -> 8
-            else -> 1
-        }
 
     companion object {
         private const val LOG_TAG = "Camera2BurstRecorder"

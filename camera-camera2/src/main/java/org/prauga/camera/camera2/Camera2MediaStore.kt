@@ -11,6 +11,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -23,6 +24,13 @@ object Camera2MediaStore {
         bytes: ByteArray,
         mimeType: String,
         timestamp: Long,
+    ): Uri = savePhoto(contentResolver, mimeType, timestamp) { it.write(bytes) }
+
+    fun savePhoto(
+        contentResolver: ContentResolver,
+        mimeType: String,
+        timestamp: Long,
+        write: (OutputStream) -> Unit,
     ): Uri {
         val contentValues =
             ContentValues().apply {
@@ -40,7 +48,7 @@ object Camera2MediaStore {
                 ?: error("MediaStore insert failed")
 
         try {
-            contentResolver.openOutputStream(uri)?.use { it.write(bytes) }
+            contentResolver.openOutputStream(uri)?.use(write)
                 ?: error("Unable to open $uri")
         } catch (e: Exception) {
             contentResolver.delete(uri, null, null)

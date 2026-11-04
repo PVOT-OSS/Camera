@@ -43,6 +43,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import java.io.ByteArrayOutputStream
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -104,6 +105,9 @@ class Camera2Session(
     private var previewSize: Size? = null
     private var imageReader: ImageReader? = null
     private var burstRecorder: Camera2BurstRecorder? = null
+    private var rawCapture: Camera2RawCapture? = null
+    private val pendingOutputs = AtomicInteger(0)
+    @Volatile private var savedUri: Uri? = null
     private var sensorOrientation = 0
     private var lensFacing = CameraMetadata.LENS_FACING_BACK
     private var deviceOrientation = 0
@@ -371,7 +375,8 @@ class Camera2Session(
         val camera = cameraDevice
         val session = captureSession
         val imageReader = imageReader
-        if (camera == null || session == null || imageReader == null) {
+        val rawCapture = rawCapture
+        if (camera == null || session == null || (imageReader == null && rawCapture == null)) {
             clearScreenFlash()
             captureStateMachine.endPhoto()
             return
@@ -387,7 +392,8 @@ class Camera2Session(
                         .apply {
                             setTag(index)
                             if (index == 0) {
-                                addTarget(imageReader.surface)
+                                imageReader?.let { addTarget(it.surface) }
+                                rawCapture?.let { addTarget(it.imageReader.surface) }
                             }
                             applyControls(capture = true)
                             set(CaptureRequest.JPEG_ORIENTATION, jpegOrientation())
@@ -415,6 +421,12 @@ class Camera2Session(
         photoTimestamp = System.currentTimeMillis()
         burstRecorder?.start(jpegOrientation())
 
+        savedUri = null
+        pendingOutputs.set(listOfNotNull(imageReader, rawCapture).size)
+        rawCapture?.expect(photoTimestamp, jpegOrientation()) { uri, error ->
+            onOutputSaved(uri, error, primary = imageReader == null)
+        }
+
         val callback =
             object : CameraCaptureSession.CaptureCallback() {
                 override fun onCaptureStarted(
@@ -440,6 +452,7 @@ class Camera2Session(
                     burstRecorder?.onCaptureCompleted(result)
 
                     if (request.tag == 0) {
+                        rawCapture?.onCaptureCompleted(result)
                         clearScreenFlash()
                     }
                 }
@@ -455,6 +468,7 @@ class Camera2Session(
                     }
 
                     clearScreenFlash()
+                    rawCapture?.onCaptureFailed()
                     Log.e(LOG_TAG, "Photo capture failed: ${failure.reason}")
                     onPhotoCaptureStatus(
                         PhotoCaptureStatus.Error(Exception("Capture failed: ${failure.reason}"))
@@ -496,17 +510,37 @@ class Camera2Session(
                 } else {
                     val uri =
                         Camera2MediaStore.savePhoto(contentResolver, bytes, "image/jpeg", timestamp)
-                    Log.d(LOG_TAG, "Photo capture succeeded: $uri")
-                    onNewPicture(uri)
-                    captureStateMachine.endPhoto()
-                    onPhotoCaptureStatus(PhotoCaptureStatus.ImageSaved(uri, null))
+                    onOutputSaved(uri, null, primary = true)
                 }
             } catch (e: Exception) {
-                Log.e(LOG_TAG, "Photo save failed", e)
-                onPhotoCaptureStatus(PhotoCaptureStatus.Error(e))
-                captureStateMachine.endPhoto()
+                onOutputSaved(null, e, primary = true)
             }
         }
+    }
+
+    private fun onOutputSaved(uri: Uri?, error: Exception?, primary: Boolean) {
+        if (uri != null) {
+            Log.d(LOG_TAG, "Photo capture succeeded: $uri")
+            onNewPicture(uri)
+            if (primary || savedUri == null) {
+                savedUri = uri
+            }
+        }
+        if (error != null) {
+            Log.e(LOG_TAG, "Photo save failed", error)
+        }
+
+        if (pendingOutputs.decrementAndGet() > 0) {
+            return
+        }
+
+        captureStateMachine.endPhoto()
+        onPhotoCaptureStatus(
+            when (val saved = savedUri) {
+                null -> PhotoCaptureStatus.Error(error ?: Exception("Photo capture failed"))
+                else -> PhotoCaptureStatus.ImageSaved(saved, null)
+            }
+        )
     }
 
     private fun clearScreenFlash() {
@@ -684,25 +718,37 @@ class Camera2Session(
         maxAfRegions = characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF) ?: 0
         maxAeRegions = characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE) ?: 0
 
-        val photoFormat =
-            when (cameraConfiguration.photoOutputFormat) {
-                PhotoOutputFormat.JPEG_ULTRA_HDR -> ImageFormat.JPEG_R
-                else -> ImageFormat.JPEG
-            }
-        val photoSize =
-            Camera2Sizes.jpegSize(
-                characteristics,
-                cameraConfiguration.photoAspectRatio,
-                photoFormat,
-                cameraConfiguration.enableHighResolution,
-            )
+        val photoOutputFormat = cameraConfiguration.photoOutputFormat
         val imageReader =
-            ImageReader.newInstance(photoSize.width, photoSize.height, photoFormat, 2).apply {
-                setOnImageAvailableListener(::onImageAvailable, cameraHandler)
+            when (photoOutputFormat) {
+                PhotoOutputFormat.RAW -> null
+                else -> {
+                    val photoFormat =
+                        when (photoOutputFormat) {
+                            PhotoOutputFormat.JPEG_ULTRA_HDR -> ImageFormat.JPEG_R
+                            else -> ImageFormat.JPEG
+                        }
+                    val photoSize =
+                        Camera2Sizes.jpegSize(
+                            characteristics,
+                            cameraConfiguration.photoAspectRatio,
+                            photoFormat,
+                            cameraConfiguration.enableHighResolution,
+                        )
+                    ImageReader.newInstance(photoSize.width, photoSize.height, photoFormat, 2)
+                        .apply { setOnImageAvailableListener(::onImageAvailable, cameraHandler) }
+                }
             }
         this.imageReader = imageReader
+        val rawCapture =
+            when (photoOutputFormat.isRaw) {
+                true ->
+                    Camera2RawCapture.create(contentResolver, scope, characteristics, cameraHandler)
+                false -> null
+            }
+        this.rawCapture = rawCapture
         val burstRecorder =
-            when (recordBursts()) {
+            when (recordBursts() && rawCapture == null) {
                 true -> Camera2BurstRecorder.create(context, scope, cameraHandler, characteristics)
                 false -> null
             }
@@ -731,7 +777,8 @@ class Camera2Session(
                         camera,
                         listOfNotNull(
                             previewSurface,
-                            imageReader.surface,
+                            imageReader?.surface,
+                            rawCapture?.imageReader?.surface,
                             burstRecorder?.imageReader?.surface,
                         ),
                     )
@@ -878,6 +925,8 @@ class Camera2Session(
         previewSurface = null
 
         imageReader?.close()
+        rawCapture?.close()
+        rawCapture = null
         imageReader = null
 
         burstRecorder?.close()
@@ -917,7 +966,8 @@ class Camera2Session(
                     PhotoOutputFormat.JPEG -> true
                     PhotoOutputFormat.JPEG_ULTRA_HDR ->
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
-                    else -> false
+                    PhotoOutputFormat.RAW,
+                    PhotoOutputFormat.RAW_JPEG -> true
                 }
     }
 }
