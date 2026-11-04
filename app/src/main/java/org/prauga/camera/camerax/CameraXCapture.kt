@@ -151,7 +151,7 @@ class CameraXCapture(
 
                 emitEvent(
                     Event.PhotoCaptureStatus.ImageSaved(
-                        output,
+                        output.savedUri,
                         photoOutputStream,
                     )
                 )

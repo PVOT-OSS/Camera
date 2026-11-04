@@ -5,8 +5,7 @@
 
 package org.prauga.camera.models
 
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
+import android.net.Uri
 import java.io.ByteArrayOutputStream
 
 /**
@@ -36,12 +35,12 @@ sealed interface Event {
         data object CaptureStarted : PhotoCaptureStatus
 
         data class ImageSaved(
-            val output: ImageCapture.OutputFileResults,
+            val savedUri: Uri?,
             val photoOutputStream: ByteArrayOutputStream?,
         ) : PhotoCaptureStatus
 
         data class Error(
-            val exception: ImageCaptureException,
+            val exception: Exception,
         ) : PhotoCaptureStatus
     }
 }

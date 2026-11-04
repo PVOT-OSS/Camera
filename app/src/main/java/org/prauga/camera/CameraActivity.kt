@@ -366,9 +366,9 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
                         is Event.PhotoCaptureStatus.ImageSaved -> {
                             if (!viewModel.uiState.value.inSingleCaptureMode) {
-                                onCapturedMedia(event.output.savedUri)
+                                onCapturedMedia(event.savedUri)
                             } else {
-                                event.output.savedUri?.let {
+                                event.savedUri?.let {
                                     openCapturePreview(it, MediaType.PHOTO)
                                 }
                                 event.photoOutputStream?.use {
