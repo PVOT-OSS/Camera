@@ -76,6 +76,10 @@ class FakeCameraSession : CameraSession {
         calls += "focus"
     }
 
+    override fun lockFocus(x: Float, y: Float) {
+        calls += "lockFocus"
+    }
+
     override fun setLinearZoom(linearZoom: Float) {}
 
     override fun pinchToZoom(scaleFactor: Float) {}

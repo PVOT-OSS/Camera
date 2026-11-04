@@ -46,6 +46,7 @@ class RoutingCameraSessionTest {
             hardwareLevel = HardwareLevel.FULL,
             processingTier = ProcessingTier.A,
             exposureCompensationRange = -12..12,
+            exposureCompensationStep = 1f / 6,
             intrinsicZoomRatio = 1f,
             logicalZoomRatios = sortedMapOf(1f to 1f),
             supportedExtensionModes = setOf(ExtensionMode.NONE),

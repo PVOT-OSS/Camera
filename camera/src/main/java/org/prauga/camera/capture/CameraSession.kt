@@ -45,6 +45,8 @@ interface CameraSession {
 
     fun focus(x: Float, y: Float)
 
+    fun lockFocus(x: Float, y: Float)
+
     fun setLinearZoom(linearZoom: Float)
 
     fun pinchToZoom(scaleFactor: Float)

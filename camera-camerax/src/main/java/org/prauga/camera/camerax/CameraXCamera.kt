@@ -69,6 +69,8 @@ fun cameraFromCameraX(
     val exposureCompensationRange =
         cameraInfo.exposureState.exposureCompensationRange.toClosedRange<Int>()
 
+    val exposureCompensationStep = cameraInfo.exposureState.exposureCompensationStep.toFloat()
+
     val intrinsicZoomRatio = cameraInfo.intrinsicZoomRatio
 
     val imageCaptureCapabilities = ImageCapture.getImageCaptureCapabilities(cameraInfo)
@@ -269,6 +271,7 @@ fun cameraFromCameraX(
         hardwareLevel = hardwareLevel,
         processingTier = processingTier,
         exposureCompensationRange = exposureCompensationRange,
+        exposureCompensationStep = exposureCompensationStep,
         intrinsicZoomRatio = intrinsicZoomRatio,
         logicalZoomRatios = logicalZoomRatios,
         supportedExtensionModes = supportedExtensionModes,

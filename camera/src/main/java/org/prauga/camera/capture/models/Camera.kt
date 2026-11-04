@@ -17,6 +17,7 @@ class Camera(
     val hardwareLevel: HardwareLevel,
     val processingTier: ProcessingTier,
     val exposureCompensationRange: ClosedRange<Int>,
+    val exposureCompensationStep: Float,
     val intrinsicZoomRatio: Float,
     val logicalZoomRatios: SortedMap<Float, Float>,
     val supportedExtensionModes: Set<ExtensionMode>,

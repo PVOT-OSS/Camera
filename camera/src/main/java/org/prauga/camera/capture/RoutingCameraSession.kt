@@ -122,6 +122,8 @@ class RoutingCameraSession(
 
     override fun focus(x: Float, y: Float) = active.focus(x, y)
 
+    override fun lockFocus(x: Float, y: Float) = active.lockFocus(x, y)
+
     override fun setLinearZoom(linearZoom: Float) = active.setLinearZoom(linearZoom)
 
     override fun pinchToZoom(scaleFactor: Float) = active.pinchToZoom(scaleFactor)

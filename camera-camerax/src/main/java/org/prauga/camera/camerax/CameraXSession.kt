@@ -9,6 +9,7 @@ import android.content.Context
 import android.location.Location
 import android.net.Uri
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.view.LifecycleCameraController
 import androidx.camera.view.PreviewView
@@ -136,6 +137,15 @@ class CameraXSession(
     }
 
     override fun focus(x: Float, y: Float) {}
+
+    override fun lockFocus(x: Float, y: Float) {
+        val previewView = previewView ?: return
+        val point = previewView.meteringPointFactory.createPoint(x, y)
+
+        cameraController.cameraControl?.startFocusAndMetering(
+            FocusMeteringAction.Builder(point).disableAutoCancel().build()
+        )
+    }
 
     override fun setLinearZoom(linearZoom: Float) {
         cameraController.setLinearZoom(linearZoom)
