@@ -29,6 +29,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Looper
 import android.util.Log
 import android.util.Size
 import android.view.OrientationEventListener
@@ -59,6 +60,7 @@ import org.prauga.camera.capture.FocusEvent
 import org.prauga.camera.capture.PhotoCaptureStatus
 import org.prauga.camera.capture.PreviewTarget
 import org.prauga.camera.capture.RecordingEvent
+import org.prauga.camera.capture.ScreenFlash
 import org.prauga.camera.capture.ZoomInfo
 import org.prauga.camera.capture.models.CameraConfiguration
 import org.prauga.camera.capture.models.ExtensionMode
@@ -84,8 +86,11 @@ class Camera2Session(
 
     private val cameraThread = HandlerThread(LOG_TAG).apply { start() }
     private val cameraHandler = Handler(cameraThread.looper)
+    private val mainHandler = Handler(Looper.getMainLooper())
 
     private var container: ViewGroup? = null
+    private var screenFlash: ScreenFlash? = null
+    private var screenFlashApplied = false
     private var textureView: TextureView? = null
     private val hiddenViews = mutableListOf<View>()
 
@@ -178,6 +183,7 @@ class Camera2Session(
         require(target is Camera2PreviewTarget) { "Unsupported preview target $target" }
 
         container = target.container
+        screenFlash = target.screenFlash
     }
 
     override fun previewBitmap(): Bitmap? {
@@ -245,6 +251,15 @@ class Camera2Session(
             return
         }
 
+        val screenFlash = screenFlash
+        if (flashMode == FlashMode.SCREEN && screenFlash != null) {
+            screenFlashApplied = true
+            screenFlash.apply {
+                cameraHandler.post { startPrecapture() }
+            }
+            return
+        }
+
         cameraHandler.post {
             when (flashMode) {
                 FlashMode.AUTO, FlashMode.ON -> startPrecapture()
@@ -258,6 +273,7 @@ class Camera2Session(
         val session = captureSession
         val previewSurface = previewSurface
         if (camera == null || session == null || previewSurface == null) {
+            clearScreenFlash()
             captureStateMachine.endPhoto()
             return
         }
@@ -328,6 +344,7 @@ class Camera2Session(
         val session = captureSession
         val imageReader = imageReader
         if (camera == null || session == null || imageReader == null) {
+            clearScreenFlash()
             captureStateMachine.endPhoto()
             return
         }
@@ -355,11 +372,20 @@ class Camera2Session(
                 captureSounds.playShutterClick()
             }
 
+            override fun onCaptureCompleted(
+                session: CameraCaptureSession,
+                request: CaptureRequest,
+                result: TotalCaptureResult,
+            ) {
+                clearScreenFlash()
+            }
+
             override fun onCaptureFailed(
                 session: CameraCaptureSession,
                 request: CaptureRequest,
                 failure: CaptureFailure,
             ) {
+                clearScreenFlash()
                 Log.e(LOG_TAG, "Photo capture failed: ${failure.reason}")
                 onPhotoCaptureStatus(
                     PhotoCaptureStatus.Error(Exception("Capture failed: ${failure.reason}"))
@@ -401,6 +427,15 @@ class Camera2Session(
                 captureStateMachine.endPhoto()
             }
         }
+    }
+
+    private fun clearScreenFlash() {
+        if (!screenFlashApplied) {
+            return
+        }
+
+        screenFlashApplied = false
+        mainHandler.post { screenFlash?.clear() }
     }
 
     private fun jpegOrientation(): Int {

@@ -44,6 +44,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.prauga.camera.camera2.Camera2PreviewTarget
 import org.prauga.camera.camerax.CameraXPreviewTarget
+import org.prauga.camera.camerax.CameraXScreenFlash
 import org.prauga.camera.capture.PhotoCaptureStatus
 import org.prauga.camera.capture.RecordingEvent
 import org.prauga.camera.capture.RoutingCameraSession
@@ -453,7 +454,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                 viewModel.attachPreview(
                     RoutingCameraSession.Target(
                         CameraXPreviewTarget(viewFinder, screenFlashView),
-                        Camera2PreviewTarget(viewFinder),
+                        Camera2PreviewTarget(viewFinder, CameraXScreenFlash(screenFlashView)),
                     )
                 )
                 screenFlashView.setScreenFlashWindow(window)
