@@ -232,7 +232,6 @@ private constructor(
             }
         }
 
-
     companion object {
         private const val LOG_TAG = "Camera2BurstRecorder"
         private const val DIRECTORY = "bursts"

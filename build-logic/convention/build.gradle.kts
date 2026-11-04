@@ -5,9 +5,7 @@
 
 plugins { `kotlin-dsl` }
 
-dependencies {
-    compileOnly(libs.android.gradlePlugin)
-}
+dependencies { compileOnly(libs.android.gradlePlugin) }
 
 gradlePlugin {
     plugins {

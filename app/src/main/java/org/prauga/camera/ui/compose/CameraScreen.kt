@@ -166,9 +166,8 @@ private fun CameraContent(
                 uiState.cameraMode == CameraMode.VIDEO -> 16f / 9f
                 uiState.cameraMode == CameraMode.PHOTO &&
                     uiState.photoAspectRatio == PhotoAspectRatio.RATIO_16_9 &&
-                    (cameraConfiguration as? CameraConfiguration.Photo)
-                        ?.photoOutputFormat
-                        ?.isRaw != true -> 16f / 9f
+                    (cameraConfiguration as? CameraConfiguration.Photo)?.photoOutputFormat?.isRaw !=
+                        true -> 16f / 9f
                 else -> 4f / 3f
             }
         val isVideoFrame = aspectRatio != 4f / 3f
@@ -198,11 +197,8 @@ private fun CameraContent(
         val haptics = LocalHapticFeedback.current
         val detents = remember { ZoomDetents() }
         val zoomStops =
-            uiState.lenses.first
-                ?.logicalZoomRatios
-                ?.values
-                ?.toList()
-                ?.takeIf { it.size > 1 } ?: listOf(1f)
+            uiState.lenses.first?.logicalZoomRatios?.values?.toList()?.takeIf { it.size > 1 }
+                ?: listOf(1f)
         val beginZoom = { detents.begin(uiState.zoomState?.zoomRatio ?: 1f) }
         val zoomBy = { scaleFactor: Float ->
             uiState.zoomState?.let { zoomState ->
@@ -222,7 +218,9 @@ private fun CameraContent(
 
         val density = LocalDensity.current
         val topInset = max(0.dp, referenceTop - frameTop)
-        LaunchedEffect(topInset) { actions.onViewfinderTopInset(with(density) { topInset.roundToPx() }) }
+        LaunchedEffect(topInset) {
+            actions.onViewfinderTopInset(with(density) { topInset.roundToPx() })
+        }
 
         Box(
             modifier =
@@ -257,7 +255,8 @@ private fun CameraContent(
                         onPinchEnd = { state.pinching = false },
                         onSwipe = { next ->
                             if (uiState.cameraState == CameraState.IDLE) {
-                                if (next) viewModel.nextCameraMode() else viewModel.previousCameraMode()
+                                if (next) viewModel.nextCameraMode()
+                                else viewModel.previousCameraMode()
                             }
                         },
                     )

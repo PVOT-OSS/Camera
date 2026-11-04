@@ -195,10 +195,7 @@ private fun Review(
             state = pagerState,
             modifier = Modifier.fillMaxSize().pvotGlassBackdrop(backdrop),
         ) { page ->
-            ZoomableMedia(
-                uri = media[page],
-                onTap = { chromeVisible = !chromeVisible },
-            )
+            ZoomableMedia(uri = media[page], onTap = { chromeVisible = !chromeVisible })
         }
 
         if (info?.isVideo == true && current != null) {

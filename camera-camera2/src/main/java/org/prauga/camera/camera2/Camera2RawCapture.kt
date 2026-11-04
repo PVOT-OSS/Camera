@@ -91,7 +91,9 @@ private constructor(
                     Camera2MediaStore.savePhoto(contentResolver, MIME_TYPE, pending.timestamp) {
                         output ->
                         DngCreator(characteristics, result).use { dngCreator ->
-                            dngCreator.setOrientation(pending.exifOrientation).writeImage(output, image)
+                            dngCreator
+                                .setOrientation(pending.exifOrientation)
+                                .writeImage(output, image)
                         }
                     }
                 pending.onDone(uri, null)
@@ -126,7 +128,8 @@ private constructor(
                     ?.getOutputSizes(ImageFormat.RAW_SENSOR)
                     ?.takeIf { it.isNotEmpty() } ?: return null
 
-            val pixelArraySize = characteristics.get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE)
+            val pixelArraySize =
+                characteristics.get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE)
             val preCorrectionArray =
                 characteristics.get(
                     CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE

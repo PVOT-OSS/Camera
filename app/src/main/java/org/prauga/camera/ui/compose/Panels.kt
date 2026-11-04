@@ -101,7 +101,9 @@ fun Panels(
             enter = fadeIn(tween(220)) + scaleIn(tween(220), initialScale = 0.92f),
             exit = fadeOut(tween(220)) + scaleOut(tween(220), targetScale = 0.92f),
         ) {
-            ControlsPanel(tiles = controlTiles(uiState, cameraConfiguration, state, viewModel, actions))
+            ControlsPanel(
+                tiles = controlTiles(uiState, cameraConfiguration, state, viewModel, actions)
+            )
         }
 
         AnimatedVisibility(

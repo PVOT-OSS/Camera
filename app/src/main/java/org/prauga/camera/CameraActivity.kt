@@ -441,9 +441,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     }
 
     private fun setIslandInset(top: Int) {
-        islandView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-            topMargin = top + 12.px
-        }
+        islandView.updateLayoutParams<ViewGroup.MarginLayoutParams> { topMargin = top + 12.px }
     }
 
     private suspend fun queueSetupWithCameraPermissions() {

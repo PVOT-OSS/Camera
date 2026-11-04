@@ -48,8 +48,7 @@ object Camera2MediaStore {
                 ?: error("MediaStore insert failed")
 
         try {
-            contentResolver.openOutputStream(uri)?.use(write)
-                ?: error("Unable to open $uri")
+            contentResolver.openOutputStream(uri)?.use(write) ?: error("Unable to open $uri")
         } catch (e: Exception) {
             contentResolver.delete(uri, null, null)
             throw e
