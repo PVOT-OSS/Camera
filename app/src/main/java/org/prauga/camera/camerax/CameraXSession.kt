@@ -73,7 +73,7 @@ class CameraXSession(
 
     private val zoom = CameraXZoom(cameraController) { cameraController.zoomState.value }
 
-    override val zoomState = cameraController.zoomState.asFlow()
+    override val zoomState = cameraController.zoomState.asFlow().map { it.toZoomInfo() }
 
     override val tapToFocusInfoState = cameraController.tapToFocusInfoState.asFlow()
 

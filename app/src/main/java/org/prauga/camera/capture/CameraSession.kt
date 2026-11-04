@@ -5,7 +5,6 @@
 
 package org.prauga.camera.capture
 
-import androidx.camera.core.ZoomState
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.camera.view.ScreenFlashView
@@ -18,7 +17,7 @@ import org.prauga.camera.models.CameraConfiguration
 import org.prauga.camera.models.FlashMode
 
 interface CameraSession {
-    val zoomState: Flow<ZoomState>
+    val zoomState: Flow<ZoomInfo>
     val tapToFocusInfoState: Flow<TapToFocusInfo>
     val isRecordingAudioSourceConfigured: Flow<Boolean>
     val videoRecordingDuration: StateFlow<Long>

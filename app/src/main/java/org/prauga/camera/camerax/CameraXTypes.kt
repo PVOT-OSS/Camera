@@ -11,7 +11,9 @@ import androidx.camera.core.DynamicRange
 import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionMode as CameraXExtensionMode
+import androidx.camera.core.ZoomState
 import androidx.camera.video.Quality
+import org.prauga.camera.capture.ZoomInfo
 import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.PhotoAspectRatio
 import org.prauga.camera.models.PhotoCaptureMode
@@ -51,6 +53,13 @@ fun VideoDynamicRange.toCameraXDynamicRange(): DynamicRange = when (this) {
 fun DynamicRange.toVideoDynamicRange() = VideoDynamicRange.entries.first {
     it.toCameraXDynamicRange() == this
 }
+
+fun ZoomState.toZoomInfo() = ZoomInfo(
+    zoomRatio = zoomRatio,
+    minZoomRatio = minZoomRatio,
+    maxZoomRatio = maxZoomRatio,
+    linearZoom = linearZoom,
+)
 
 fun VideoQuality.toCameraXQuality(): Quality = when (this) {
     VideoQuality.SD -> Quality.SD

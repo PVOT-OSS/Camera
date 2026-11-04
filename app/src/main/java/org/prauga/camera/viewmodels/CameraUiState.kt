@@ -6,7 +6,7 @@
 package org.prauga.camera.viewmodels
 
 import android.net.Uri
-import androidx.camera.core.ZoomState
+import org.prauga.camera.capture.ZoomInfo
 import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraMode
 import org.prauga.camera.models.CameraState
@@ -37,7 +37,7 @@ data class CameraUiState(
     val levelerEnabled: Boolean,
     val fullScreenBrightness: Boolean,
     val thermalStatus: ThermalStatus,
-    val zoomState: ZoomState?,
+    val zoomState: ZoomInfo?,
     val exposureCompensationRangeToLevel: Pair<ClosedRange<Int>, Float>?,
     val isShutterButtonEnabled: Boolean,
     val photoAspectRatio: PhotoAspectRatio,
