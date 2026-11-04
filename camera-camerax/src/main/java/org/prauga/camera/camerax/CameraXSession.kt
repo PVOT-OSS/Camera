@@ -17,6 +17,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.asFlow
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -136,7 +137,16 @@ class CameraXSession(
         cameraController.cameraControl?.setExposureCompensationIndex(exposureCompensationIndex)
     }
 
-    override fun focus(x: Float, y: Float) {}
+    override fun focus(x: Float, y: Float) {
+        val previewView = previewView ?: return
+        val point = previewView.meteringPointFactory.createPoint(x, y)
+
+        cameraController.cameraControl?.startFocusAndMetering(
+            FocusMeteringAction.Builder(point)
+                .setAutoCancelDuration(FOCUS_RESET_SECONDS, TimeUnit.SECONDS)
+                .build()
+        )
+    }
 
     override fun lockFocus(x: Float, y: Float) {
         val previewView = previewView ?: return
@@ -165,5 +175,9 @@ class CameraXSession(
 
     override fun zoomOut() {
         zoom.zoomOut()
+    }
+
+    companion object {
+        private const val FOCUS_RESET_SECONDS = 5L
     }
 }

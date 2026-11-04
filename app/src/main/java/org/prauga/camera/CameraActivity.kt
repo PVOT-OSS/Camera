@@ -11,6 +11,7 @@ import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
+import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Toast
@@ -54,6 +55,7 @@ import org.prauga.camera.capture.RoutingCameraSession
 import org.prauga.camera.capture.models.CameraConfiguration
 import org.prauga.camera.capture.models.CameraMode
 import org.prauga.camera.capture.models.CameraState
+import org.prauga.camera.ext.px
 import org.prauga.camera.ext.select
 import org.prauga.camera.ext.updateBarsVisibility
 import org.prauga.camera.models.Event
@@ -64,7 +66,6 @@ import org.prauga.camera.models.PermissionState
 import org.prauga.camera.ui.GalleryLauncher
 import org.prauga.camera.ui.HardwareKeyHandler
 import org.prauga.camera.ui.camera.CameraAlerts
-import org.prauga.camera.ui.camera.ViewfinderGestures
 import org.prauga.camera.ui.camera.ViewfinderOverlays
 import org.prauga.camera.ui.compose.CameraScreen
 import org.prauga.camera.ui.compose.CameraScreenActions
@@ -94,6 +95,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         layoutInflater.inflate(R.layout.viewfinder_layout, mainLayout, false)
     }
     private val viewFinder by lazy { viewfinderLayout.findViewById<PreviewView>(R.id.viewFinder) }
+    private val islandView by lazy { viewfinderLayout.findViewById<View>(R.id.islandView) }
 
     // System services
     private val keyguardManager by lazy { getSystemService(KeyguardManager::class.java) }
@@ -135,41 +137,14 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
     private val cameraAlerts by lazy { CameraAlerts(mainLayout, viewModel, this) }
 
-    private val viewfinderGestures by lazy {
-        ViewfinderGestures(
-            viewFinder,
-            viewModel,
-            onFocus = { x, y -> screenState.showFocus(Offset(x, y), locked = false) },
-            onLockFocus = { x, y ->
-                viewModel.lockFocus(x, y)
-                viewModel.setExposureCompensationLevel(0.5f)
-                screenState.showFocus(Offset(x, y), locked = true)
-            },
-            onExposureDrag = { delta ->
-                viewModel.uiState.value.exposureCompensationRangeToLevel?.let { (_, level) ->
-                    viewModel.setExposureCompensationLevel((level + delta).coerceIn(0f, 1f))
-                    screenState.exposureKey++
-                }
-            },
-            canAdjustExposure = {
-                screenState.focusPoint != null &&
-                    viewModel.uiState.value.exposureCompensationRangeToLevel != null
-            },
-        ) {
-            // Reset exposure level to 0 EV
-            viewModel.setExposureCompensationLevel(0.5f)
-
-            screenState.panel = CameraScreenState.Panel.NONE
-        }
-    }
-
     private val hardwareKeyHandler by lazy {
         HardwareKeyHandler(
             viewModel,
             onShutter = ::onShutter,
             onFocus = {
-                viewfinderGestures.viewFinderTouchEvent = null
-                viewFinder.performClick()
+                val center = Offset(viewFinder.width / 2f, viewFinder.height / 2f)
+                viewModel.focus(center.x, center.y)
+                screenState.showFocus(center, locked = false)
             },
             isMicButtonEnabled = { viewModel.uiState.value.isVideoMicButtonEnabled },
         )
@@ -222,8 +197,6 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         }
 
         // Observe manual focus
-        viewfinderGestures.attach()
-
         val actions =
             CameraScreenActions(
                 onShutter = ::onShutter,
@@ -235,6 +208,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                 onOpenGallery = { lifecycleScope.launch { galleryLauncher.openGallery() } },
                 onOpenSettings = ::openSettings,
                 canReview = { !keyguardManager.isKeyguardLocked },
+                onViewfinderTopInset = ::setIslandInset,
             )
 
         cameraScreen.setContent {
@@ -463,6 +437,12 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
             viewModel.qrResult.collectLatest { qrResult ->
                 qrBottomSheetDialog.setQrResult(qrResult)
             }
+        }
+    }
+
+    private fun setIslandInset(top: Int) {
+        islandView.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+            topMargin = top + 12.px
         }
     }
 

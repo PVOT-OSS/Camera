@@ -1061,6 +1061,9 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         this.exposureCompensationLevel.value = exposureCompensationLevel
     }
 
+    fun adjustExposureCompensationLevel(delta: Float) =
+        setExposureCompensationLevel((exposureCompensationLevel.value + delta).coerceIn(0f, 1f))
+
     fun focus(x: Float, y: Float) = cameraSession.focus(x, y)
 
     fun lockFocus(x: Float, y: Float) = cameraSession.lockFocus(x, y)

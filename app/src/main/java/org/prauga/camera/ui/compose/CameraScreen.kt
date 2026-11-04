@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -92,10 +93,12 @@ class CameraScreenActions(
     val onOpenGallery: () -> Unit,
     val onOpenSettings: () -> Unit,
     val canReview: () -> Boolean,
+    val onViewfinderTopInset: (Int) -> Unit,
 )
 
 private val TopBarHeight = 142.dp
 private val BottomBarHeight = 196.dp
+private val TopControlsInset = 63.dp
 
 private val ModeOrder = listOf(CameraMode.VIDEO, CameraMode.PHOTO, CameraMode.QR)
 
@@ -169,7 +172,8 @@ private fun CameraContent(
         val frameHeight = min(maxHeight, maxWidth * aspectRatio)
         val frameTop =
             when (isVideoFrame) {
-                true -> max(0.dp, (maxHeight - frameHeight) / 2)
+                true ->
+                    max(0.dp, min((maxHeight - frameHeight) / 2, referenceTop - TopControlsInset))
                 false -> referenceTop
             }
 
@@ -182,16 +186,48 @@ private fun CameraContent(
                     .pvotGlassBackdrop(backdrop),
         )
 
+        val density = LocalDensity.current
+        val topInset = max(0.dp, referenceTop - frameTop)
+        LaunchedEffect(topInset) { actions.onViewfinderTopInset(with(density) { topInset.roundToPx() }) }
+
+        Box(
+            modifier =
+                Modifier.offset(y = frameTop)
+                    .fillMaxWidth()
+                    .height(frameHeight)
+                    .viewfinderGestures(
+                        canAdjustExposure = {
+                            state.focusPoint != null &&
+                                uiState.exposureCompensationRangeToLevel != null
+                        },
+                        onTap = {
+                            viewModel.focus(it.x, it.y)
+                            viewModel.setExposureCompensationLevel(0.5f)
+                            state.panel = CameraScreenState.Panel.NONE
+                            state.showFocus(it, locked = false)
+                        },
+                        onLongPress = {
+                            viewModel.lockFocus(it.x, it.y)
+                            viewModel.setExposureCompensationLevel(0.5f)
+                            state.showFocus(it, locked = true)
+                        },
+                        onExposureDrag = {
+                            viewModel.adjustExposureCompensationLevel(it)
+                            state.exposureKey++
+                        },
+                        onPinch = viewModel::pinchToZoom,
+                        onSwipe = { next ->
+                            if (uiState.cameraState == CameraState.IDLE) {
+                                if (next) viewModel.nextCameraMode() else viewModel.previousCameraMode()
+                            }
+                        },
+                    )
+        )
+
         CompositionLocalProvider(
             LocalIconRotation provides iconRotation,
             LocalPvotGlassBackdrop provides backdrop,
         ) {
-            Shades(
-                isVideoFrame = isVideoFrame,
-                topHeight = referenceTop,
-                bottomHeight = maxHeight - referenceBottom,
-            )
-
             ViewfinderOverlay(
                 state = state,
                 uiState = uiState,
@@ -230,25 +266,6 @@ private fun CameraContent(
             initialUri = state.latestMedia,
             onDismiss = { state.reviewOpen = false },
             onOpenGallery = actions.onOpenGallery,
-        )
-    }
-}
-
-@Composable
-private fun Shades(isVideoFrame: Boolean, topHeight: Dp, bottomHeight: Dp) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        Box(
-            modifier =
-                Modifier.fillMaxWidth()
-                    .height(topHeight)
-                    .background(Color.Black.copy(alpha = if (isVideoFrame) 0.28f else 0.52f))
-        )
-        Box(
-            modifier =
-                Modifier.fillMaxWidth()
-                    .height(bottomHeight)
-                    .align(Alignment.BottomCenter)
-                    .background(Color.Black.copy(alpha = if (isVideoFrame) 0.3f else 0.58f))
         )
     }
 }
