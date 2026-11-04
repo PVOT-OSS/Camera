@@ -66,6 +66,10 @@ class FakeCameraSession : CameraSession {
         lastExposureCompensationIndex = exposureCompensationIndex
     }
 
+    override fun focus(x: Float, y: Float) {
+        calls += "focus"
+    }
+
     override fun setLinearZoom(linearZoom: Float) {}
 
     override fun pinchToZoom(scaleFactor: Float) {}

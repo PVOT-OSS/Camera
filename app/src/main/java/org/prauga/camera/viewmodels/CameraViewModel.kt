@@ -1105,6 +1105,8 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         this.exposureCompensationLevel.value = exposureCompensationLevel
     }
 
+    fun focus(x: Float, y: Float) = cameraSession.focus(x, y)
+
     fun setLinearZoom(linearZoom: Float) = cameraSession.setLinearZoom(linearZoom)
 
     fun pinchToZoom(scaleFactor: Float) = cameraSession.pinchToZoom(scaleFactor)

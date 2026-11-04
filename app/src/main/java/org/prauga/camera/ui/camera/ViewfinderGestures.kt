@@ -27,6 +27,7 @@ class ViewfinderGestures(
         GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
             override fun onSingleTapUp(e: MotionEvent): Boolean {
                 viewFinderTouchEvent = e
+                viewModel.focus(e.x, e.y)
                 return false
             }
 

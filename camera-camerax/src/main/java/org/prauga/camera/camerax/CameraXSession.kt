@@ -134,6 +134,8 @@ class CameraXSession(
         cameraController.cameraControl?.setExposureCompensationIndex(exposureCompensationIndex)
     }
 
+    override fun focus(x: Float, y: Float) {}
+
     override fun setLinearZoom(linearZoom: Float) {
         cameraController.setLinearZoom(linearZoom)
     }

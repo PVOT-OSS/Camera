@@ -9,6 +9,8 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.ImageFormat
+import android.graphics.PointF
+import android.graphics.Rect
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
@@ -19,6 +21,7 @@ import android.hardware.camera2.CaptureFailure
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.CaptureResult
 import android.hardware.camera2.TotalCaptureResult
+import android.hardware.camera2.params.MeteringRectangle
 import android.location.Location
 import android.media.ImageReader
 import android.net.Uri
@@ -108,6 +111,20 @@ class Camera2Session(
     @Volatile
     private var exposureCompensationIndex = 0
 
+    @Volatile
+    private var meteringRegions: Array<MeteringRectangle>? = null
+    private var focusTapPoint: PointF? = null
+    private var focusState = FocusState.IDLE
+    private var activeArraySize: Rect? = null
+    private var maxAfRegions = 0
+    private var maxAeRegions = 0
+    private val cancelFocus = Runnable {
+        meteringRegions = null
+        focusState = FocusState.IDLE
+        sendAfTrigger(CameraMetadata.CONTROL_AF_TRIGGER_CANCEL)
+        updatePreview()
+    }
+
     private var precaptureState = PrecaptureState.IDLE
     private val precaptureTimeout = Runnable { finishPrecapture() }
 
@@ -125,7 +142,7 @@ class Camera2Session(
     private val _zoomState = MutableStateFlow<ZoomInfo?>(null)
     override val zoomState = _zoomState.filterNotNull()
 
-    override val tapToFocusInfoState = MutableSharedFlow<FocusEvent>()
+    override val tapToFocusInfoState = MutableSharedFlow<FocusEvent>(extraBufferCapacity = 1)
 
     override val isRecordingAudioSourceConfigured = flowOf(false)
     override val videoRecordingDuration = MutableStateFlow(0L).asStateFlow()
@@ -245,6 +262,20 @@ class Camera2Session(
     }
 
     private fun onPreviewResult(result: CaptureResult) {
+        if (focusState == FocusState.SCANNING) {
+            val focused = when (result.get(CaptureResult.CONTROL_AF_STATE)) {
+                CameraMetadata.CONTROL_AF_STATE_FOCUSED_LOCKED -> FocusEvent.State.FOCUSED
+                CameraMetadata.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED -> FocusEvent.State.NOT_FOCUSED
+                else -> if (maxAfRegions == 0) FocusEvent.State.FOCUSED else null
+            }
+
+            focused?.let {
+                focusState = FocusState.LOCKED
+                val tapPoint = focusTapPoint
+                scope.launch { tapToFocusInfoState.emit(FocusEvent(it, tapPoint)) }
+            }
+        }
+
         val aeState = result.get(CaptureResult.CONTROL_AE_STATE)
 
         when (precaptureState) {
@@ -381,6 +412,59 @@ class Camera2Session(
         updatePreview()
     }
 
+    override fun focus(x: Float, y: Float) {
+        val textureView = textureView ?: return
+        val activeArraySize = activeArraySize ?: return
+
+        val displayedWidth = textureView.width * textureView.scaleX
+        val displayedHeight = textureView.height * textureView.scaleY
+        if (displayedWidth <= 0f || displayedHeight <= 0f) {
+            return
+        }
+
+        val u = ((x - (textureView.width - displayedWidth) / 2f) / displayedWidth).coerceIn(0f, 1f)
+        val v = ((y - (textureView.height - displayedHeight) / 2f) / displayedHeight).coerceIn(0f, 1f)
+
+        val (sensorX, sensorY) = Camera2Metering.viewToSensor(
+            u, v, sensorOrientation, lensFacing == CameraMetadata.LENS_FACING_FRONT
+        )
+        val region = Camera2Metering.region(
+            sensorX, sensorY, activeArraySize.width(), activeArraySize.height()
+        )
+
+        cameraHandler.post {
+            cameraHandler.removeCallbacks(cancelFocus)
+
+            meteringRegions = arrayOf(region)
+            focusTapPoint = PointF(x, y)
+            focusState = FocusState.SCANNING
+            scope.launch { tapToFocusInfoState.emit(FocusEvent(FocusEvent.State.STARTED, PointF(x, y))) }
+
+            updatePreview()
+            sendAfTrigger(CameraMetadata.CONTROL_AF_TRIGGER_START)
+
+            cameraHandler.postDelayed(cancelFocus, FOCUS_RESET_MS)
+        }
+    }
+
+    private fun sendAfTrigger(trigger: Int) {
+        val camera = cameraDevice ?: return
+        val session = captureSession ?: return
+        val previewSurface = previewSurface ?: return
+
+        val request = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
+            addTarget(previewSurface)
+            applyControls()
+            set(CaptureRequest.CONTROL_AF_TRIGGER, trigger)
+        }.build()
+
+        try {
+            session.capture(request, null, cameraHandler)
+        } catch (e: Exception) {
+            Log.w(LOG_TAG, "Unable to send the AF trigger", e)
+        }
+    }
+
     override fun setLinearZoom(linearZoom: Float) =
         setZoomRatio(Camera2Zoom.zoomRatio(zoomRatioRange, linearZoom))
 
@@ -428,6 +512,9 @@ class Camera2Session(
         sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) ?: 0
         lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING)
             ?: CameraMetadata.LENS_FACING_BACK
+        activeArraySize = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
+        maxAfRegions = characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF) ?: 0
+        maxAeRegions = characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE) ?: 0
 
         val photoFormat = when (cameraConfiguration.photoOutputFormat) {
             PhotoOutputFormat.JPEG_ULTRA_HDR -> ImageFormat.JPEG_R
@@ -537,7 +624,18 @@ class Camera2Session(
     }
 
     private fun CaptureRequest.Builder.applyControls() {
-        set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+        val meteringRegions = meteringRegions
+        if (meteringRegions != null) {
+            set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_AUTO)
+            if (maxAfRegions > 0) {
+                set(CaptureRequest.CONTROL_AF_REGIONS, meteringRegions)
+            }
+            if (maxAeRegions > 0) {
+                set(CaptureRequest.CONTROL_AE_REGIONS, meteringRegions)
+            }
+        } else {
+            set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             set(CaptureRequest.CONTROL_ZOOM_RATIO, zoomRatio)
         }
@@ -557,6 +655,12 @@ class Camera2Session(
             },
         )
         set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, exposureCompensationIndex)
+    }
+
+    private enum class FocusState {
+        IDLE,
+        SCANNING,
+        LOCKED,
     }
 
     private enum class PrecaptureState {
@@ -601,6 +705,7 @@ class Camera2Session(
     companion object {
         private const val LOG_TAG = "Camera2Session"
         private const val PRECAPTURE_TIMEOUT_MS = 1500L
+        private const val FOCUS_RESET_MS = 5000L
 
         val isSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 

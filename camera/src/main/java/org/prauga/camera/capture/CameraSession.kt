@@ -33,6 +33,8 @@ interface CameraSession {
     fun setFlashMode(flashMode: FlashMode)
     fun setExposureCompensationIndex(exposureCompensationIndex: Int)
 
+    fun focus(x: Float, y: Float)
+
     fun setLinearZoom(linearZoom: Float)
     fun pinchToZoom(scaleFactor: Float)
     fun smoothZoom(zoomRatio: Float)
