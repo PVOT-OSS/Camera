@@ -15,14 +15,18 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalLensFacing
 import androidx.camera.extensions.ExtensionsManager
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.lifecycle.asFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
+import org.prauga.camera.camerax.cameraFromCameraX
+import org.prauga.camera.camerax.toCameraError
 import org.prauga.camera.camerax.toCameraXExtensionMode
 import org.prauga.camera.ext.permissionGranted
 import org.prauga.camera.models.Camera
@@ -111,15 +115,23 @@ class CameraRepository(
         camera: Camera,
         mode: ExtensionMode,
     ): CameraSelector = extensionsManager.getExtensionEnabledCameraSelector(
-        camera.cameraSelector, mode.toCameraXExtensionMode()
+        cameraInfo(camera).cameraSelector, mode.toCameraXExtensionMode()
     )
+
+    fun cameraErrors(camera: Camera) = cameraInfo(camera).cameraState.asFlow().map {
+        it.error?.toCameraError()
+    }
+
+    private fun cameraInfo(camera: Camera) = cameraProvider.availableCameraInfos.first {
+        Camera2CameraInfo.from(it).cameraId == camera.cameraId
+    }
 
     private fun CameraInfo.isInternalCameraAllowed() =
         Camera2CameraInfo.from(this).cameraId in mainCameraIds
 
     private fun List<CameraInfo>.mapToCamera() = map { it.toCamera() }.sortedBy { it.cameraId }
 
-    private fun CameraInfo.toCamera() = Camera.fromCameraX(
+    private fun CameraInfo.toCamera() = cameraFromCameraX(
         this,
         extensionsManager,
     )

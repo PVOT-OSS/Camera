@@ -230,7 +230,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     @OptIn(ExperimentalCoroutinesApi::class)
     val cameraError = camera
         .flatMapLatest { camera ->
-            camera.cameraErrors
+            cameraRepository.cameraErrors(camera)
         }
         .flowOn(Dispatchers.IO)
         .shareIn(
