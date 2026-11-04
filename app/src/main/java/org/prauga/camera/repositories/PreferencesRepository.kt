@@ -456,6 +456,14 @@ class PreferencesRepository(
     ).asPreferenceHolder()
 
     /**
+     * Whether to use the new camera screen.
+     */
+    val newCameraUi = primitivePreference(
+        key = "new_camera_ui",
+        defaultValue = false,
+    ).asPreferenceHolder()
+
+    /**
      * Video mirror mode.
      */
     val videoMirrorMode = enumPreference(

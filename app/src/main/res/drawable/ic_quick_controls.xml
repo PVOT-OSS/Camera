@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: Saalim Quadri <danascape@gmail.com>
+     SPDX-License-Identifier: Apache-2.0
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M2.6667,2.6667 m-0.9333,0 a0.9333,0.9333 0 1,0 1.8666,0 a0.9333,0.9333 0 1,0 -1.8666,0" />
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M8,2.6667 m-0.9333,0 a0.9333,0.9333 0 1,0 1.8666,0 a0.9333,0.9333 0 1,0 -1.8666,0" />
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M13.3333,2.6667 m-0.9333,0 a0.9333,0.9333 0 1,0 1.8666,0 a0.9333,0.9333 0 1,0 -1.8666,0" />
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M2.6667,8 m-0.9333,0 a0.9333,0.9333 0 1,0 1.8666,0 a0.9333,0.9333 0 1,0 -1.8666,0" />
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M8,8 m-0.9333,0 a0.9333,0.9333 0 1,0 1.8666,0 a0.9333,0.9333 0 1,0 -1.8666,0" />
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M13.3333,8 m-0.9333,0 a0.9333,0.9333 0 1,0 1.8666,0 a0.9333,0.9333 0 1,0 -1.8666,0" />
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M2.6667,13.3333 m-0.9333,0 a0.9333,0.9333 0 1,0 1.8666,0 a0.9333,0.9333 0 1,0 -1.8666,0" />
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M8,13.3333 m-0.9333,0 a0.9333,0.9333 0 1,0 1.8666,0 a0.9333,0.9333 0 1,0 -1.8666,0" />
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M13.3333,13.3333 m-0.9333,0 a0.9333,0.9333 0 1,0 1.8666,0 a0.9333,0.9333 0 1,0 -1.8666,0" />
+</vector>

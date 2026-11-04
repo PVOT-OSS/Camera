@@ -142,6 +142,13 @@
             app:summary="@string/record_bursts_summary"
             app:title="@string/record_bursts_title" />
 
+        <SwitchPreference
+            app:defaultValue="false"
+            app:iconSpaceReserved="false"
+            app:key="new_camera_ui"
+            app:summary="@string/new_camera_ui_summary"
+            app:title="@string/new_camera_ui_title" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

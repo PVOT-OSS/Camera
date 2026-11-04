@@ -26,11 +26,13 @@ import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.view.PreviewView
 import androidx.camera.view.ScreenFlashView
+import androidx.compose.ui.platform.ComposeView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.Lifecycle
@@ -51,6 +53,7 @@ import org.prauga.camera.capture.RoutingCameraSession
 import org.prauga.camera.capture.models.CameraConfiguration
 import org.prauga.camera.capture.models.CameraMode
 import org.prauga.camera.capture.models.CameraState
+import org.prauga.camera.ext.px
 import org.prauga.camera.ext.select
 import org.prauga.camera.ext.slide
 import org.prauga.camera.ext.slideDown
@@ -69,6 +72,8 @@ import org.prauga.camera.ui.camera.SecondaryBottomBar
 import org.prauga.camera.ui.camera.SecondaryTopBar
 import org.prauga.camera.ui.camera.ViewfinderGestures
 import org.prauga.camera.ui.camera.ViewfinderOverlays
+import org.prauga.camera.ui.compose.CameraScreen
+import org.prauga.camera.ui.compose.CameraTheme
 import org.prauga.camera.ui.dialogs.LocationPermissionsDialog
 import org.prauga.camera.ui.dialogs.QrBottomSheetDialog
 import org.prauga.camera.ui.views.CameraModeSelectorLayout
@@ -85,9 +90,12 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
     // Views
     private val cameraModeSelectorLayout by lazy { findViewById<CameraModeSelectorLayout>(R.id.cameraModeSelectorLayout) }
+    private val cameraScreen by lazy { findViewById<ComposeView>(R.id.cameraScreen) }
     private val capturePreviewLayout by lazy { findViewById<CapturePreviewLayout>(R.id.capturePreviewLayout) }
     private val mainLayout by lazy { findViewById<ConstraintLayout>(R.id.mainLayout) }
+    private val primaryBarLayout by lazy { findViewById<ConstraintLayout>(R.id.primaryBarLayout) }
     private val screenFlashView by lazy { findViewById<ScreenFlashView>(R.id.screenFlashView) }
+    private val secondaryBottomBarLayout by lazy { findViewById<ConstraintLayout>(R.id.secondaryBottomBarLayout) }
     private val viewFinder by lazy { findViewById<PreviewView>(R.id.viewFinder) }
 
     // System services
@@ -222,6 +230,17 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         // Observe manual focus
         viewfinderGestures.attach()
 
+        cameraScreen.setContent {
+            CameraTheme {
+                CameraScreen(
+                    viewModel,
+                    onShutter = { primaryBar.performShutterClick() },
+                    onGallery = { lifecycleScope.launch { galleryLauncher.openGallery() } },
+                    onOpenControls = { secondaryTopBar.slide() },
+                )
+            }
+        }
+
         // Set capture preview callback
         capturePreviewLayout.onChoiceCallback = { input ->
             when (input) {
@@ -348,6 +367,10 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         with(cameraAlerts) { bind() }
 
         launch {
+            viewModel.newCameraUi.collectLatest(::setNewCameraUi)
+        }
+
+        launch {
             viewModel.event.collect { event ->
                 when (event) {
                     is Event.NoCamera -> noCamera()
@@ -443,6 +466,20 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
             }
         }
 
+    }
+
+    private fun setNewCameraUi(enabled: Boolean) {
+        cameraScreen.isVisible = enabled
+
+        secondaryBottomBarLayout.isInvisible = enabled
+        primaryBarLayout.isInvisible = enabled
+        cameraModeSelectorLayout.isInvisible = enabled
+
+        viewFinder.updateLayoutParams<ConstraintLayout.LayoutParams> {
+            topMargin = if (enabled) 142.px else 0
+            bottomToTop = if (enabled) ConstraintLayout.LayoutParams.UNSET else R.id.secondaryBottomBarLayout
+            dimensionRatio = if (enabled) "H,3:4" else null
+        }
     }
 
     private suspend fun queueSetupWithCameraPermissions() {

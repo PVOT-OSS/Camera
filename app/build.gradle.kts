@@ -99,6 +99,7 @@ dependencies {
     implementation(libs.androidx.recyclerview)
     implementation(libs.material)
     implementation(libs.coil)
+    implementation(libs.coil.compose)
     implementation(libs.coil.video)
     implementation(libs.kotlinx.coroutines.guava)
     implementation(libs.zxing.core)
