@@ -51,28 +51,25 @@ class CameraXSession(
 
     private val cameraController = LifecycleCameraController(context)
 
-    private val binder = CameraXBinder(
-        cameraController,
-        cameraExecutor,
-        qrImageAnalyzer,
-        extensionCameraSelector,
-    )
+    private val binder =
+        CameraXBinder(cameraController, cameraExecutor, qrImageAnalyzer, extensionCameraSelector)
 
-    private val capture = CameraXCapture(
-        context,
-        cameraController,
-        cameraExecutor,
-        scope,
-        captureSounds,
-        captureStateMachine,
-        inSingleCaptureMode,
-        location,
-        cameraFacing,
-        photoFfcMirror,
-        onPhotoCaptureStatus,
-        onNewPicture,
-        onNewVideo,
-    )
+    private val capture =
+        CameraXCapture(
+            context,
+            cameraController,
+            cameraExecutor,
+            scope,
+            captureSounds,
+            captureStateMachine,
+            inSingleCaptureMode,
+            location,
+            cameraFacing,
+            photoFfcMirror,
+            onPhotoCaptureStatus,
+            onNewPicture,
+            onNewVideo,
+        )
 
     private val zoom = CameraXZoom(cameraController) { cameraController.zoomState.value }
 
@@ -83,13 +80,11 @@ class CameraXSession(
 
     override val zoomState = cameraController.zoomState.asFlow().map { it.toZoomInfo() }
 
-    override val tapToFocusInfoState = cameraController.tapToFocusInfoState.asFlow().map {
-        it.toFocusEvent()
-    }
+    override val tapToFocusInfoState =
+        cameraController.tapToFocusInfoState.asFlow().map { it.toFocusEvent() }
 
-    override val isRecordingAudioSourceConfigured = capture.videoRecording.map {
-        it?.isAudioSourceConfigured == true
-    }
+    override val isRecordingAudioSourceConfigured =
+        capture.videoRecording.map { it?.isAudioSourceConfigured == true }
 
     override val videoRecordingDuration = capture.videoRecordingDuration
 
@@ -106,9 +101,8 @@ class CameraXSession(
         }
     }
 
-    override fun previewBitmap() = previewView?.takeUnless {
-        it.height <= 0 || it.width <= 0
-    }?.bitmap
+    override fun previewBitmap() =
+        previewView?.takeUnless { it.height <= 0 || it.width <= 0 }?.bitmap
 
     override fun configure(
         cameraConfiguration: CameraConfiguration,

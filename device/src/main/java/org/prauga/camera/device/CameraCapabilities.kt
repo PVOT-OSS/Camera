@@ -5,11 +5,11 @@
 
 package org.prauga.camera.device
 
+import java.util.SortedMap
 import org.prauga.camera.capture.models.FrameRate
 import org.prauga.camera.capture.models.HardwareLevel
 import org.prauga.camera.capture.models.ProcessingTier
 import org.prauga.camera.capture.models.VideoQuality
-import java.util.SortedMap
 
 data class CameraCapabilities(
     val cameraId: String,

@@ -5,11 +5,7 @@
 
 package org.prauga.camera.capture
 
-data class CameraError(
-    val code: Code,
-    val type: Type,
-    val cause: Throwable?,
-) {
+data class CameraError(val code: Code, val type: Type, val cause: Throwable?) {
     enum class Code {
         MAX_CAMERAS_IN_USE,
         CAMERA_IN_USE,

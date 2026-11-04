@@ -24,8 +24,9 @@ object LensZoomRatios {
         return zoomRatios
     }
 
-    fun approximate(zoomRatio: Float) = when {
-        zoomRatio < 1f -> floor(zoomRatio * 10f + 0.1f) / 10f
-        else -> zoomRatio.roundToInt().toFloat()
-    }
+    fun approximate(zoomRatio: Float) =
+        when {
+            zoomRatio < 1f -> floor(zoomRatio * 10f + 0.1f) / 10f
+            else -> zoomRatio.roundToInt().toFloat()
+        }
 }

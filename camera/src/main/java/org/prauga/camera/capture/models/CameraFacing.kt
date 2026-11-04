@@ -5,19 +5,9 @@
 
 package org.prauga.camera.capture.models
 
-enum class CameraFacing(
-    val cameraType: CameraType,
-) {
-    UNKNOWN(
-        CameraType.INTERNAL,
-    ),
-    FRONT(
-        CameraType.INTERNAL,
-    ),
-    BACK(
-        CameraType.INTERNAL,
-    ),
-    EXTERNAL(
-        CameraType.EXTERNAL,
-    ),
+enum class CameraFacing(val cameraType: CameraType) {
+    UNKNOWN(CameraType.INTERNAL),
+    FRONT(CameraType.INTERNAL),
+    BACK(CameraType.INTERNAL),
+    EXTERNAL(CameraType.EXTERNAL),
 }

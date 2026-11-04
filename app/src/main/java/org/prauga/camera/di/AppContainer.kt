@@ -32,17 +32,16 @@ import org.prauga.camera.repositories.DeviceStateRepository
 import org.prauga.camera.repositories.MediaRepository
 import org.prauga.camera.repositories.PreferencesRepository
 
-class AppContainer(
-    private val context: Context,
-    coroutineScope: CoroutineScope,
-) {
+class AppContainer(private val context: Context, coroutineScope: CoroutineScope) {
     private val device by lazy {
         DeviceResolver(listOf(GenericModule())).resolve(DeviceInfo.current())
     }
 
     private val cameraXDevices by lazy { CameraXDevices(context, coroutineScope, device) }
 
-    val cameraDevices: CameraDevices get() = cameraXDevices
+    val cameraDevices: CameraDevices
+        get() = cameraXDevices
+
     val deviceStateRepository by lazy { DeviceStateRepository(context) }
     val mediaRepository by lazy { MediaRepository(context) }
     val preferencesRepository by lazy { PreferencesRepository(context, coroutineScope) }
@@ -63,48 +62,47 @@ class AppContainer(
     ): CameraSession {
         lateinit var session: RoutingCameraSession
 
-        session = RoutingCameraSession(
-            scope,
-            CameraXSession(
-                context,
+        session =
+            RoutingCameraSession(
                 scope,
-                captureSounds,
-                captureStateMachine,
-                inSingleCaptureMode,
-                qrImageAnalyzer,
-                cameraXDevices::getExtensionEnabledCameraSelector,
-                location = location,
-                cameraFacing = cameraFacing,
-                photoFfcMirror = photoFfcMirror,
-                onPhotoCaptureStatus = onPhotoCaptureStatus,
-                onNewPicture = mediaRepository::broadcastNewPicture,
-                onNewVideo = mediaRepository::broadcastNewVideo,
-            ),
-            Camera2Session(
-                context,
-                scope,
-                captureSounds,
-                captureStateMachine,
-                inSingleCaptureMode,
-                location = location,
-                photoFfcMirror = photoFfcMirror,
-                recordBursts = { preferencesRepository.recordBursts.value },
-                onPhotoCaptureStatus = onPhotoCaptureStatus,
-                onNewPicture = mediaRepository::broadcastNewPicture,
-                onFailure = { cameraId ->
-                    camera2Health.markFailed(cameraId)
-                    mainHandler.post { session.fallBackToPrimary() }
-                },
-            ),
-        ) {
-            when (preferencesRepository.cameraEngine.value) {
-                CameraEngine.AUTO -> it.camera.hardwareLevel >= HardwareLevel.FULL
-                CameraEngine.CAMERAX -> false
-                CameraEngine.CAMERA2 -> true
+                CameraXSession(
+                    context,
+                    scope,
+                    captureSounds,
+                    captureStateMachine,
+                    inSingleCaptureMode,
+                    qrImageAnalyzer,
+                    cameraXDevices::getExtensionEnabledCameraSelector,
+                    location = location,
+                    cameraFacing = cameraFacing,
+                    photoFfcMirror = photoFfcMirror,
+                    onPhotoCaptureStatus = onPhotoCaptureStatus,
+                    onNewPicture = mediaRepository::broadcastNewPicture,
+                    onNewVideo = mediaRepository::broadcastNewVideo,
+                ),
+                Camera2Session(
+                    context,
+                    scope,
+                    captureSounds,
+                    captureStateMachine,
+                    inSingleCaptureMode,
+                    location = location,
+                    photoFfcMirror = photoFfcMirror,
+                    recordBursts = { preferencesRepository.recordBursts.value },
+                    onPhotoCaptureStatus = onPhotoCaptureStatus,
+                    onNewPicture = mediaRepository::broadcastNewPicture,
+                    onFailure = { cameraId ->
+                        camera2Health.markFailed(cameraId)
+                        mainHandler.post { session.fallBackToPrimary() }
+                    },
+                ),
+            ) {
+                when (preferencesRepository.cameraEngine.value) {
+                    CameraEngine.AUTO -> it.camera.hardwareLevel >= HardwareLevel.FULL
+                    CameraEngine.CAMERAX -> false
+                    CameraEngine.CAMERA2 -> true
+                } && Camera2Session.supports(it) && camera2Health.isHealthy(it.camera.cameraId)
             }
-                    && Camera2Session.supports(it)
-                    && camera2Health.isHealthy(it.camera.cameraId)
-        }
 
         return session
     }

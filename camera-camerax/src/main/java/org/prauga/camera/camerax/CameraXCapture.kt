@@ -48,24 +48,16 @@ class CameraXCapture(
     private val onNewPicture: (Uri) -> Unit,
     private val onNewVideo: (Uri) -> Unit,
 ) {
-    /**
-     * Video [AudioConfig].
-     */
+    /** Video [AudioConfig]. */
     private var videoAudioConfig: AudioConfig = AudioConfig.AUDIO_DISABLED
 
-    /**
-     * Video [Recording].
-     */
+    /** Video [Recording]. */
     val videoRecording = MutableStateFlow<Recording?>(null)
 
-    /**
-     * Video recording duration.
-     */
+    /** Video recording duration. */
     val videoRecordingDuration = MutableStateFlow(0L)
 
-    /**
-     * Video record event.
-     */
+    /** Video record event. */
     val videoRecordEvent = MutableSharedFlow<RecordingEvent>()
 
     fun takePhoto() {
@@ -74,112 +66,114 @@ class CameraXCapture(
             return
         }
 
-        val photoOutputStream = if (inSingleCaptureMode.value) {
-            ByteArrayOutputStream(SINGLE_CAPTURE_PHOTO_BUFFER_INITIAL_SIZE_BYTES)
-        } else {
-            null
-        }
+        val photoOutputStream =
+            if (inSingleCaptureMode.value) {
+                ByteArrayOutputStream(SINGLE_CAPTURE_PHOTO_BUFFER_INITIAL_SIZE_BYTES)
+            } else {
+                null
+            }
 
         val imageOutputFormat = cameraController.imageOutputFormat
 
-        val mimeType = when (imageOutputFormat) {
-            ImageCapture.OUTPUT_FORMAT_JPEG,
-            ImageCapture.OUTPUT_FORMAT_JPEG_ULTRA_HDR,
-            ImageCapture.OUTPUT_FORMAT_RAW_JPEG -> "image/jpeg"
-
-            ImageCapture.OUTPUT_FORMAT_RAW -> "image/x-adobe-dng"
-
-            else -> error("Unknown image output format")
-        }
-
-        val imageCount = AtomicInteger(
+        val mimeType =
             when (imageOutputFormat) {
-                ImageCapture.OUTPUT_FORMAT_RAW_JPEG -> 2
-                else -> 1
+                ImageCapture.OUTPUT_FORMAT_JPEG,
+                ImageCapture.OUTPUT_FORMAT_JPEG_ULTRA_HDR,
+                ImageCapture.OUTPUT_FORMAT_RAW_JPEG -> "image/jpeg"
+
+                ImageCapture.OUTPUT_FORMAT_RAW -> "image/x-adobe-dng"
+
+                else -> error("Unknown image output format")
             }
-        )
+
+        val imageCount =
+            AtomicInteger(
+                when (imageOutputFormat) {
+                    ImageCapture.OUTPUT_FORMAT_RAW_JPEG -> 2
+                    else -> 1
+                }
+            )
 
         // Create output options object which contains file + metadata
         val timestamp = System.currentTimeMillis()
-        val outputOptions = StorageUtils.getPhotoMediaStoreOutputOptions(
-            context.contentResolver,
-            ImageCapture.Metadata().apply {
-                if (!inSingleCaptureMode.value) {
-                    location = location()
-                }
-                if (cameraFacing() == CameraFacing.FRONT) {
-                    isReversedHorizontal = photoFfcMirror()
-                }
-            },
-            mimeType,
-            timestamp,
-            photoOutputStream,
-        )
+        val outputOptions =
+            StorageUtils.getPhotoMediaStoreOutputOptions(
+                context.contentResolver,
+                ImageCapture.Metadata().apply {
+                    if (!inSingleCaptureMode.value) {
+                        location = location()
+                    }
+                    if (cameraFacing() == CameraFacing.FRONT) {
+                        isReversedHorizontal = photoFfcMirror()
+                    }
+                },
+                mimeType,
+                timestamp,
+                photoOutputStream,
+            )
 
         // Set up image capture listener, which is triggered after photo has
         // been taken
-        val onImageSavedCallback = object : ImageCapture.OnImageSavedCallback {
-            override fun onCaptureStarted() {
-                onPhotoCaptureStatus(PhotoCaptureStatus.CaptureStarted)
+        val onImageSavedCallback =
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onCaptureStarted() {
+                    onPhotoCaptureStatus(PhotoCaptureStatus.CaptureStarted)
 
-                captureSounds.playShutterClick()
-            }
-
-            override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                Log.d(
-                    LOG_TAG,
-                    "Photo capture succeeded: ${output.savedUri} format = ${output.imageFormat}"
-                )
-
-                if (!inSingleCaptureMode.value) {
-                    output.savedUri?.let {
-                        onNewPicture(it)
-                    }
+                    captureSounds.playShutterClick()
                 }
 
-                if (imageCount.decrementAndGet() == 0) {
+                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    Log.d(
+                        LOG_TAG,
+                        "Photo capture succeeded: ${output.savedUri} format = ${output.imageFormat}",
+                    )
+
+                    if (!inSingleCaptureMode.value) {
+                        output.savedUri?.let { onNewPicture(it) }
+                    }
+
+                    if (imageCount.decrementAndGet() == 0) {
+                        captureStateMachine.endPhoto()
+                    }
+
+                    // We only care about JPEG-like formats
+                    if (
+                        imageOutputFormat == ImageCapture.OUTPUT_FORMAT_RAW_JPEG &&
+                            output.imageFormat in RAW_FORMATS
+                    ) {
+                        return
+                    }
+
+                    onPhotoCaptureStatus(
+                        PhotoCaptureStatus.ImageSaved(output.savedUri, photoOutputStream)
+                    )
+                }
+
+                override fun onError(exc: ImageCaptureException) {
+                    onPhotoCaptureStatus(PhotoCaptureStatus.Error(exc))
+
+                    Log.e(LOG_TAG, "Photo capture failed", exc)
                     captureStateMachine.endPhoto()
                 }
-
-                // We only care about JPEG-like formats
-                if (imageOutputFormat == ImageCapture.OUTPUT_FORMAT_RAW_JPEG
-                    && output.imageFormat in RAW_FORMATS
-                ) {
-                    return
-                }
-
-                onPhotoCaptureStatus(
-                    PhotoCaptureStatus.ImageSaved(
-                        output.savedUri,
-                        photoOutputStream,
-                    )
-                )
             }
-
-            override fun onError(exc: ImageCaptureException) {
-                onPhotoCaptureStatus(PhotoCaptureStatus.Error(exc))
-
-                Log.e(LOG_TAG, "Photo capture failed", exc)
-                captureStateMachine.endPhoto()
-            }
-        }
 
         when (imageOutputFormat) {
             ImageCapture.OUTPUT_FORMAT_RAW_JPEG -> {
                 // Create output options object which contains raw file + metadata
-                val rawOutputOptions = StorageUtils.getPhotoMediaStoreOutputOptions(
-                    context.contentResolver,
-                    ImageCapture.Metadata().apply {
-                        if (!inSingleCaptureMode.value) {
-                            location = location()
-                        }
-                        if (cameraFacing() == CameraFacing.FRONT) {
-                            isReversedHorizontal = photoFfcMirror()
-                        }
-                    },
-                    "image/x-adobe-dng",
-                    timestamp,
-                )
+                val rawOutputOptions =
+                    StorageUtils.getPhotoMediaStoreOutputOptions(
+                        context.contentResolver,
+                        ImageCapture.Metadata().apply {
+                            if (!inSingleCaptureMode.value) {
+                                location = location()
+                            }
+                            if (cameraFacing() == CameraFacing.FRONT) {
+                                isReversedHorizontal = photoFfcMirror()
+                            }
+                        },
+                        "image/x-adobe-dng",
+                        timestamp,
+                    )
 
                 cameraController.takePicture(
                     rawOutputOptions,
@@ -189,11 +183,12 @@ class CameraXCapture(
                 )
             }
 
-            else -> cameraController.takePicture(
-                outputOptions,
-                ContextCompat.getMainExecutor(context),
-                onImageSavedCallback,
-            )
+            else ->
+                cameraController.takePicture(
+                    outputOptions,
+                    ContextCompat.getMainExecutor(context),
+                    onImageSavedCallback,
+                )
         }
     }
 
@@ -211,11 +206,12 @@ class CameraXCapture(
         videoRecordingDuration.value = 0L
 
         // Create output options object which contains file + metadata
-        val outputOptions = StorageUtils.getVideoMediaStoreOutputOptions(
-            context.contentResolver,
-            System.currentTimeMillis(),
-            location().takeUnless { inSingleCaptureMode.value }
-        )
+        val outputOptions =
+            StorageUtils.getVideoMediaStoreOutputOptions(
+                context.contentResolver,
+                System.currentTimeMillis(),
+                location().takeUnless { inSingleCaptureMode.value },
+            )
 
         // Play shutter sound
         val delayTime = if (captureSounds.playStartVideoRecording()) 500L else 0L
@@ -224,49 +220,46 @@ class CameraXCapture(
             delay(delayTime)
 
             // Start recording
-            videoRecording.value = cameraController.startRecording(
-                outputOptions,
-                videoAudioConfig,
-                cameraExecutor,
-            ) {
-                scope.launch {
-                    it.toRecordingEvent()?.let { event -> videoRecordEvent.emit(event) }
-                }
-
-                when (it) {
-                    is VideoRecordEvent.Start -> {
-                        captureStateMachine.onRecordingStarted()
+            videoRecording.value =
+                cameraController.startRecording(outputOptions, videoAudioConfig, cameraExecutor) {
+                    scope.launch {
+                        it.toRecordingEvent()?.let { event -> videoRecordEvent.emit(event) }
                     }
 
-                    is VideoRecordEvent.Pause -> {
-                        captureStateMachine.onRecordingPaused()
-                    }
-
-                    is VideoRecordEvent.Resume -> {
-                        captureStateMachine.onRecordingResumed()
-                    }
-
-                    is VideoRecordEvent.Status -> {
-                        videoRecordingDuration.value = it.recordingStats.recordedDurationNanos
-                    }
-
-                    is VideoRecordEvent.Finalize -> {
-                        captureSounds.playStopVideoRecording()
-                        if (it.error != VideoRecordEvent.Finalize.ERROR_NO_VALID_DATA) {
-                            Log.d(
-                                LOG_TAG,
-                                "Video capture succeeded: ${it.outputResults.outputUri}",
-                            )
-
-                            if (!inSingleCaptureMode.value) {
-                                onNewVideo(it.outputResults.outputUri)
-                            }
+                    when (it) {
+                        is VideoRecordEvent.Start -> {
+                            captureStateMachine.onRecordingStarted()
                         }
-                        captureStateMachine.endRecording()
-                        videoRecording.value = null
+
+                        is VideoRecordEvent.Pause -> {
+                            captureStateMachine.onRecordingPaused()
+                        }
+
+                        is VideoRecordEvent.Resume -> {
+                            captureStateMachine.onRecordingResumed()
+                        }
+
+                        is VideoRecordEvent.Status -> {
+                            videoRecordingDuration.value = it.recordingStats.recordedDurationNanos
+                        }
+
+                        is VideoRecordEvent.Finalize -> {
+                            captureSounds.playStopVideoRecording()
+                            if (it.error != VideoRecordEvent.Finalize.ERROR_NO_VALID_DATA) {
+                                Log.d(
+                                    LOG_TAG,
+                                    "Video capture succeeded: ${it.outputResults.outputUri}",
+                                )
+
+                                if (!inSingleCaptureMode.value) {
+                                    onNewVideo(it.outputResults.outputUri)
+                                }
+                            }
+                            captureStateMachine.endRecording()
+                            videoRecording.value = null
+                        }
                     }
                 }
-            }
         }
     }
 
@@ -274,18 +267,17 @@ class CameraXCapture(
         when (val cameraState = captureStateMachine.state.value) {
             CameraState.RECORDING_VIDEO -> videoRecording.value?.pause()
             CameraState.RECORDING_VIDEO_PAUSED -> videoRecording.value?.resume()
-            else -> error(
-                "videoRecordingStateButton clicked while in invalid state: $cameraState"
-            )
+            else -> error("videoRecordingStateButton clicked while in invalid state: $cameraState")
         }
     }
 
     @Suppress("MissingPermission")
     fun setAudioEnabled(enabled: Boolean) {
-        videoAudioConfig = when (enabled) {
-            true -> AudioConfig.create(true)
-            false -> AudioConfig.AUDIO_DISABLED
-        }
+        videoAudioConfig =
+            when (enabled) {
+                true -> AudioConfig.create(true)
+                false -> AudioConfig.AUDIO_DISABLED
+            }
 
         videoRecording.value?.mute(!enabled)
     }
@@ -293,11 +285,12 @@ class CameraXCapture(
     companion object {
         private val LOG_TAG = CameraXCapture::class.simpleName!!
         private const val SINGLE_CAPTURE_PHOTO_BUFFER_INITIAL_SIZE_BYTES = 8 * 1024 * 1024 // 8 MiB
-        private val RAW_FORMATS = listOf(
-            ImageFormat.RAW10,
-            ImageFormat.RAW12,
-            ImageFormat.RAW_SENSOR,
-            ImageFormat.RAW_PRIVATE,
-        )
+        private val RAW_FORMATS =
+            listOf(
+                ImageFormat.RAW10,
+                ImageFormat.RAW12,
+                ImageFormat.RAW_SENSOR,
+                ImageFormat.RAW_PRIVATE,
+            )
     }
 }

@@ -22,25 +22,38 @@ interface CameraSession {
     val videoRecordEvent: SharedFlow<RecordingEvent>
 
     fun attachPreview(target: PreviewTarget)
+
     fun previewBitmap(): Bitmap?
+
     fun configure(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner)
+
     fun release()
+
     fun close()
 
     fun takePhoto()
+
     fun captureVideo()
+
     fun toggleRecordingPause()
+
     fun setAudioEnabled(enabled: Boolean)
 
     fun setFlashMode(flashMode: FlashMode)
+
     fun setExposureCompensationIndex(exposureCompensationIndex: Int)
 
     fun focus(x: Float, y: Float)
 
     fun setLinearZoom(linearZoom: Float)
+
     fun pinchToZoom(scaleFactor: Float)
+
     fun smoothZoom(zoomRatio: Float)
+
     fun resetZoom()
+
     fun zoomIn()
+
     fun zoomOut()
 }

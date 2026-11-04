@@ -10,15 +10,16 @@ import org.junit.Test
 import org.prauga.camera.capture.models.PhotoAspectRatio
 
 class Camera2SizesTest {
-    private val sizes = listOf(
-        4080 to 3072,
-        4000 to 3000,
-        3840 to 2160,
-        1920 to 1440,
-        1920 to 1080,
-        1280 to 720,
-        640 to 480,
-    )
+    private val sizes =
+        listOf(
+            4080 to 3072,
+            4000 to 3000,
+            3840 to 2160,
+            1920 to 1440,
+            1920 to 1080,
+            1280 to 720,
+            640 to 480,
+        )
 
     @Test
     fun picksTheLargestSizeWithTheAspectRatio() {
@@ -34,7 +35,14 @@ class Camera2SizesTest {
 
     @Test
     fun fallsBackToTheLargestSize() {
-        assertEquals(0, Camera2Sizes.chooseIndex(listOf(4000 to 2000, 100 to 100), PhotoAspectRatio.RATIO_4_3, Int.MAX_VALUE))
+        assertEquals(
+            0,
+            Camera2Sizes.chooseIndex(
+                listOf(4000 to 2000, 100 to 100),
+                PhotoAspectRatio.RATIO_4_3,
+                Int.MAX_VALUE,
+            ),
+        )
     }
 
     @Test

@@ -5,9 +5,7 @@
 
 package org.prauga.camera.capture.models
 
-enum class CameraState(
-    val isRecordingVideo: Boolean = false,
-) {
+enum class CameraState(val isRecordingVideo: Boolean = false) {
     IDLE,
     COUNTDOWN,
     TAKING_PHOTO,

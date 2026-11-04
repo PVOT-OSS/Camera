@@ -29,38 +29,29 @@ sealed interface CameraConfiguration {
         val hotPixelMode: HotPixelMode?,
     ) {
         companion object {
-            /**
-             * Default instance that will not alter Camera2 options.
-             */
-            val DEFAULT = Camera2Options(
-                edgeMode = null,
-                noiseReductionMode = null,
-                shadingMode = null,
-                colorCorrectionAberrationMode = null,
-                distortionCorrectionMode = null,
-                hotPixelMode = null,
-            )
+            /** Default instance that will not alter Camera2 options. */
+            val DEFAULT =
+                Camera2Options(
+                    edgeMode = null,
+                    noiseReductionMode = null,
+                    shadingMode = null,
+                    colorCorrectionAberrationMode = null,
+                    distortionCorrectionMode = null,
+                    hotPixelMode = null,
+                )
         }
     }
 
-    /**
-     * The [Camera] to use.
-     */
+    /** The [Camera] to use. */
     val camera: Camera
 
-    /**
-     * The [CameraMode] to use.
-     */
+    /** The [CameraMode] to use. */
     val cameraMode: CameraMode
 
-    /**
-     * The [ExtensionMode] to use.
-     */
+    /** The [ExtensionMode] to use. */
     val extensionMode: ExtensionMode
 
-    /**
-     * The [Camera2Options] to use.
-     */
+    /** The [Camera2Options] to use. */
     val camera2Options: Camera2Options
 
     /**
@@ -105,12 +96,8 @@ sealed interface CameraConfiguration {
         override val extensionMode = ExtensionMode.NONE
     }
 
-    /**
-     * QR mode configuration.
-     */
-    data class Qr(
-        override val camera: Camera,
-    ) : CameraConfiguration {
+    /** QR mode configuration. */
+    data class Qr(override val camera: Camera) : CameraConfiguration {
         override val cameraMode = CameraMode.QR
         override val extensionMode = ExtensionMode.NONE
         override val camera2Options = Camera2Options.DEFAULT

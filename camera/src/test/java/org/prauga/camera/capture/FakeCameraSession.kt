@@ -32,7 +32,10 @@ class FakeCameraSession : CameraSession {
 
     override fun previewBitmap(): Bitmap? = null
 
-    override fun configure(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner) {
+    override fun configure(
+        cameraConfiguration: CameraConfiguration,
+        lifecycleOwner: LifecycleOwner,
+    ) {
         calls += "configure"
         configuration = cameraConfiguration
     }

@@ -6,23 +6,24 @@
 package org.prauga.camera.utils
 
 import androidx.exifinterface.media.ExifInterface
+import java.io.InputStream
 import org.prauga.camera.models.Rotation
 import org.prauga.camera.models.Transform
-import java.io.InputStream
 
 class ExifUtils {
     companion object {
-        private val orientationMap = mapOf(
-            ExifInterface.ORIENTATION_UNDEFINED to Transform.DEFAULT,
-            ExifInterface.ORIENTATION_NORMAL to Transform.DEFAULT,
-            ExifInterface.ORIENTATION_ROTATE_90 to Transform(Rotation.ROTATION_90, false),
-            ExifInterface.ORIENTATION_ROTATE_180 to Transform(Rotation.ROTATION_180, false),
-            ExifInterface.ORIENTATION_ROTATE_270 to Transform(Rotation.ROTATION_270, false),
-            ExifInterface.ORIENTATION_FLIP_HORIZONTAL to Transform(Rotation.ROTATION_0, true),
-            ExifInterface.ORIENTATION_FLIP_VERTICAL to Transform(Rotation.ROTATION_180, true),
-            ExifInterface.ORIENTATION_TRANSPOSE to Transform(Rotation.ROTATION_270, true),
-            ExifInterface.ORIENTATION_TRANSVERSE to Transform(Rotation.ROTATION_90, true),
-        )
+        private val orientationMap =
+            mapOf(
+                ExifInterface.ORIENTATION_UNDEFINED to Transform.DEFAULT,
+                ExifInterface.ORIENTATION_NORMAL to Transform.DEFAULT,
+                ExifInterface.ORIENTATION_ROTATE_90 to Transform(Rotation.ROTATION_90, false),
+                ExifInterface.ORIENTATION_ROTATE_180 to Transform(Rotation.ROTATION_180, false),
+                ExifInterface.ORIENTATION_ROTATE_270 to Transform(Rotation.ROTATION_270, false),
+                ExifInterface.ORIENTATION_FLIP_HORIZONTAL to Transform(Rotation.ROTATION_0, true),
+                ExifInterface.ORIENTATION_FLIP_VERTICAL to Transform(Rotation.ROTATION_180, true),
+                ExifInterface.ORIENTATION_TRANSPOSE to Transform(Rotation.ROTATION_270, true),
+                ExifInterface.ORIENTATION_TRANSVERSE to Transform(Rotation.ROTATION_90, true),
+            )
 
         private fun getOrientation(inputStream: InputStream): Int {
             inputStream.mark(Int.MAX_VALUE)

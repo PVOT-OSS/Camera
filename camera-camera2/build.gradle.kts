@@ -3,13 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-plugins {
-    id("camera.android.library")
-}
+plugins { id("camera.android.library") }
 
-android {
-    namespace = "org.prauga.camera.camera2"
-}
+android { namespace = "org.prauga.camera.camera2" }
 
 dependencies {
     api(project(":camera"))

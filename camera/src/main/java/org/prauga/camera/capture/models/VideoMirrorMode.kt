@@ -5,9 +5,7 @@
 
 package org.prauga.camera.capture.models
 
-/**
- * Video mirror mode.
- */
+/** Video mirror mode. */
 enum class VideoMirrorMode {
     OFF,
     ON,

@@ -21,16 +21,17 @@ import android.media.ImageReader
 import android.os.Build
 import android.os.Handler
 import android.util.Log
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.File
-import java.text.SimpleDateFormat
-import java.util.Locale
 
-class Camera2BurstRecorder private constructor(
+class Camera2BurstRecorder
+private constructor(
     context: Context,
     private val scope: CoroutineScope,
     private val handler: Handler,
@@ -42,18 +43,14 @@ class Camera2BurstRecorder private constructor(
     private val sensorManager = context.getSystemService(SensorManager::class.java)
     private val gyroscope = sensorManager?.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
 
-    val imageReader: ImageReader = ImageReader.newInstance(
-        width, height, ImageFormat.RAW_SENSOR, FRAMES + 1
-    ).apply {
-        setOnImageAvailableListener(::onImageAvailable, handler)
-    }
+    val imageReader: ImageReader =
+        ImageReader.newInstance(width, height, ImageFormat.RAW_SENSOR, FRAMES + 1).apply {
+            setOnImageAvailableListener(::onImageAvailable, handler)
+        }
 
     private var burst: Burst? = null
 
-    private class Burst(
-        val directory: File,
-        val exifOrientation: Int,
-    ) {
+    private class Burst(val directory: File, val exifOrientation: Int) {
         val results = mutableMapOf<Long, TotalCaptureResult>()
         val images = mutableMapOf<Long, Image>()
         val frames = JSONArray()
@@ -62,15 +59,18 @@ class Camera2BurstRecorder private constructor(
         var written = 0
     }
 
-    private val gyroscopeListener = object : SensorEventListener {
-        override fun onSensorChanged(event: SensorEvent) {
-            burst?.gyro?.append(
-                "${event.timestamp},${event.values[0]},${event.values[1]},${event.values[2]}\n"
-            )
-        }
+    private val gyroscopeListener =
+        object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent) {
+                burst
+                    ?.gyro
+                    ?.append(
+                        "${event.timestamp},${event.values[0]},${event.values[1]},${event.values[2]}\n"
+                    )
+            }
 
-        override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
-    }
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+        }
 
     fun start(jpegOrientation: Int) {
         burst?.let {
@@ -86,7 +86,10 @@ class Camera2BurstRecorder private constructor(
         gyroscope?.let {
             try {
                 sensorManager.registerListener(
-                    gyroscopeListener, it, GYROSCOPE_SAMPLING_PERIOD_US, handler
+                    gyroscopeListener,
+                    it,
+                    GYROSCOPE_SAMPLING_PERIOD_US,
+                    handler,
                 )
             } catch (e: Exception) {
                 Log.w(LOG_TAG, "Unable to record the gyroscope", e)
@@ -112,10 +115,12 @@ class Camera2BurstRecorder private constructor(
 
     private fun onImageAvailable(imageReader: ImageReader) {
         val image = imageReader.acquireNextImage() ?: return
-        val burst = burst ?: run {
-            image.close()
-            return
-        }
+        val burst =
+            burst
+                ?: run {
+                    image.close()
+                    return
+                }
 
         burst.images[image.timestamp] = image
         writeReadyFrames(burst)
@@ -162,52 +167,78 @@ class Camera2BurstRecorder private constructor(
         }
 
         scope.launch(Dispatchers.IO) {
-            File(burst.directory, "metadata.json").writeText(
-                JSONObject()
-                    .put("frames", burst.frames)
-                    .put("device", "${Build.MANUFACTURER} ${Build.MODEL}")
-                    .put("fingerprint", Build.FINGERPRINT)
-                    .toString(2)
-            )
+            File(burst.directory, "metadata.json")
+                .writeText(
+                    JSONObject()
+                        .put("frames", burst.frames)
+                        .put("device", "${Build.MANUFACTURER} ${Build.MODEL}")
+                        .put("fingerprint", Build.FINGERPRINT)
+                        .toString(2)
+                )
             File(burst.directory, "gyro.csv").writeText(burst.gyro.toString())
 
             Log.i(LOG_TAG, "Recorded $FRAMES frames to ${burst.directory}")
         }
     }
 
-    private fun frameMetadata(index: Int, result: TotalCaptureResult) = JSONObject().apply {
-        put("index", index)
-        put("timestampNs", result.get(CaptureResult.SENSOR_TIMESTAMP))
-        put("exposureTimeNs", result.get(CaptureResult.SENSOR_EXPOSURE_TIME))
-        put("frameDurationNs", result.get(CaptureResult.SENSOR_FRAME_DURATION))
-        put("sensitivity", result.get(CaptureResult.SENSOR_SENSITIVITY))
-        put("postRawSensitivityBoost", result.get(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST))
-        put("focusDistance", result.get(CaptureResult.LENS_FOCUS_DISTANCE)?.toDouble())
-        result.get(CaptureResult.SENSOR_NOISE_PROFILE)?.let { noiseProfile ->
-            put("noiseProfile", JSONArray(noiseProfile.map { JSONArray(listOf(it.first, it.second)) }))
+    private fun frameMetadata(index: Int, result: TotalCaptureResult) =
+        JSONObject().apply {
+            put("index", index)
+            put("timestampNs", result.get(CaptureResult.SENSOR_TIMESTAMP))
+            put("exposureTimeNs", result.get(CaptureResult.SENSOR_EXPOSURE_TIME))
+            put("frameDurationNs", result.get(CaptureResult.SENSOR_FRAME_DURATION))
+            put("sensitivity", result.get(CaptureResult.SENSOR_SENSITIVITY))
+            put(
+                "postRawSensitivityBoost",
+                result.get(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST),
+            )
+            put("focusDistance", result.get(CaptureResult.LENS_FOCUS_DISTANCE)?.toDouble())
+            result.get(CaptureResult.SENSOR_NOISE_PROFILE)?.let { noiseProfile ->
+                put(
+                    "noiseProfile",
+                    JSONArray(noiseProfile.map { JSONArray(listOf(it.first, it.second)) }),
+                )
+            }
+            result.get(CaptureResult.SENSOR_DYNAMIC_BLACK_LEVEL)?.let { blackLevel ->
+                put("blackLevel", JSONArray(blackLevel.map { it.toDouble() }))
+            }
+            result.get(CaptureResult.SENSOR_DYNAMIC_WHITE_LEVEL)?.let { put("whiteLevel", it) }
+            result.get(CaptureResult.COLOR_CORRECTION_GAINS)?.let { gains ->
+                put(
+                    "colorCorrectionGains",
+                    JSONArray(
+                        listOf(gains.red, gains.greenEven, gains.greenOdd, gains.blue).map {
+                            it.toDouble()
+                        }
+                    ),
+                )
+            }
+            result.get(CaptureResult.STATISTICS_LENS_SHADING_CORRECTION_MAP)?.let { map ->
+                put(
+                    "lensShadingMap",
+                    JSONObject().apply {
+                        put("columns", map.columnCount)
+                        put("rows", map.rowCount)
+                        put(
+                            "gains",
+                            JSONArray(
+                                FloatArray(map.gainFactorCount)
+                                    .also { map.copyGainFactors(it, 0) }
+                                    .map { it.toDouble() }
+                            ),
+                        )
+                    },
+                )
+            }
         }
-        result.get(CaptureResult.SENSOR_DYNAMIC_BLACK_LEVEL)?.let { blackLevel ->
-            put("blackLevel", JSONArray(blackLevel.map { it.toDouble() }))
-        }
-        result.get(CaptureResult.SENSOR_DYNAMIC_WHITE_LEVEL)?.let { put("whiteLevel", it) }
-        result.get(CaptureResult.COLOR_CORRECTION_GAINS)?.let { gains ->
-            put("colorCorrectionGains", JSONArray(listOf(gains.red, gains.greenEven, gains.greenOdd, gains.blue).map { it.toDouble() }))
-        }
-        result.get(CaptureResult.STATISTICS_LENS_SHADING_CORRECTION_MAP)?.let { map ->
-            put("lensShadingMap", JSONObject().apply {
-                put("columns", map.columnCount)
-                put("rows", map.rowCount)
-                put("gains", JSONArray(FloatArray(map.gainFactorCount).also { map.copyGainFactors(it, 0) }.map { it.toDouble() }))
-            })
-        }
-    }
 
-    private fun exifOrientation(jpegOrientation: Int) = when (jpegOrientation) {
-        90 -> 6
-        180 -> 3
-        270 -> 8
-        else -> 1
-    }
+    private fun exifOrientation(jpegOrientation: Int) =
+        when (jpegOrientation) {
+            90 -> 6
+            180 -> 3
+            270 -> 8
+            else -> 1
+        }
 
     companion object {
         private const val LOG_TAG = "Camera2BurstRecorder"
@@ -223,19 +254,27 @@ class Camera2BurstRecorder private constructor(
             handler: Handler,
             characteristics: CameraCharacteristics,
         ): Camera2BurstRecorder? {
-            val capabilities = characteristics.get(
-                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES
-            ) ?: return null
+            val capabilities =
+                characteristics.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES)
+                    ?: return null
             if (CameraMetadata.REQUEST_AVAILABLE_CAPABILITIES_RAW !in capabilities) {
                 return null
             }
 
-            val size = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-                ?.getOutputSizes(ImageFormat.RAW_SENSOR)
-                ?.maxByOrNull { it.width.toLong() * it.height }
-                ?: return null
+            val size =
+                characteristics
+                    .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+                    ?.getOutputSizes(ImageFormat.RAW_SENSOR)
+                    ?.maxByOrNull { it.width.toLong() * it.height } ?: return null
 
-            return Camera2BurstRecorder(context, scope, handler, characteristics, size.width, size.height)
+            return Camera2BurstRecorder(
+                context,
+                scope,
+                handler,
+                characteristics,
+                size.width,
+                size.height,
+            )
         }
     }
 }

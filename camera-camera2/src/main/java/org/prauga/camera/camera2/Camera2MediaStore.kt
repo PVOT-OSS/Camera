@@ -24,19 +24,20 @@ object Camera2MediaStore {
         mimeType: String,
         timestamp: Long,
     ): Uri {
-        val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, getTimeString(timestamp))
-            put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, STORAGE_DESTINATION)
-                put(MediaStore.MediaColumns.IS_PENDING, 1)
+        val contentValues =
+            ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, getTimeString(timestamp))
+                put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    put(MediaStore.Images.Media.RELATIVE_PATH, STORAGE_DESTINATION)
+                    put(MediaStore.MediaColumns.IS_PENDING, 1)
+                }
+                put(MediaStore.Images.Media.DATE_TAKEN, timestamp)
             }
-            put(MediaStore.Images.Media.DATE_TAKEN, timestamp)
-        }
 
-        val uri = contentResolver.insert(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues
-        ) ?: error("MediaStore insert failed")
+        val uri =
+            contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                ?: error("MediaStore insert failed")
 
         try {
             contentResolver.openOutputStream(uri)?.use { it.write(bytes) }

@@ -7,5 +7,6 @@ package org.prauga.camera.capture
 
 interface ScreenFlash {
     fun apply(onApplied: () -> Unit)
+
     fun clear()
 }

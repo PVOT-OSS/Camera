@@ -7,6 +7,7 @@ package org.prauga.camera.capture.models
 
 /**
  * Video [VideoQuality] info.
+ *
  * @param quality The quality
  * @param supportedFrameRates The supported frame rates for this quality
  * @param supportedDynamicRanges The supported dynamic ranges for this quality

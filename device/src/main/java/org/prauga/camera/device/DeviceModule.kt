@@ -15,10 +15,8 @@ interface DeviceModule {
 
     fun includesCamera(cameraId: String, default: Boolean) = default
 
-    fun capabilities(
-        base: CameraCapabilities,
-        characteristics: (String) -> CameraCharacteristics,
-    ) = base
+    fun capabilities(base: CameraCapabilities, characteristics: (String) -> CameraCharacteristics) =
+        base
 
     enum class Layer {
         GENERIC,

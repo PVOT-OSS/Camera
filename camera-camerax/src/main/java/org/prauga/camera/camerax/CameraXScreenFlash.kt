@@ -8,13 +8,10 @@ package org.prauga.camera.camerax
 import androidx.camera.view.ScreenFlashView
 import org.prauga.camera.capture.ScreenFlash
 
-class CameraXScreenFlash(
-    private val screenFlashView: ScreenFlashView,
-) : ScreenFlash {
+class CameraXScreenFlash(private val screenFlashView: ScreenFlashView) : ScreenFlash {
     override fun apply(onApplied: () -> Unit) {
-        screenFlashView.screenFlash?.apply(System.currentTimeMillis() + TIMEOUT_MS) {
-            onApplied()
-        } ?: onApplied()
+        screenFlashView.screenFlash?.apply(System.currentTimeMillis() + TIMEOUT_MS) { onApplied() }
+            ?: onApplied()
     }
 
     override fun clear() {

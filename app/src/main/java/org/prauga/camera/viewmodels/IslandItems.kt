@@ -23,15 +23,11 @@ fun islandItemsOf(
         ThermalStatus.LIGHT -> Unit
 
         ThermalStatus.MODERATE,
-        ThermalStatus.SEVERE -> add(
-            IslandItem.ThermalThrottling(false)
-        )
+        ThermalStatus.SEVERE -> add(IslandItem.ThermalThrottling(false))
 
         ThermalStatus.CRITICAL,
         ThermalStatus.EMERGENCY,
-        ThermalStatus.SHUTDOWN -> add(
-            IslandItem.ThermalThrottling(true)
-        )
+        ThermalStatus.SHUTDOWN -> add(IslandItem.ThermalThrottling(true))
     }
 
     batteryIntent?.let {
@@ -43,10 +39,7 @@ fun islandItemsOf(
         if (percentage <= 15) {
             add(
                 IslandItem.LowBattery(
-                    isCharging = it.getIntExtra(
-                        BatteryManager.EXTRA_PLUGGED,
-                        0,
-                    ) != 0,
+                    isCharging = it.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) != 0
                 )
             )
         }
@@ -56,17 +49,11 @@ fun islandItemsOf(
                 when (cameraConfiguration.photoOutputFormat) {
                     PhotoOutputFormat.JPEG -> {}
 
-                    PhotoOutputFormat.JPEG_ULTRA_HDR -> add(
-                        IslandItem.PhotoJpegUltraHdr
-                    )
+                    PhotoOutputFormat.JPEG_ULTRA_HDR -> add(IslandItem.PhotoJpegUltraHdr)
 
-                    PhotoOutputFormat.RAW -> add(
-                        IslandItem.PhotoRawEnabled(false)
-                    )
+                    PhotoOutputFormat.RAW -> add(IslandItem.PhotoRawEnabled(false))
 
-                    PhotoOutputFormat.RAW_JPEG -> add(
-                        IslandItem.PhotoRawEnabled(true)
-                    )
+                    PhotoOutputFormat.RAW_JPEG -> add(IslandItem.PhotoRawEnabled(true))
                 }
             }
 

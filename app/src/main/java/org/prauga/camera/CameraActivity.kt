@@ -89,13 +89,19 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     private val viewModel by viewModels<CameraViewModel>()
 
     // Views
-    private val cameraModeSelectorLayout by lazy { findViewById<CameraModeSelectorLayout>(R.id.cameraModeSelectorLayout) }
+    private val cameraModeSelectorLayout by lazy {
+        findViewById<CameraModeSelectorLayout>(R.id.cameraModeSelectorLayout)
+    }
     private val cameraScreen by lazy { findViewById<ComposeView>(R.id.cameraScreen) }
-    private val capturePreviewLayout by lazy { findViewById<CapturePreviewLayout>(R.id.capturePreviewLayout) }
+    private val capturePreviewLayout by lazy {
+        findViewById<CapturePreviewLayout>(R.id.capturePreviewLayout)
+    }
     private val mainLayout by lazy { findViewById<ConstraintLayout>(R.id.mainLayout) }
     private val primaryBarLayout by lazy { findViewById<ConstraintLayout>(R.id.primaryBarLayout) }
     private val screenFlashView by lazy { findViewById<ScreenFlashView>(R.id.screenFlashView) }
-    private val secondaryBottomBarLayout by lazy { findViewById<ConstraintLayout>(R.id.secondaryBottomBarLayout) }
+    private val secondaryBottomBarLayout by lazy {
+        findViewById<ConstraintLayout>(R.id.secondaryBottomBarLayout)
+    }
     private val viewFinder by lazy { findViewById<PreviewView>(R.id.viewFinder) }
 
     // System services
@@ -114,9 +120,8 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
             it.onResultCallback = { result ->
                 if (result) {
                     lifecycleScope.launch {
-                        val permissionState = permissionsManager.requestPermission(
-                            Permission.LOCATION
-                        )
+                        val permissionState =
+                            permissionsManager.requestPermission(Permission.LOCATION)
                         viewModel.setSaveLocation(permissionState == PermissionState.GRANTED)
                     }
                 } else {
@@ -191,11 +196,11 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         )
 
         // Force dark navigation bar
-        WindowCompat.getInsetsController(window, window.decorView)
-            .isAppearanceLightNavigationBars = false
+        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightNavigationBars =
+            false
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1
-            && keyguardManager.isKeyguardLocked
+        if (
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 && keyguardManager.isKeyguardLocked
         ) {
             setShowWhenLocked(true)
 
@@ -256,15 +261,11 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         }
 
         // Observe QR dialog dismiss
-        qrBottomSheetDialog.setOnDismissListener {
-            viewModel.onQrDialogDismissed()
-        }
+        qrBottomSheetDialog.setOnDismissListener { viewModel.onQrDialogDismissed() }
 
         lifecycleScope.launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                permissionsManager.withPermissionGranted(Permission.CAMERA) {
-                    loadData()
-                }
+                permissionsManager.withPermissionGranted(Permission.CAMERA) { loadData() }
             }
         }
 
@@ -279,9 +280,8 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
         // Check for permissions
         lifecycleScope.launch {
-            permissionsManager.permissionStateFlow(
-                Permission.CAMERA
-            ).collectLatest { permissionState ->
+            permissionsManager.permissionStateFlow(Permission.CAMERA).collectLatest {
+                permissionState ->
                 if (permissionState != PermissionState.GRANTED) {
                     when (permissionsManager.requestPermission(Permission.CAMERA)) {
                         PermissionState.GRANTED -> {
@@ -293,10 +293,11 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
                         else -> {
                             Toast.makeText(
-                                this@CameraActivity,
-                                R.string.app_permissions_toast,
-                                Toast.LENGTH_LONG,
-                            ).show()
+                                    this@CameraActivity,
+                                    R.string.app_permissions_toast,
+                                    Toast.LENGTH_LONG,
+                                )
+                                .show()
                             finish()
                         }
                     }
@@ -305,9 +306,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         }
 
         // Initialize stuff after camera permissions are granted
-        lifecycleScope.launch {
-            queueSetupWithCameraPermissions()
-        }
+        lifecycleScope.launch { queueSetupWithCameraPermissions() }
     }
 
     override fun onDestroy() {
@@ -320,27 +319,31 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         super.onDestroy()
     }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?) = when (capturePreviewLayout.isVisible) {
-        true -> super.onKeyDown(keyCode, event)
-        false -> when (hardwareKeyHandler.onKeyDown(keyCode, event)) {
-            HardwareKeyHandler.Result.HANDLED -> true
-            HardwareKeyHandler.Result.DEFAULT -> super.onKeyDown(keyCode, event)
-            null -> super.onKeyDown(keyCode, event)
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?) =
+        when (capturePreviewLayout.isVisible) {
+            true -> super.onKeyDown(keyCode, event)
+            false ->
+                when (hardwareKeyHandler.onKeyDown(keyCode, event)) {
+                    HardwareKeyHandler.Result.HANDLED -> true
+                    HardwareKeyHandler.Result.DEFAULT -> super.onKeyDown(keyCode, event)
+                    null -> super.onKeyDown(keyCode, event)
+                }
         }
-    }
 
-    override fun onKeyUp(keyCode: Int, event: KeyEvent?) = when (capturePreviewLayout.isVisible) {
-        true -> super.onKeyUp(keyCode, event)
-        false -> when (hardwareKeyHandler.onKeyUp(keyCode)) {
-            HardwareKeyHandler.Result.HANDLED -> true
-            HardwareKeyHandler.Result.DEFAULT -> super.onKeyDown(keyCode, event)
-            null -> super.onKeyUp(keyCode, event)
+    override fun onKeyUp(keyCode: Int, event: KeyEvent?) =
+        when (capturePreviewLayout.isVisible) {
+            true -> super.onKeyUp(keyCode, event)
+            false ->
+                when (hardwareKeyHandler.onKeyUp(keyCode)) {
+                    HardwareKeyHandler.Result.HANDLED -> true
+                    HardwareKeyHandler.Result.DEFAULT -> super.onKeyDown(keyCode, event)
+                    null -> super.onKeyUp(keyCode, event)
+                }
         }
-    }
 
     /**
-     * This is a method that can be overridden to set the initial camera mode and facing.
-     * It's gonna have priority over shared preferences and intents.
+     * This is a method that can be overridden to set the initial camera mode and facing. It's gonna
+     * have priority over shared preferences and intents.
      */
     protected open fun overrideInitialCameraMode(): CameraMode? = null
 
@@ -366,9 +369,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         with(viewfinderOverlays) { bind() }
         with(cameraAlerts) { bind() }
 
-        launch {
-            viewModel.newCameraUi.collectLatest(::setNewCameraUi)
-        }
+        launch { viewModel.newCameraUi.collectLatest(::setNewCameraUi) }
 
         launch {
             viewModel.event.collect { event ->
@@ -377,40 +378,36 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
                     is Event.ShowForceTorchHelp -> cameraAlerts.showForceTorchHelp()
 
-                    is Event.FlipCameraAnimation ->
-                        primaryBar.startFlipAnimation()
+                    is Event.FlipCameraAnimation -> primaryBar.startFlipAnimation()
 
-                    is Event.PhotoCapture -> when (val status = event.status) {
-                        is PhotoCaptureStatus.CaptureStarted -> {
-                            viewFinder.foreground = ColorDrawable(Color.BLACK)
-                            ValueAnimator.ofInt(0, 255, 0).apply {
-                                addUpdateListener { anim ->
-                                    viewFinder.foreground.alpha = anim.animatedValue as Int
-                                }
-                            }.start()
-                        }
+                    is Event.PhotoCapture ->
+                        when (val status = event.status) {
+                            is PhotoCaptureStatus.CaptureStarted -> {
+                                viewFinder.foreground = ColorDrawable(Color.BLACK)
+                                ValueAnimator.ofInt(0, 255, 0)
+                                    .apply {
+                                        addUpdateListener { anim ->
+                                            viewFinder.foreground.alpha = anim.animatedValue as Int
+                                        }
+                                    }
+                                    .start()
+                            }
 
-                        is PhotoCaptureStatus.ImageSaved -> {
-                            if (!viewModel.uiState.value.inSingleCaptureMode) {
-                                onCapturedMedia(status.savedUri)
-                            } else {
-                                status.savedUri?.let {
-                                    openCapturePreview(it, MediaType.PHOTO)
-                                }
-                                status.photoOutputStream?.use {
-                                    openCapturePreview(
-                                        ByteArrayInputStream(
-                                            it.toByteArray()
-                                        )
-                                    )
+                            is PhotoCaptureStatus.ImageSaved -> {
+                                if (!viewModel.uiState.value.inSingleCaptureMode) {
+                                    onCapturedMedia(status.savedUri)
+                                } else {
+                                    status.savedUri?.let { openCapturePreview(it, MediaType.PHOTO) }
+                                    status.photoOutputStream?.use {
+                                        openCapturePreview(ByteArrayInputStream(it.toByteArray()))
+                                    }
                                 }
                             }
-                        }
 
-                        is PhotoCaptureStatus.Error -> {
-                            // Do nothing
+                            is PhotoCaptureStatus.Error -> {
+                                // Do nothing
+                            }
                         }
-                    }
                 }
             }
         }
@@ -422,21 +419,27 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         }
 
         launch {
-            viewModel.uiState.select { it.screenRotation }.collectLatest { screenRotation ->
-                // Rotate capture preview
-                capturePreviewLayout.setScreenRotation(screenRotation)
-            }
+            viewModel.uiState
+                .select { it.screenRotation }
+                .collectLatest { screenRotation ->
+                    // Rotate capture preview
+                    capturePreviewLayout.setScreenRotation(screenRotation)
+                }
         }
 
         launch {
-            viewModel.uiState.select { it.fullScreenBrightness }.collectLatest { fullScreenBrightness ->
-                window.attributes = window.attributes.apply {
-                    screenBrightness = when (fullScreenBrightness) {
-                        true -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
-                        false -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
-                    }
+            viewModel.uiState
+                .select { it.fullScreenBrightness }
+                .collectLatest { fullScreenBrightness ->
+                    window.attributes =
+                        window.attributes.apply {
+                            screenBrightness =
+                                when (fullScreenBrightness) {
+                                    true -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
+                                    false -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                                }
+                        }
                 }
-            }
         }
 
         launch {
@@ -447,10 +450,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                             if (!viewModel.uiState.value.inSingleCaptureMode) {
                                 onCapturedMedia(videoRecordEvent.outputUri)
                             } else {
-                                openCapturePreview(
-                                    videoRecordEvent.outputUri,
-                                    MediaType.VIDEO,
-                                )
+                                openCapturePreview(videoRecordEvent.outputUri, MediaType.VIDEO)
                             }
                         }
                     }
@@ -465,7 +465,6 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                 qrBottomSheetDialog.setQrResult(qrResult)
             }
         }
-
     }
 
     private fun setNewCameraUi(enabled: Boolean) {
@@ -477,7 +476,8 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
         viewFinder.updateLayoutParams<ConstraintLayout.LayoutParams> {
             topMargin = if (enabled) 142.px else 0
-            bottomToTop = if (enabled) ConstraintLayout.LayoutParams.UNSET else R.id.secondaryBottomBarLayout
+            bottomToTop =
+                if (enabled) ConstraintLayout.LayoutParams.UNSET else R.id.secondaryBottomBarLayout
             dimensionRatio = if (enabled) "H,3:4" else null
         }
     }
@@ -503,10 +503,11 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
                     CameraViewModel.InitializationResult.VIDEO_UNSUPPORTED -> {
                         Toast.makeText(
-                            this@CameraActivity,
-                            R.string.camcorder_unsupported_toast,
-                            Toast.LENGTH_LONG,
-                        ).show()
+                                this@CameraActivity,
+                                R.string.camcorder_unsupported_toast,
+                                Toast.LENGTH_LONG,
+                            )
+                            .show()
                         finish()
                         return@collect
                     }
@@ -517,9 +518,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         }
     }
 
-    /**
-     * Rebind cameraProvider use cases
-     */
+    /** Rebind cameraProvider use cases */
     private fun bindCameraUseCases(cameraConfiguration: CameraConfiguration) {
         require(viewModel.canRestartCamera()) {
             "Trying to rebind camera while camera is not in IDLE state"
@@ -551,8 +550,8 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     }
 
     /**
-     * When the user took a photo or a video and confirmed it, its URI gets sent back to the
-     * app that sent the intent and closes the camera.
+     * When the user took a photo or a video and confirmed it, its URI gets sent back to the app
+     * that sent the intent and closes the camera.
      */
     private fun sendIntentResultAndExit(input: Any) {
         val (resultCode, data) = CaptureIntentResult.build(contentResolver, intent, input)
@@ -563,7 +562,8 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     private fun onShutter() {
         // Shutter animation
         when (viewModel.uiState.value.cameraMode) {
-            CameraMode.PHOTO -> primaryBar.startShutterAnimation(PrimaryBar.ShutterAnimation.PhotoCapture)
+            CameraMode.PHOTO ->
+                primaryBar.startShutterAnimation(PrimaryBar.ShutterAnimation.PhotoCapture)
             CameraMode.VIDEO -> {
                 if (viewfinderOverlays.cancelCountDown()) {
                     viewModel.endCountdown()
@@ -610,22 +610,15 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         }
     }
 
-    /**
-     * Show a toast warning the user that no camera is available and close the activity.
-     */
+    /** Show a toast warning the user that no camera is available and close the activity. */
     private fun noCamera() {
-        Toast.makeText(
-            this, R.string.error_no_cameras_available, Toast.LENGTH_LONG
-        ).show()
+        Toast.makeText(this, R.string.error_no_cameras_available, Toast.LENGTH_LONG).show()
         finish()
     }
 
-    /**
-     * Method called when a new media have been successfully captured and saved.
-     */
+    /** Method called when a new media have been successfully captured and saved. */
     private fun onCapturedMedia(item: Uri?) {
         primaryBar.updateGalleryButton(item, true)
         galleryLauncher.onCapturedMedia(item)
     }
-
 }

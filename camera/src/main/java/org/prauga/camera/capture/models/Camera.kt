@@ -8,17 +8,11 @@ package org.prauga.camera.capture.models
 import java.util.SortedMap
 import kotlin.reflect.safeCast
 
-/**
- * Class representing a device camera.
- */
+/** Class representing a device camera. */
 class Camera(
-    /**
-     * Camera2's camera ID.
-     */
+    /** Camera2's camera ID. */
     val cameraId: String,
-    /**
-     * The [CameraFacing] of this camera.
-     */
+    /** The [CameraFacing] of this camera. */
     val cameraFacing: CameraFacing,
     val hardwareLevel: HardwareLevel,
     val processingTier: ProcessingTier,
@@ -37,14 +31,13 @@ class Camera(
     val supportedDistortionCorrectionModes: Set<DistortionCorrectionMode>,
     val supportedHotPixelModes: Set<HotPixelMode>,
     /**
-     * The supported flash modes of this camera.
-     * Keep in mind that support also depends on the camera mode used.
+     * The supported flash modes of this camera. Keep in mind that support also depends on the
+     * camera mode used.
      */
     val supportedFlashModes: Set<FlashMode>,
 ) {
-    override fun equals(other: Any?) = this::class.safeCast(other)?.let {
-        this.cameraId == it.cameraId
-    } ?: false
+    override fun equals(other: Any?) =
+        this::class.safeCast(other)?.let { this.cameraId == it.cameraId } ?: false
 
     override fun hashCode() = this::class.qualifiedName.hashCode() + cameraId.hashCode()
 

@@ -37,8 +37,17 @@ class Camera2MeteringTest {
 
     @Test
     fun keepsTheRegionInsideTheSensor() {
-        assertArrayEquals(intArrayOf(0, 0, 300, 300), Camera2Metering.regionBounds(0f, 0f, 4000, 3000))
-        assertArrayEquals(intArrayOf(3700, 2700, 300, 300), Camera2Metering.regionBounds(1f, 1f, 4000, 3000))
-        assertArrayEquals(intArrayOf(1850, 1350, 300, 300), Camera2Metering.regionBounds(0.5f, 0.5f, 4000, 3000))
+        assertArrayEquals(
+            intArrayOf(0, 0, 300, 300),
+            Camera2Metering.regionBounds(0f, 0f, 4000, 3000),
+        )
+        assertArrayEquals(
+            intArrayOf(3700, 2700, 300, 300),
+            Camera2Metering.regionBounds(1f, 1f, 4000, 3000),
+        )
+        assertArrayEquals(
+            intArrayOf(1850, 1350, 300, 300),
+            Camera2Metering.regionBounds(0.5f, 0.5f, 4000, 3000),
+        )
     }
 }

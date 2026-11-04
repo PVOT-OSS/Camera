@@ -24,32 +24,39 @@ class ViewfinderGestures(
     var viewFinderTouchEvent: MotionEvent? = null
 
     private val gestureDetector by lazy {
-        GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
-            override fun onSingleTapUp(e: MotionEvent): Boolean {
-                viewFinderTouchEvent = e
-                viewModel.focus(e.x, e.y)
-                return false
-            }
+        GestureDetector(
+            context,
+            object : GestureDetector.SimpleOnGestureListener() {
+                override fun onSingleTapUp(e: MotionEvent): Boolean {
+                    viewFinderTouchEvent = e
+                    viewModel.focus(e.x, e.y)
+                    return false
+                }
 
-            override fun onFling(
-                e1: MotionEvent?, e2: MotionEvent, velocityX: Float, velocityY: Float
-            ): Boolean {
-                return e1?.let {
-                    if (!handler.hasMessages(MSG_ON_PINCH_TO_ZOOM) &&
-                        abs(it.x - e2.x) > 75 * context.resources.displayMetrics.density
-                    ) {
-                        if (e2.x > it.x) {
-                            // Left to right
-                            viewModel.previousCameraMode()
-                        } else {
-                            // Right to left
-                            viewModel.nextCameraMode()
+                override fun onFling(
+                    e1: MotionEvent?,
+                    e2: MotionEvent,
+                    velocityX: Float,
+                    velocityY: Float,
+                ): Boolean {
+                    return e1?.let {
+                        if (
+                            !handler.hasMessages(MSG_ON_PINCH_TO_ZOOM) &&
+                                abs(it.x - e2.x) > 75 * context.resources.displayMetrics.density
+                        ) {
+                            if (e2.x > it.x) {
+                                // Left to right
+                                viewModel.previousCameraMode()
+                            } else {
+                                // Right to left
+                                viewModel.nextCameraMode()
+                            }
                         }
-                    }
-                    true
-                } ?: false
-            }
-        })
+                        true
+                    } ?: false
+                }
+            },
+        )
     }
 
     private val zoomGestureDetector by lazy {

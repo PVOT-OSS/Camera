@@ -14,10 +14,12 @@ import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun CameraTheme(content: @Composable () -> Unit) {
-    val colorScheme = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> dynamicDarkColorScheme(LocalContext.current)
-        else -> darkColorScheme()
-    }
+    val colorScheme =
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
+                dynamicDarkColorScheme(LocalContext.current)
+            else -> darkColorScheme()
+        }
 
     MaterialTheme(colorScheme = colorScheme, content = content)
 }

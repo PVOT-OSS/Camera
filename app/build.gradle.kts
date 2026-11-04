@@ -35,7 +35,7 @@ android {
             setProguardFiles(
                 listOf(
                     getDefaultProguardFile("proguard-android-optimize.txt"),
-                    "proguard-rules.pro"
+                    "proguard-rules.pro",
                 )
             )
         }
@@ -51,19 +51,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_17)
-        }
-    }
+    kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
 
-    buildFeatures {
-        compose = true
-    }
+    buildFeatures { compose = true }
 
-    lint {
-        lintConfig = file("lint.xml")
-    }
+    lint { lintConfig = file("lint.xml") }
 }
 
 dependencies {
@@ -105,4 +97,3 @@ dependencies {
     implementation(libs.zxing.core)
     implementation(libs.zxing.cpp.android)
 }
-

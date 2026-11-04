@@ -5,9 +5,7 @@
 
 package org.prauga.camera.models
 
-/**
- * Thermal status.
- */
+/** Thermal status. */
 enum class ThermalStatus {
     NONE,
     LIGHT,

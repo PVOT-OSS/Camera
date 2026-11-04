@@ -14,12 +14,11 @@ import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatImageView
 import org.prauga.camera.ext.stackBlur
 
-/**
- * Display a blurred viewfinder snapshot during camera rebind.
- */
-class PreviewBlurView @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : AppCompatImageView(context, attrs, defStyleAttr) {
+/** Display a blurred viewfinder snapshot during camera rebind. */
+class PreviewBlurView
+@JvmOverloads
+constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
+    AppCompatImageView(context, attrs, defStyleAttr) {
     var previewBitmap: () -> Bitmap? = { null }
 
     init {

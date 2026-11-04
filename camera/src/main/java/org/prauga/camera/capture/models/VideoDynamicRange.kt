@@ -5,9 +5,7 @@
 
 package org.prauga.camera.capture.models
 
-/**
- * Video dynamic range.
- */
+/** Video dynamic range. */
 enum class VideoDynamicRange {
     SDR,
     HLG_10_BIT,

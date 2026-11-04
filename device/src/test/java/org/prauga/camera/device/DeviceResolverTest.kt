@@ -14,15 +14,16 @@ import org.prauga.camera.capture.models.HardwareLevel
 import org.prauga.camera.capture.models.ProcessingTier
 
 class DeviceResolverTest {
-    private val device = DeviceInfo(
-        manufacturer = "Google",
-        brand = "google",
-        model = "Pixel 9",
-        device = "tokay",
-        socManufacturer = "Google",
-        socModel = "Tensor G4",
-        sdk = 37,
-    )
+    private val device =
+        DeviceInfo(
+            manufacturer = "Google",
+            brand = "google",
+            model = "Pixel 9",
+            device = "tokay",
+            socManufacturer = "Google",
+            socModel = "Tensor G4",
+            sdk = 37,
+        )
 
     private class TestModule(
         override val id: String,
@@ -40,38 +41,44 @@ class DeviceResolverTest {
         override fun capabilities(
             base: CameraCapabilities,
             characteristics: (String) -> CameraCharacteristics,
-        ) = zoomRatio?.let {
-            base.copy(logicalZoomRatios = base.logicalZoomRatios.toSortedMap().apply { put(it, it) })
-        } ?: base
+        ) =
+            zoomRatio?.let {
+                base.copy(
+                    logicalZoomRatios = base.logicalZoomRatios.toSortedMap().apply { put(it, it) }
+                )
+            } ?: base
     }
 
-    private val base = CameraCapabilities(
-        cameraId = "0",
-        hardwareLevel = HardwareLevel.FULL,
-        processingTier = ProcessingTier.A,
-        logicalZoomRatios = sortedMapOf(1f to 1f),
-        additionalVideoFrameRates = mapOf(),
-    )
+    private val base =
+        CameraCapabilities(
+            cameraId = "0",
+            hardwareLevel = HardwareLevel.FULL,
+            processingTier = ProcessingTier.A,
+            logicalZoomRatios = sortedMapOf(1f to 1f),
+            additionalVideoFrameRates = mapOf(),
+        )
 
     @Test
     fun resolvesOnlyMatchingModulesInLayerOrder() {
-        val resolved = DeviceResolver(
-            listOf(
-                TestModule("pixel-9", DeviceModule.Layer.DEVICE, matchingDevice = "tokay"),
-                TestModule("other", DeviceModule.Layer.DEVICE, matchingDevice = "frankel"),
-                TestModule("tensor", DeviceModule.Layer.SOC),
-                GenericModule(),
-            )
-        ).resolve(device)
+        val resolved =
+            DeviceResolver(
+                    listOf(
+                        TestModule("pixel-9", DeviceModule.Layer.DEVICE, matchingDevice = "tokay"),
+                        TestModule("other", DeviceModule.Layer.DEVICE, matchingDevice = "frankel"),
+                        TestModule("tensor", DeviceModule.Layer.SOC),
+                        GenericModule(),
+                    )
+                )
+                .resolve(device)
 
         assertEquals(listOf("generic", "tensor", "pixel-9"), resolved.modules.map { it.id })
     }
 
     @Test
     fun modulesWithoutOverridesKeepTheDefaults() {
-        val resolved = DeviceResolver(
-            listOf(TestModule("generic", DeviceModule.Layer.GENERIC))
-        ).resolve(device)
+        val resolved =
+            DeviceResolver(listOf(TestModule("generic", DeviceModule.Layer.GENERIC)))
+                .resolve(device)
 
         assertTrue(resolved.includesCamera("0", default = true))
         assertFalse(resolved.includesCamera("2", default = false))
@@ -80,13 +87,20 @@ class DeviceResolverTest {
 
     @Test
     fun laterLayersBuildOnEarlierOnes() {
-        val resolved = DeviceResolver(
-            listOf(
-                TestModule("generic", DeviceModule.Layer.GENERIC),
-                TestModule("soc", DeviceModule.Layer.SOC, includedCameraId = "2", zoomRatio = 0.5f),
-                TestModule("device", DeviceModule.Layer.DEVICE, zoomRatio = 2f),
-            )
-        ).resolve(device)
+        val resolved =
+            DeviceResolver(
+                    listOf(
+                        TestModule("generic", DeviceModule.Layer.GENERIC),
+                        TestModule(
+                            "soc",
+                            DeviceModule.Layer.SOC,
+                            includedCameraId = "2",
+                            zoomRatio = 0.5f,
+                        ),
+                        TestModule("device", DeviceModule.Layer.DEVICE, zoomRatio = 2f),
+                    )
+                )
+                .resolve(device)
 
         assertTrue(resolved.includesCamera("2", default = false))
         assertEquals(

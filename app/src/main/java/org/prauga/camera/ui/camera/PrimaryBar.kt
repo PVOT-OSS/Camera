@@ -8,7 +8,6 @@ package org.prauga.camera.ui.camera
 import android.graphics.drawable.AnimatedVectorDrawable
 import android.net.Uri
 import android.os.Looper
-import android.provider.MediaStore
 import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -46,19 +45,20 @@ class PrimaryBar(
     private val context = root.context
 
     private val galleryButtonCardView = root.findViewById<CardView>(R.id.galleryButtonCardView)
-    private val galleryButtonIconImageView = root.findViewById<ImageView>(R.id.galleryButtonIconImageView)
-    private val galleryButtonPreviewImageView = root.findViewById<ImageView>(R.id.galleryButtonPreviewImageView)
+    private val galleryButtonIconImageView =
+        root.findViewById<ImageView>(R.id.galleryButtonIconImageView)
+    private val galleryButtonPreviewImageView =
+        root.findViewById<ImageView>(R.id.galleryButtonPreviewImageView)
     private val shutterButton = root.findViewById<ImageButton>(R.id.shutterButton)
     private val flipCameraButton = root.findViewById<ImageButton>(R.id.flipCameraButton)
-    private val videoRecordingStateButton = root.findViewById<ImageButton>(R.id.videoRecordingStateButton)
+    private val videoRecordingStateButton =
+        root.findViewById<ImageButton>(R.id.videoRecordingStateButton)
 
     enum class ShutterAnimation(val resourceId: Int) {
         InitPhoto(R.drawable.avd_photo_capture),
         InitVideo(R.drawable.avd_mode_video_photo),
-
         PhotoCapture(R.drawable.avd_photo_capture),
         PhotoToVideo(R.drawable.avd_mode_photo_video),
-
         VideoToPhoto(R.drawable.avd_mode_video_photo),
         VideoStart(R.drawable.avd_video_start),
         VideoEnd(R.drawable.avd_video_end),
@@ -88,9 +88,9 @@ class PrimaryBar(
 
     fun startShutterAnimation(shutterAnimation: ShutterAnimation) {
         // Get appropriate drawable
-        val drawable = ContextCompat.getDrawable(
-            context, shutterAnimation.resourceId
-        ) as AnimatedVectorDrawable
+        val drawable =
+            ContextCompat.getDrawable(context, shutterAnimation.resourceId)
+                as AnimatedVectorDrawable
 
         // Update current drawable
         shutterButton.setImageDrawable(drawable)
@@ -106,9 +106,8 @@ class PrimaryBar(
 
     private fun startVideoRecordingStateAnimation(animation: VideoRecordingStateAnimation) {
         // Get appropriate drawable
-        val drawable = ContextCompat.getDrawable(
-            context, animation.resourceId
-        ) as AnimatedVectorDrawable
+        val drawable =
+            ContextCompat.getDrawable(context, animation.resourceId) as AnimatedVectorDrawable
 
         // Update current drawable
         videoRecordingStateButton.setImageDrawable(drawable)
@@ -159,13 +158,14 @@ class PrimaryBar(
                         onSuccess = { _, _ ->
                             galleryButtonPreviewImageView.isVisible = true
                             galleryButtonIconImageView.isVisible = false
-                        }
+                        },
                     )
                 }
-            } ?: run {
-                galleryButtonIconImageView.isVisible = true
-                galleryButtonPreviewImageView.isVisible = false
             }
+                ?: run {
+                    galleryButtonIconImageView.isVisible = true
+                    galleryButtonPreviewImageView.isVisible = false
+                }
         }
     }
 
@@ -179,60 +179,68 @@ class PrimaryBar(
 
     fun CoroutineScope.bind() {
         launch {
-            viewModel.uiState.select { it.cameraMode }.collectLatest { cameraMode ->
-                shutterButton.isInvisible = cameraMode == CameraMode.QR
-            }
+            viewModel.uiState
+                .select { it.cameraMode }
+                .collectLatest { cameraMode ->
+                    shutterButton.isInvisible = cameraMode == CameraMode.QR
+                }
         }
 
         launch {
-            viewModel.uiState.select { it.inSingleCaptureMode }.collectLatest { inSingleCaptureMode ->
-                galleryButtonCardView.isInvisible = inSingleCaptureMode
-            }
+            viewModel.uiState
+                .select { it.inSingleCaptureMode }
+                .collectLatest { inSingleCaptureMode ->
+                    galleryButtonCardView.isInvisible = inSingleCaptureMode
+                }
         }
 
         launch {
-            viewModel.uiState.select { it.cameraState }.collectLatest { cameraState ->
-                galleryButtonCardView.isEnabled = cameraState == CameraState.IDLE
-                // Shutter button must stay enabled
-                flipCameraButton.isEnabled = cameraState == CameraState.IDLE
-                videoRecordingStateButton.isVisible = cameraState.isRecordingVideo
-            }
+            viewModel.uiState
+                .select { it.cameraState }
+                .collectLatest { cameraState ->
+                    galleryButtonCardView.isEnabled = cameraState == CameraState.IDLE
+                    // Shutter button must stay enabled
+                    flipCameraButton.isEnabled = cameraState == CameraState.IDLE
+                    videoRecordingStateButton.isVisible = cameraState.isRecordingVideo
+                }
         }
 
         launch {
-            viewModel.uiState.select { it.screenRotation }.collectLatest { screenRotation ->
-                val compensationValue = screenRotation.compensationValue.toFloat()
+            viewModel.uiState
+                .select { it.screenRotation }
+                .collectLatest { screenRotation ->
+                    val compensationValue = screenRotation.compensationValue.toFloat()
 
-                galleryButtonCardView.smoothRotate(compensationValue)
-                shutterButton.smoothRotate(compensationValue)
-                flipCameraButton.smoothRotate(compensationValue)
-            }
+                    galleryButtonCardView.smoothRotate(compensationValue)
+                    shutterButton.smoothRotate(compensationValue)
+                    flipCameraButton.smoothRotate(compensationValue)
+                }
         }
 
         launch {
             viewModel.videoRecordEvent.collect { videoRecordEvent ->
                 when (videoRecordEvent) {
-                    is RecordingEvent.Started -> runOnUiThread {
-                        startVideoRecordingStateAnimation(
-                            VideoRecordingStateAnimation.Init
-                        )
-                    }
+                    is RecordingEvent.Started ->
+                        runOnUiThread {
+                            startVideoRecordingStateAnimation(VideoRecordingStateAnimation.Init)
+                        }
 
-                    is RecordingEvent.Paused -> runOnUiThread {
-                        startVideoRecordingStateAnimation(
-                            VideoRecordingStateAnimation.ResumeToPause
-                        )
-                    }
+                    is RecordingEvent.Paused ->
+                        runOnUiThread {
+                            startVideoRecordingStateAnimation(
+                                VideoRecordingStateAnimation.ResumeToPause
+                            )
+                        }
 
-                    is RecordingEvent.Resumed -> runOnUiThread {
-                        startVideoRecordingStateAnimation(
-                            VideoRecordingStateAnimation.PauseToResume
-                        )
-                    }
+                    is RecordingEvent.Resumed ->
+                        runOnUiThread {
+                            startVideoRecordingStateAnimation(
+                                VideoRecordingStateAnimation.PauseToResume
+                            )
+                        }
 
-                    is RecordingEvent.Finalized -> runOnUiThread {
-                        startShutterAnimation(ShutterAnimation.VideoEnd)
-                    }
+                    is RecordingEvent.Finalized ->
+                        runOnUiThread { startShutterAnimation(ShutterAnimation.VideoEnd) }
 
                     else -> {}
                 }
@@ -242,43 +250,51 @@ class PrimaryBar(
         launch {
             viewModel.cameraModeTransition.collectLatest { (oldCameraMode, newCameraMode) ->
                 when (oldCameraMode) {
-                    CameraMode.PHOTO -> when (newCameraMode) {
-                        CameraMode.VIDEO -> startShutterAnimation(ShutterAnimation.PhotoToVideo)
-                        else -> startShutterAnimation(ShutterAnimation.InitPhoto)
-                    }
+                    CameraMode.PHOTO ->
+                        when (newCameraMode) {
+                            CameraMode.VIDEO -> startShutterAnimation(ShutterAnimation.PhotoToVideo)
+                            else -> startShutterAnimation(ShutterAnimation.InitPhoto)
+                        }
 
-                    CameraMode.VIDEO -> when (newCameraMode) {
-                        CameraMode.PHOTO -> startShutterAnimation(ShutterAnimation.VideoToPhoto)
-                        else -> startShutterAnimation(ShutterAnimation.InitVideo)
-                    }
+                    CameraMode.VIDEO ->
+                        when (newCameraMode) {
+                            CameraMode.PHOTO -> startShutterAnimation(ShutterAnimation.VideoToPhoto)
+                            else -> startShutterAnimation(ShutterAnimation.InitVideo)
+                        }
 
-                    CameraMode.QR, null -> when (newCameraMode) {
-                        CameraMode.PHOTO -> startShutterAnimation(ShutterAnimation.InitPhoto)
+                    CameraMode.QR,
+                    null ->
+                        when (newCameraMode) {
+                            CameraMode.PHOTO -> startShutterAnimation(ShutterAnimation.InitPhoto)
 
-                        CameraMode.VIDEO -> startShutterAnimation(ShutterAnimation.InitVideo)
+                            CameraMode.VIDEO -> startShutterAnimation(ShutterAnimation.InitVideo)
 
-                        CameraMode.QR -> {}
-                    }
+                            CameraMode.QR -> {}
+                        }
                 }
             }
         }
 
         launch {
-            viewModel.uiState.select { it.capturedMedia }.collectLatest { capturedMedia ->
-                updateGalleryButton(capturedMedia.firstOrNull(), false)
-            }
+            viewModel.uiState
+                .select { it.capturedMedia }
+                .collectLatest { capturedMedia ->
+                    updateGalleryButton(capturedMedia.firstOrNull(), false)
+                }
         }
 
         launch {
-            viewModel.uiState.select { it.isShutterButtonEnabled }.collectLatest { isShutterButtonEnabled ->
-                shutterButton.isEnabled = isShutterButtonEnabled
-            }
+            viewModel.uiState
+                .select { it.isShutterButtonEnabled }
+                .collectLatest { isShutterButtonEnabled ->
+                    shutterButton.isEnabled = isShutterButtonEnabled
+                }
         }
 
         launch {
-            viewModel.uiState.select { it.canFlipCamera }.collectLatest { canFlipCamera ->
-                flipCameraButton.isInvisible = !canFlipCamera
-            }
+            viewModel.uiState
+                .select { it.canFlipCamera }
+                .collectLatest { canFlipCamera -> flipCameraButton.isInvisible = !canFlipCamera }
         }
     }
 }

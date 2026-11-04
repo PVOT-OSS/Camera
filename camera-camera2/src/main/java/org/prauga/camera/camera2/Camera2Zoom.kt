@@ -17,9 +17,8 @@ object Camera2Zoom {
             }
         }
 
-        val maxDigitalZoom = characteristics.get(
-            CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM
-        ) ?: 1f
+        val maxDigitalZoom =
+            characteristics.get(CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM) ?: 1f
 
         return 1f..maxDigitalZoom
     }
@@ -51,8 +50,9 @@ object Camera2Zoom {
             return range.start
         }
 
-        val inverse = 1f / range.start - linearZoom.coerceIn(0f, 1f) *
-                (1f / range.start - 1f / range.endInclusive)
+        val inverse =
+            1f / range.start -
+                linearZoom.coerceIn(0f, 1f) * (1f / range.start - 1f / range.endInclusive)
 
         return (1f / inverse).coerceIn(range)
     }

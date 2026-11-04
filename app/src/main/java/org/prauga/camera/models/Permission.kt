@@ -5,17 +5,11 @@
 
 package org.prauga.camera.models
 
-/**
- * Permissions.
- */
+/** Permissions. */
 enum class Permission {
-    /**
-     * Camera permission.
-     */
+    /** Camera permission. */
     CAMERA,
 
-    /**
-     * Location permission.
-     */
+    /** Location permission. */
     LOCATION,
 }

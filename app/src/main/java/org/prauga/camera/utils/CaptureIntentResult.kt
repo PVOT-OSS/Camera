@@ -13,10 +13,10 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Log
-import org.prauga.camera.ext.scale
-import org.prauga.camera.ext.transform
 import java.io.FileNotFoundException
 import java.io.InputStream
+import org.prauga.camera.ext.scale
+import org.prauga.camera.ext.transform
 
 object CaptureIntentResult {
     private val LOG_TAG = CaptureIntentResult::class.simpleName!!
@@ -29,32 +29,28 @@ object CaptureIntentResult {
     // https://developer.android.com/guide/components/activities/parcelables-and-bundles#sdbp
     private const val INLINE_MAX_SIDE_LEN_PIXELS = 256
 
-    fun build(
-        contentResolver: ContentResolver,
-        request: Intent,
-        input: Any,
-    ): Pair<Int, Intent?> {
+    fun build(contentResolver: ContentResolver, request: Intent, input: Any): Pair<Int, Intent?> {
         var outputUri: Uri? = null
         if (request.extras?.containsKey(MediaStore.EXTRA_OUTPUT) == true) {
-            outputUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                request.extras?.getParcelable(MediaStore.EXTRA_OUTPUT, Uri::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                request.extras?.get(MediaStore.EXTRA_OUTPUT) as Uri
-            }
+            outputUri =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    request.extras?.getParcelable(MediaStore.EXTRA_OUTPUT, Uri::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    request.extras?.get(MediaStore.EXTRA_OUTPUT) as Uri
+                }
         }
 
         outputUri?.let {
             return try {
                 contentResolver.openOutputStream(it, "wt").use { outputStream ->
                     when (input) {
-                        is InputStream -> input.use {
-                            input.copyTo(outputStream!!)
-                        }
+                        is InputStream -> input.use { input.copyTo(outputStream!!) }
 
-                        is Uri -> contentResolver.openInputStream(input).use { inputStream ->
-                            inputStream!!.copyTo(outputStream!!)
-                        }
+                        is Uri ->
+                            contentResolver.openInputStream(input).use { inputStream ->
+                                inputStream!!.copyTo(outputStream!!)
+                            }
 
                         else -> throw IllegalStateException("Input is not Uri or InputStream")
                     }
@@ -67,28 +63,29 @@ object CaptureIntentResult {
             }
         }
 
-        return Activity.RESULT_OK to Intent().apply {
-            when (input) {
-                is InputStream -> {
-                    // No output URI provided, so return the photo inline as a downscaled Bitmap.
-                    action = "inline-data"
-                    val transform = ExifUtils.getTransform(input)
-                    val bitmap = input.use { BitmapFactory.decodeStream(input) }
-                    val scaledAndRotatedBitmap = bitmap.scale(
-                        INLINE_MAX_SIDE_LEN_PIXELS
-                    ).transform(transform)
-                    putExtra("data", scaledAndRotatedBitmap)
-                }
+        return Activity.RESULT_OK to
+            Intent().apply {
+                when (input) {
+                    is InputStream -> {
+                        // No output URI provided, so return the photo inline as a downscaled
+                        // Bitmap.
+                        action = "inline-data"
+                        val transform = ExifUtils.getTransform(input)
+                        val bitmap = input.use { BitmapFactory.decodeStream(input) }
+                        val scaledAndRotatedBitmap =
+                            bitmap.scale(INLINE_MAX_SIDE_LEN_PIXELS).transform(transform)
+                        putExtra("data", scaledAndRotatedBitmap)
+                    }
 
-                is Uri -> {
-                    // We saved the media (video), so return the URI that we saved.
-                    data = input
-                    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    putExtra(MediaStore.EXTRA_OUTPUT, input)
-                }
+                    is Uri -> {
+                        // We saved the media (video), so return the URI that we saved.
+                        data = input
+                        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        putExtra(MediaStore.EXTRA_OUTPUT, input)
+                    }
 
-                else -> throw IllegalStateException("Input is not Uri or InputStream")
+                    else -> throw IllegalStateException("Input is not Uri or InputStream")
+                }
             }
-        }
     }
 }

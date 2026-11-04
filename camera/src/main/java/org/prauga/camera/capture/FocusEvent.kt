@@ -7,10 +7,7 @@ package org.prauga.camera.capture
 
 import android.graphics.PointF
 
-data class FocusEvent(
-    val focusState: State,
-    val tapPoint: PointF?,
-) {
+data class FocusEvent(val focusState: State, val tapPoint: PointF?) {
     enum class State {
         NOT_STARTED,
         STARTED,

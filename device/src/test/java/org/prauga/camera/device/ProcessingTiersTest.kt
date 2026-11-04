@@ -10,18 +10,19 @@ import org.junit.Test
 import org.prauga.camera.capture.models.ProcessingTier
 
 class ProcessingTiersTest {
-    private val tierA = ProcessingTiers.Inputs(
-        raw = true,
-        manualSensor = true,
-        readSensorSettings = true,
-        burstCapture = true,
-        rawFps = 30.0,
-        yuvFps = 30.0,
-        noiseProfile = true,
-        shadingMap = true,
-        realtimeTimestamps = true,
-        aeLock = true,
-    )
+    private val tierA =
+        ProcessingTiers.Inputs(
+            raw = true,
+            manualSensor = true,
+            readSensorSettings = true,
+            burstCapture = true,
+            rawFps = 30.0,
+            yuvFps = 30.0,
+            noiseProfile = true,
+            shadingMap = true,
+            realtimeTimestamps = true,
+            aeLock = true,
+        )
 
     @Test
     fun fullRawCameraIsTierA() {
@@ -48,9 +49,6 @@ class ProcessingTiersTest {
 
     @Test
     fun slowYuvIsTierC() {
-        assertEquals(
-            ProcessingTier.C,
-            ProcessingTiers.tier(tierA.copy(raw = false, yuvFps = 5.0)),
-        )
+        assertEquals(ProcessingTier.C, ProcessingTiers.tier(tierA.copy(raw = false, yuvFps = 5.0)))
     }
 }

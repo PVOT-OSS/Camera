@@ -56,6 +56,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 import org.prauga.camera.R
 import org.prauga.camera.capture.models.Camera
 import org.prauga.camera.capture.models.CameraConfiguration
@@ -65,9 +68,6 @@ import org.prauga.camera.capture.models.FlashMode
 import org.prauga.camera.capture.models.PhotoOutputFormat
 import org.prauga.camera.capture.models.VideoQuality
 import org.prauga.camera.viewmodels.CameraViewModel
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
-import java.util.Locale
 
 private val Yellow = Color(0xFFFFD60A)
 private val Recording = Color(0xFFFF3B30)
@@ -94,10 +94,10 @@ fun CameraScreen(
         val viewFinderBottom = TopBarHeight + maxWidth * 4 / 3
 
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(TopBarHeight)
-                .padding(start = 21.dp, end = 22.dp, bottom = 22.dp),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .height(TopBarHeight)
+                    .padding(start = 21.dp, end = 22.dp, bottom = 22.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom,
         ) {
@@ -117,9 +117,7 @@ fun CameraScreen(
                 activeCamera = activeCamera,
                 availableCameras = uiState.lenses.second,
                 zoomRatio = uiState.zoomState?.zoomRatio ?: 1f,
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .offset(y = viewFinderBottom - 48.dp),
+                modifier = Modifier.align(Alignment.TopCenter).offset(y = viewFinderBottom - 48.dp),
                 onSelectCamera = viewModel::selectCamera,
                 onZoom = viewModel::smoothZoom,
                 onResetZoom = viewModel::resetZoom,
@@ -127,11 +125,11 @@ fun CameraScreen(
         }
 
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .height(maxHeight - viewFinderBottom)
-                .navigationBarsPadding(),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .height(maxHeight - viewFinderBottom)
+                    .navigationBarsPadding(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(modifier = Modifier.height(12.dp))
@@ -146,9 +144,8 @@ fun CameraScreen(
             Spacer(modifier = Modifier.weight(1f))
 
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 31.dp, end = 30.dp, bottom = 12.dp),
+                modifier =
+                    Modifier.fillMaxWidth().padding(start = 31.dp, end = 30.dp, bottom = 12.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 LatestCapture(
@@ -185,11 +182,12 @@ private fun GlassSurface(
     content: @Composable () -> Unit,
 ) {
     Box(
-        modifier = modifier
-            .shadow(16.dp, shape, ambientColor = Color.Black.copy(alpha = 0.18f))
-            .clip(shape)
-            .background(Glass.copy(alpha = alpha))
-            .border(BorderStroke(0.6.dp, Color.White.copy(alpha = 0.24f)), shape),
+        modifier =
+            modifier
+                .shadow(16.dp, shape, ambientColor = Color.Black.copy(alpha = 0.18f))
+                .clip(shape)
+                .background(Glass.copy(alpha = alpha))
+                .border(BorderStroke(0.6.dp, Color.White.copy(alpha = 0.24f)), shape),
         contentAlignment = Alignment.Center,
     ) {
         content()
@@ -200,23 +198,21 @@ private fun GlassSurface(
 private fun FormatChip(cameraConfiguration: CameraConfiguration?) {
     val photoOutputFormat = (cameraConfiguration as? CameraConfiguration.Photo)?.photoOutputFormat
 
-    GlassSurface(
-        modifier = Modifier.size(74.dp, 32.dp),
-        shape = RoundedCornerShape(17.dp),
-    ) {
+    GlassSurface(modifier = Modifier.size(74.dp, 32.dp), shape = RoundedCornerShape(17.dp)) {
         Text(
-            text = when (photoOutputFormat) {
-                PhotoOutputFormat.JPEG -> "JPEG"
-                PhotoOutputFormat.JPEG_ULTRA_HDR -> "UHDR"
-                PhotoOutputFormat.RAW -> "RAW"
-                null -> when (cameraConfiguration) {
-                    is CameraConfiguration.Video -> stringResource(
-                        videoQualityTitle(cameraConfiguration.videoQuality)
-                    )
-                    else -> "QR"
-                }
-                else -> "RAW+J"
-            },
+            text =
+                when (photoOutputFormat) {
+                    PhotoOutputFormat.JPEG -> "JPEG"
+                    PhotoOutputFormat.JPEG_ULTRA_HDR -> "UHDR"
+                    PhotoOutputFormat.RAW -> "RAW"
+                    null ->
+                        when (cameraConfiguration) {
+                            is CameraConfiguration.Video ->
+                                stringResource(videoQualityTitle(cameraConfiguration.videoQuality))
+                            else -> "QR"
+                        }
+                    else -> "RAW+J"
+                },
             color = Color.White,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
@@ -224,13 +220,14 @@ private fun FormatChip(cameraConfiguration: CameraConfiguration?) {
     }
 }
 
-private fun videoQualityTitle(videoQuality: VideoQuality) = when (videoQuality) {
-    VideoQuality.SD -> R.string.video_quality_sd
-    VideoQuality.HD -> R.string.video_quality_hd
-    VideoQuality.FHD -> R.string.video_quality_fhd
-    VideoQuality.QHD -> R.string.video_quality_qhd
-    VideoQuality.UHD -> R.string.video_quality_uhd
-}
+private fun videoQualityTitle(videoQuality: VideoQuality) =
+    when (videoQuality) {
+        VideoQuality.SD -> R.string.video_quality_sd
+        VideoQuality.HD -> R.string.video_quality_hd
+        VideoQuality.FHD -> R.string.video_quality_fhd
+        VideoQuality.QHD -> R.string.video_quality_qhd
+        VideoQuality.UHD -> R.string.video_quality_uhd
+    }
 
 @Composable
 private fun QuickControls(
@@ -240,41 +237,37 @@ private fun QuickControls(
     onFlashLongPress: () -> Unit,
     onOpenControls: () -> Unit,
 ) {
-    GlassSurface(
-        modifier = Modifier.size(76.dp, 32.dp),
-        shape = RoundedCornerShape(17.dp),
-    ) {
+    GlassSurface(modifier = Modifier.size(76.dp, 32.dp), shape = RoundedCornerShape(17.dp)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .combinedClickable(
-                        enabled = isFlashEnabled,
-                        onLongClick = onFlashLongPress,
-                        onClick = onFlash,
-                    ),
+                modifier =
+                    Modifier.size(32.dp)
+                        .clip(CircleShape)
+                        .combinedClickable(
+                            enabled = isFlashEnabled,
+                            onLongClick = onFlashLongPress,
+                            onClick = onFlash,
+                        ),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     painter = painterResource(flashIcon(flashMode)),
                     contentDescription = stringResource(R.string.flash_button_description),
                     modifier = Modifier.size(18.dp),
-                    tint = when (flashMode) {
-                        FlashMode.OFF -> Color.White
-                        else -> Yellow
-                    }.copy(alpha = if (isFlashEnabled) 1f else 0.4f),
+                    tint =
+                        when (flashMode) {
+                            FlashMode.OFF -> Color.White
+                            else -> Yellow
+                        }.copy(alpha = if (isFlashEnabled) 1f else 0.4f),
                 )
             }
 
             Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .clip(CircleShape)
-                    .clickable(onClick = onOpenControls),
+                modifier =
+                    Modifier.size(32.dp).clip(CircleShape).clickable(onClick = onOpenControls),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -289,13 +282,14 @@ private fun QuickControls(
 }
 
 @DrawableRes
-private fun flashIcon(flashMode: FlashMode) = when (flashMode) {
-    FlashMode.OFF -> R.drawable.ic_quick_flash_off
-    FlashMode.AUTO -> R.drawable.ic_flash_auto
-    FlashMode.ON -> R.drawable.ic_flash_on
-    FlashMode.TORCH -> R.drawable.ic_flashlight_on
-    FlashMode.SCREEN -> R.drawable.ic_flash_screen
-}
+private fun flashIcon(flashMode: FlashMode) =
+    when (flashMode) {
+        FlashMode.OFF -> R.drawable.ic_quick_flash_off
+        FlashMode.AUTO -> R.drawable.ic_flash_auto
+        FlashMode.ON -> R.drawable.ic_flash_on
+        FlashMode.TORCH -> R.drawable.ic_flashlight_on
+        FlashMode.SCREEN -> R.drawable.ic_flash_screen
+    }
 
 @Composable
 private fun LensRow(
@@ -309,24 +303,28 @@ private fun LensRow(
 ) {
     val usesLogicalZoomRatio = activeCamera.logicalZoomRatios.size > 1
 
-    val lenses = when (usesLogicalZoomRatio) {
-        true -> activeCamera.logicalZoomRatios.map { (approximate, exact) ->
-            Triple(approximate, exact, null as Camera?)
-        }
+    val lenses =
+        when (usesLogicalZoomRatio) {
+            true ->
+                activeCamera.logicalZoomRatios.map { (approximate, exact) ->
+                    Triple(approximate, exact, null as Camera?)
+                }
 
-        false -> availableCameras.sortedBy { it.intrinsicZoomRatio }.map {
-            Triple(it.intrinsicZoomRatio, it.intrinsicZoomRatio, it)
+            false ->
+                availableCameras
+                    .sortedBy { it.intrinsicZoomRatio }
+                    .map { Triple(it.intrinsicZoomRatio, it.intrinsicZoomRatio, it) }
         }
-    }
 
     if (lenses.size < 2) {
         return
     }
 
-    val selectedIndex = when (usesLogicalZoomRatio) {
-        true -> lenses.indexOfLast { zoomRatio >= it.second }.coerceAtLeast(0)
-        false -> lenses.indexOfFirst { it.third == activeCamera }.coerceAtLeast(0)
-    }
+    val selectedIndex =
+        when (usesLogicalZoomRatio) {
+            true -> lenses.indexOfLast { zoomRatio >= it.second }.coerceAtLeast(0)
+            false -> lenses.indexOfFirst { it.third == activeCamera }.coerceAtLeast(0)
+        }
 
     Row(
         modifier = modifier.height(34.dp),
@@ -338,24 +336,26 @@ private fun LensRow(
             val size by animateDpAsState(if (selected) 34.dp else 30.dp, tween(240))
 
             Box(
-                modifier = Modifier
-                    .size(size)
-                    .clip(CircleShape)
-                    .background(Lens.copy(alpha = if (selected) 0.65f else 0.22f))
-                    .clickable {
-                        when {
-                            selected -> onResetZoom()
-                            camera != null -> onSelectCamera(camera)
-                            else -> onZoom(exact)
-                        }
-                    },
+                modifier =
+                    Modifier.size(size)
+                        .clip(CircleShape)
+                        .background(Lens.copy(alpha = if (selected) 0.65f else 0.22f))
+                        .clickable {
+                            when {
+                                selected -> onResetZoom()
+                                camera != null -> onSelectCamera(camera)
+                                else -> onZoom(exact)
+                            }
+                        },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = when (selected) {
-                        true -> "${formatZoomRatio(if (usesLogicalZoomRatio) zoomRatio else approximate)}x"
-                        false -> formatZoomRatio(approximate)
-                    },
+                    text =
+                        when (selected) {
+                            true ->
+                                "${formatZoomRatio(if (usesLogicalZoomRatio) zoomRatio else approximate)}x"
+                            false -> formatZoomRatio(approximate)
+                        },
                     color = if (selected) Yellow else Color.White,
                     fontSize = if (selected) 14.sp else 12.sp,
                     fontWeight = FontWeight.Bold,
@@ -369,10 +369,11 @@ private val DECIMAL_FORMAT_SYMBOLS = DecimalFormatSymbols(Locale.US)
 private val ZOOM_RATIO_FORMATTER = DecimalFormat("0.#", DECIMAL_FORMAT_SYMBOLS)
 private val ZOOM_RATIO_FORMATTER_SUB_ONE = DecimalFormat(".#", DECIMAL_FORMAT_SYMBOLS)
 
-private fun formatZoomRatio(zoomRatio: Float): String = when (zoomRatio < 1f) {
-    true -> ZOOM_RATIO_FORMATTER_SUB_ONE.format(zoomRatio)
-    false -> ZOOM_RATIO_FORMATTER.format(zoomRatio)
-}
+private fun formatZoomRatio(zoomRatio: Float): String =
+    when (zoomRatio < 1f) {
+        true -> ZOOM_RATIO_FORMATTER_SUB_ONE.format(zoomRatio)
+        false -> ZOOM_RATIO_FORMATTER.format(zoomRatio)
+    }
 
 @Composable
 private fun ShutterButton(
@@ -385,55 +386,54 @@ private fun ShutterButton(
     val pressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(if (pressed) 0.92f else 1f, tween(85))
 
-    val recording = cameraState == CameraState.RECORDING_VIDEO ||
+    val recording =
+        cameraState == CameraState.RECORDING_VIDEO ||
             cameraState == CameraState.RECORDING_VIDEO_PAUSED
-    val coreColor by animateColorAsState(
-        when (cameraMode) {
-            CameraMode.VIDEO -> Recording
-            else -> Color.White
-        },
-        tween(240),
-    )
+    val coreColor by
+        animateColorAsState(
+            when (cameraMode) {
+                CameraMode.VIDEO -> Recording
+                else -> Color.White
+            },
+            tween(240),
+        )
     val coreSize by animateDpAsState(if (recording) 30.dp else 64.dp, tween(240))
     val coreRadius by animateDpAsState(if (recording) 8.dp else 32.dp, tween(240))
 
     Box(
-        modifier = Modifier
-            .size(78.dp)
-            .scale(scale)
-            .clip(CircleShape)
-            .background(Color(0xFF999999).copy(alpha = 0.25f))
-            .border(BorderStroke(1.2.dp, Color.White.copy(alpha = 0.48f)), CircleShape)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                enabled = enabled,
-                onClick = onClick,
-            ),
+        modifier =
+            Modifier.size(78.dp)
+                .scale(scale)
+                .clip(CircleShape)
+                .background(Color(0xFF999999).copy(alpha = 0.25f))
+                .border(BorderStroke(1.2.dp, Color.White.copy(alpha = 0.48f)), CircleShape)
+                .clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    enabled = enabled,
+                    onClick = onClick,
+                ),
         contentAlignment = Alignment.Center,
     ) {
         Box(
-            modifier = Modifier
-                .size(coreSize)
-                .clip(RoundedCornerShape(coreRadius))
-                .background(coreColor.copy(alpha = if (enabled) 1f else 0.5f)),
+            modifier =
+                Modifier.size(coreSize)
+                    .clip(RoundedCornerShape(coreRadius))
+                    .background(coreColor.copy(alpha = if (enabled) 1f else 0.5f))
         )
     }
 }
 
 @Composable
-private fun LatestCapture(
-    uri: Uri?,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
+private fun LatestCapture(uri: Uri?, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Box(
-        modifier = modifier
-            .size(43.dp)
-            .clip(CircleShape)
-            .background(Glass.copy(alpha = 0.55f))
-            .border(BorderStroke(0.6.dp, Color.White.copy(alpha = 0.24f)), CircleShape)
-            .clickable(onClick = onClick),
+        modifier =
+            modifier
+                .size(43.dp)
+                .clip(CircleShape)
+                .background(Glass.copy(alpha = 0.55f))
+                .border(BorderStroke(0.6.dp, Color.White.copy(alpha = 0.24f)), CircleShape)
+                .clickable(onClick = onClick)
     ) {
         uri?.let {
             AsyncImage(
@@ -452,28 +452,20 @@ private fun ModeSelector(
     enabled: Boolean,
     onModeSelected: (CameraMode) -> Unit,
 ) {
-    Row(
-        modifier = Modifier.height(38.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Row(modifier = Modifier.height(38.dp), verticalAlignment = Alignment.CenterVertically) {
         ModeOrder.forEach { mode ->
             val selected = mode == cameraMode
-            val background by animateColorAsState(
-                Glass.copy(alpha = if (selected) 0.62f else 0f),
-                tween(260),
-            )
-            val textColor by animateColorAsState(
-                if (selected) Yellow else Color.White,
-                tween(260),
-            )
+            val background by
+                animateColorAsState(Glass.copy(alpha = if (selected) 0.62f else 0f), tween(260))
+            val textColor by animateColorAsState(if (selected) Yellow else Color.White, tween(260))
 
             Box(
-                modifier = Modifier
-                    .height(38.dp)
-                    .clip(RoundedCornerShape(21.dp))
-                    .background(background)
-                    .clickable(enabled = enabled && !selected) { onModeSelected(mode) }
-                    .padding(horizontal = 16.dp),
+                modifier =
+                    Modifier.height(38.dp)
+                        .clip(RoundedCornerShape(21.dp))
+                        .background(background)
+                        .clickable(enabled = enabled && !selected) { onModeSelected(mode) }
+                        .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
@@ -487,25 +479,21 @@ private fun ModeSelector(
     }
 }
 
-private fun modeTitle(cameraMode: CameraMode) = when (cameraMode) {
-    CameraMode.PHOTO -> R.string.camera_mode_photo
-    CameraMode.VIDEO -> R.string.camera_mode_video
-    CameraMode.QR -> R.string.camera_mode_qr
-}
+private fun modeTitle(cameraMode: CameraMode) =
+    when (cameraMode) {
+        CameraMode.PHOTO -> R.string.camera_mode_photo
+        CameraMode.VIDEO -> R.string.camera_mode_video
+        CameraMode.QR -> R.string.camera_mode_qr
+    }
 
 @Composable
-private fun FlipButton(
-    modifier: Modifier = Modifier,
-    enabled: Boolean,
-    onClick: () -> Unit,
-) {
+private fun FlipButton(modifier: Modifier = Modifier, enabled: Boolean, onClick: () -> Unit) {
     var turns by remember { mutableFloatStateOf(0f) }
     val rotation by animateFloatAsState(turns * 180f, tween(300))
 
     GlassSurface(
-        modifier = modifier
-            .size(44.dp)
-            .clickable(enabled = enabled) {
+        modifier =
+            modifier.size(44.dp).clickable(enabled = enabled) {
                 turns += 1f
                 onClick()
             },
@@ -515,9 +503,7 @@ private fun FlipButton(
         Icon(
             painter = painterResource(R.drawable.ic_quick_flip),
             contentDescription = stringResource(R.string.flip_camera_button_description),
-            modifier = Modifier
-                .size(20.dp)
-                .rotate(rotation),
+            modifier = Modifier.size(20.dp).rotate(rotation),
             tint = Color.White,
         )
     }

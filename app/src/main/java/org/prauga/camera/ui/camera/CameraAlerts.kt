@@ -26,16 +26,17 @@ class CameraAlerts(
     private val viewModel: CameraViewModel,
     private val activity: Activity,
 ) {
-    private val secondaryBottomBarLayout = root.findViewById<ConstraintLayout>(R.id.secondaryBottomBarLayout)
+    private val secondaryBottomBarLayout =
+        root.findViewById<ConstraintLayout>(R.id.secondaryBottomBarLayout)
 
     private val forceTorchSnackbar by lazy {
         Snackbar.make(
-            secondaryBottomBarLayout, R.string.force_torch_help, Snackbar.LENGTH_INDEFINITE
-        )
+                secondaryBottomBarLayout,
+                R.string.force_torch_help,
+                Snackbar.LENGTH_INDEFINITE,
+            )
             .setAnchorView(secondaryBottomBarLayout)
-            .setAction(android.R.string.ok) {
-                viewModel.setForceModeHelpShown(true)
-            }
+            .setAction(android.R.string.ok) { viewModel.setForceModeHelpShown(true) }
     }
 
     fun showForceTorchHelp() {
@@ -49,18 +50,10 @@ class CameraAlerts(
             viewModel.cameraError.collect { cameraError ->
                 cameraError?.let {
                     // Log the error
-                    Log.e(
-                        LOG_TAG,
-                        "Error: code: ${it.code}, type: ${it.type}",
-                        it.cause
-                    )
+                    Log.e(LOG_TAG, "Error: code: ${it.code}, type: ${it.type}", it.cause)
 
                     val showToast = { stringId: Int ->
-                        Toast.makeText(
-                            activity,
-                            stringId,
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        Toast.makeText(activity, stringId, Toast.LENGTH_SHORT).show()
                     }
 
                     when (it.code) {
@@ -125,47 +118,49 @@ class CameraAlerts(
         }
 
         launch {
-            viewModel.uiState.select { it.thermalStatus }.collectLatest { thermalStatus ->
-                val showSnackBar = { stringId: Int ->
-                    Snackbar.make(
-                        secondaryBottomBarLayout,
-                        stringId,
-                        Snackbar.LENGTH_INDEFINITE
-                    )
-                        .setAnchorView(secondaryBottomBarLayout)
-                        .setAction(android.R.string.ok) {
-                            // Do nothing
+            viewModel.uiState
+                .select { it.thermalStatus }
+                .collectLatest { thermalStatus ->
+                    val showSnackBar = { stringId: Int ->
+                        Snackbar.make(
+                                secondaryBottomBarLayout,
+                                stringId,
+                                Snackbar.LENGTH_INDEFINITE,
+                            )
+                            .setAnchorView(secondaryBottomBarLayout)
+                            .setAction(android.R.string.ok) {
+                                // Do nothing
+                            }
+                            .show()
+                    }
+
+                    when (thermalStatus) {
+                        ThermalStatus.NONE,
+                        ThermalStatus.LIGHT -> Unit
+
+                        ThermalStatus.MODERATE -> {
+                            showSnackBar(R.string.thermal_status_moderate)
                         }
-                        .show()
-                }
 
-                when (thermalStatus) {
-                    ThermalStatus.NONE,
-                    ThermalStatus.LIGHT -> Unit
+                        ThermalStatus.SEVERE -> {
+                            showSnackBar(R.string.thermal_status_severe)
+                        }
 
-                    ThermalStatus.MODERATE -> {
-                        showSnackBar(R.string.thermal_status_moderate)
-                    }
+                        ThermalStatus.CRITICAL -> {
+                            showSnackBar(R.string.thermal_status_critical)
+                        }
 
-                    ThermalStatus.SEVERE -> {
-                        showSnackBar(R.string.thermal_status_severe)
-                    }
+                        ThermalStatus.EMERGENCY -> {
+                            showSnackBar(R.string.thermal_status_emergency)
+                            activity.finish()
+                        }
 
-                    ThermalStatus.CRITICAL -> {
-                        showSnackBar(R.string.thermal_status_critical)
-                    }
-
-                    ThermalStatus.EMERGENCY -> {
-                        showSnackBar(R.string.thermal_status_emergency)
-                        activity.finish()
-                    }
-
-                    ThermalStatus.SHUTDOWN -> {
-                        showSnackBar(R.string.thermal_status_shutdown)
-                        activity.finish()
+                        ThermalStatus.SHUTDOWN -> {
+                            showSnackBar(R.string.thermal_status_shutdown)
+                            activity.finish()
+                        }
                     }
                 }
-            }
         }
     }
 

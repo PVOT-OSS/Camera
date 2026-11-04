@@ -23,10 +23,7 @@ class RoutingCameraSession(
     private val photo: CameraSession,
     private val usePhotoSession: (CameraConfiguration) -> Boolean,
 ) : CameraSession {
-    class Target(
-        val primary: PreviewTarget,
-        val photo: PreviewTarget,
-    ) : PreviewTarget
+    class Target(val primary: PreviewTarget, val photo: PreviewTarget) : PreviewTarget
 
     private val _active = MutableStateFlow(primary)
     val active: CameraSession
@@ -37,13 +34,14 @@ class RoutingCameraSession(
     private var flashMode: FlashMode? = null
     private var exposureCompensationIndex: Int? = null
 
-    override val previewStreaming = combine(
-        _active,
-        primary.previewStreaming,
-        photo.previewStreaming,
-    ) { active, primaryStreaming, photoStreaming ->
-        if (active === photo) photoStreaming else primaryStreaming
-    }.stateIn(scope, SharingStarted.Eagerly, false)
+    override val previewStreaming =
+        combine(_active, primary.previewStreaming, photo.previewStreaming) {
+                active,
+                primaryStreaming,
+                photoStreaming ->
+                if (active === photo) photoStreaming else primaryStreaming
+            }
+            .stateIn(scope, SharingStarted.Eagerly, false)
 
     override val zoomState = _active.flatMapLatest { it.zoomState }
     override val tapToFocusInfoState = _active.flatMapLatest { it.tapToFocusInfoState }
@@ -60,7 +58,10 @@ class RoutingCameraSession(
 
     override fun previewBitmap() = active.previewBitmap()
 
-    override fun configure(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner) {
+    override fun configure(
+        cameraConfiguration: CameraConfiguration,
+        lifecycleOwner: LifecycleOwner,
+    ) {
         val next = if (usePhotoSession(cameraConfiguration)) photo else primary
 
         if (next !== active) {

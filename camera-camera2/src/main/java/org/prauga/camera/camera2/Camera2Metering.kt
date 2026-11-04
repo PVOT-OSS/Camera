@@ -27,15 +27,14 @@ object Camera2Metering {
         }
     }
 
-    fun regionBounds(
-        sensorX: Float,
-        sensorY: Float,
-        width: Int,
-        height: Int,
-    ): IntArray {
+    fun regionBounds(sensorX: Float, sensorY: Float, width: Int, height: Int): IntArray {
         val size = (minOf(width, height) * REGION_FRACTION).roundToInt().coerceAtLeast(1)
-        val left = (sensorX * width - size / 2f).roundToInt().coerceIn(0, (width - size).coerceAtLeast(0))
-        val top = (sensorY * height - size / 2f).roundToInt().coerceIn(0, (height - size).coerceAtLeast(0))
+        val left =
+            (sensorX * width - size / 2f).roundToInt().coerceIn(0, (width - size).coerceAtLeast(0))
+        val top =
+            (sensorY * height - size / 2f)
+                .roundToInt()
+                .coerceIn(0, (height - size).coerceAtLeast(0))
 
         return intArrayOf(left, top, size, size)
     }
@@ -44,7 +43,11 @@ object Camera2Metering {
         val (left, top, regionWidth, regionHeight) = regionBounds(sensorX, sensorY, width, height)
 
         return MeteringRectangle(
-            left, top, regionWidth, regionHeight, MeteringRectangle.METERING_WEIGHT_MAX - 1
+            left,
+            top,
+            regionWidth,
+            regionHeight,
+            MeteringRectangle.METERING_WEIGHT_MAX - 1,
         )
     }
 }

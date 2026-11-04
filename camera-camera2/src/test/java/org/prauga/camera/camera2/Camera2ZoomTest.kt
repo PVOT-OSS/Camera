@@ -20,7 +20,11 @@ class Camera2ZoomTest {
     @Test
     fun linearZoomRoundTrips() {
         listOf(0.5f, 1f, 2f, 5f, 8f).forEach {
-            assertEquals(it, Camera2Zoom.zoomRatio(range, Camera2Zoom.linearZoom(range, it)), 0.001f)
+            assertEquals(
+                it,
+                Camera2Zoom.zoomRatio(range, Camera2Zoom.linearZoom(range, it)),
+                0.001f,
+            )
         }
     }
 

@@ -48,34 +48,31 @@ class ViewfinderOverlays(
     private val viewFinderFocus = root.findViewById<ImageView>(R.id.viewFinderFocus)
     private val zoomLevel = root.findViewById<HorizontalSlider>(R.id.zoomLevel)
 
-    private val handler = object : Handler(Looper.getMainLooper()) {
-        override fun handleMessage(msg: Message) {
-            super.handleMessage(msg)
-            when (msg.what) {
-                MSG_HIDE_ZOOM_SLIDER -> {
-                    zoomLevel.isVisible = false
-                }
+    private val handler =
+        object : Handler(Looper.getMainLooper()) {
+            override fun handleMessage(msg: Message) {
+                super.handleMessage(msg)
+                when (msg.what) {
+                    MSG_HIDE_ZOOM_SLIDER -> {
+                        zoomLevel.isVisible = false
+                    }
 
-                MSG_HIDE_FOCUS_RING -> {
-                    viewFinderFocus.isVisible = false
-                }
+                    MSG_HIDE_FOCUS_RING -> {
+                        viewFinderFocus.isVisible = false
+                    }
 
-                MSG_HIDE_EXPOSURE_SLIDER -> {
-                    exposureLevel.isVisible = false
+                    MSG_HIDE_EXPOSURE_SLIDER -> {
+                        exposureLevel.isVisible = false
+                    }
                 }
             }
         }
-    }
 
     init {
         previewBlurView.previewBitmap = viewModel::previewBitmap
 
-        zoomLevel.onProgressChangedByUser = {
-            viewModel.setLinearZoom(it)
-        }
-        zoomLevel.textFormatter = {
-            "%.1fx".format(viewModel.uiState.value.zoomState?.zoomRatio)
-        }
+        zoomLevel.onProgressChangedByUser = { viewModel.setLinearZoom(it) }
+        zoomLevel.textFormatter = { "%.1fx".format(viewModel.uiState.value.zoomState?.zoomRatio) }
 
         // Set expose level callback & text formatter
         exposureLevel.onProgressChangedByUser = {
@@ -113,54 +110,61 @@ class ViewfinderOverlays(
     fun cancelCountDown() = countDownView.cancelCountDown()
 
     fun startCountDown(seconds: Int, onCountDownEnded: () -> Unit) {
-        countDownView.onPreviewAreaChanged(Rect().apply {
-            viewFinder.getGlobalVisibleRect(this)
-        })
+        countDownView.onPreviewAreaChanged(Rect().apply { viewFinder.getGlobalVisibleRect(this) })
         countDownView.startCountDown(seconds, onCountDownEnded)
     }
 
     fun CoroutineScope.bind() {
         launch {
-            viewModel.uiState.select { it.screenRotation }.collectLatest { screenRotation ->
-                // Rotate sliders
-                exposureLevel.screenRotation = screenRotation
-                zoomLevel.screenRotation = screenRotation
+            viewModel.uiState
+                .select { it.screenRotation }
+                .collectLatest { screenRotation ->
+                    // Rotate sliders
+                    exposureLevel.screenRotation = screenRotation
+                    zoomLevel.screenRotation = screenRotation
 
-                // Rotate info chip
-                islandView.setScreenRotation(screenRotation)
+                    // Rotate info chip
+                    islandView.setScreenRotation(screenRotation)
 
-                // Rotate count down view
-                countDownView.setScreenRotation(screenRotation)
-            }
-        }
-
-        launch {
-            viewModel.uiState.select { it.gridMode }.collectLatest { gridMode ->
-                gridView.mode = gridMode
-            }
-        }
-
-        launch {
-            viewModel.uiState.select { it.levelerEnabled }.collectLatest { levelerEnabled ->
-                levelerView.isVisible = levelerEnabled
-            }
-        }
-
-        launch {
-            viewModel.uiState.select { it.islandItems }.collectLatest { islandItems ->
-                islandView.setItems(islandItems)
-            }
-        }
-        launch {
-            viewModel.uiState.select { it.zoomState }.collectLatest { zoomState ->
-                zoomState?.takeIf { it.minZoomRatio != it.maxZoomRatio }?.let {
-                    zoomLevel.progress = it.linearZoom
-                    zoomLevel.isVisible = true
-
-                    handler.removeMessages(MSG_HIDE_ZOOM_SLIDER)
-                    handler.sendMessageDelayed(handler.obtainMessage(MSG_HIDE_ZOOM_SLIDER), 2000)
+                    // Rotate count down view
+                    countDownView.setScreenRotation(screenRotation)
                 }
-            }
+        }
+
+        launch {
+            viewModel.uiState
+                .select { it.gridMode }
+                .collectLatest { gridMode -> gridView.mode = gridMode }
+        }
+
+        launch {
+            viewModel.uiState
+                .select { it.levelerEnabled }
+                .collectLatest { levelerEnabled -> levelerView.isVisible = levelerEnabled }
+        }
+
+        launch {
+            viewModel.uiState
+                .select { it.islandItems }
+                .collectLatest { islandItems -> islandView.setItems(islandItems) }
+        }
+        launch {
+            viewModel.uiState
+                .select { it.zoomState }
+                .collectLatest { zoomState ->
+                    zoomState
+                        ?.takeIf { it.minZoomRatio != it.maxZoomRatio }
+                        ?.let {
+                            zoomLevel.progress = it.linearZoom
+                            zoomLevel.isVisible = true
+
+                            handler.removeMessages(MSG_HIDE_ZOOM_SLIDER)
+                            handler.sendMessageDelayed(
+                                handler.obtainMessage(MSG_HIDE_ZOOM_SLIDER),
+                                2000,
+                            )
+                        }
+                }
         }
 
         launch {
@@ -173,20 +177,24 @@ class ViewfinderOverlays(
                             tapToFocusInfoState.tapPoint!!.y - (viewFinderFocus.height / 2)
                         viewFinderFocus.isVisible = true
                         handler.removeMessages(MSG_HIDE_FOCUS_RING)
-                        ValueAnimator.ofInt(0.px, 8.px).apply {
-                            addUpdateListener { anim ->
-                                viewFinderFocus.setPadding(anim.animatedValue as Int)
+                        ValueAnimator.ofInt(0.px, 8.px)
+                            .apply {
+                                addUpdateListener { anim ->
+                                    viewFinderFocus.setPadding(anim.animatedValue as Int)
+                                }
                             }
-                        }.start()
+                            .start()
                     }
 
                     else -> {
                         handler.removeMessages(MSG_HIDE_FOCUS_RING)
-                        ValueAnimator.ofInt(8.px, 0.px).apply {
-                            addUpdateListener { anim ->
-                                viewFinderFocus.setPadding(anim.animatedValue as Int)
+                        ValueAnimator.ofInt(8.px, 0.px)
+                            .apply {
+                                addUpdateListener { anim ->
+                                    viewFinderFocus.setPadding(anim.animatedValue as Int)
+                                }
                             }
-                        }.start()
+                            .start()
 
                         handler.sendMessageDelayed(handler.obtainMessage(MSG_HIDE_FOCUS_RING), 500)
                     }
@@ -195,17 +203,20 @@ class ViewfinderOverlays(
         }
 
         launch {
-            viewModel.uiState.select { it.exposureCompensationRangeToLevel }.filterNotNull().collectLatest { (range, level) ->
-                exposureLevel.steps = range.endInclusive - range.start
-                exposureLevel.progress = level
-                exposureLevel.textFormatter = {
-                    val ev = Int.mapToRange(range, it)
-                    when (ev == 0) {
-                        true -> "0"
-                        false -> EXPOSURE_LEVEL_FORMATTER.format(ev).toString()
+            viewModel.uiState
+                .select { it.exposureCompensationRangeToLevel }
+                .filterNotNull()
+                .collectLatest { (range, level) ->
+                    exposureLevel.steps = range.endInclusive - range.start
+                    exposureLevel.progress = level
+                    exposureLevel.textFormatter = {
+                        val ev = Int.mapToRange(range, it)
+                        when (ev == 0) {
+                            true -> "0"
+                            false -> EXPOSURE_LEVEL_FORMATTER.format(ev).toString()
+                        }
                     }
                 }
-            }
         }
     }
 

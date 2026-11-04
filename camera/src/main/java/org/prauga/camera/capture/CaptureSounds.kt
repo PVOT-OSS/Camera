@@ -7,6 +7,8 @@ package org.prauga.camera.capture
 
 interface CaptureSounds {
     fun playShutterClick()
+
     fun playStartVideoRecording(): Boolean
+
     fun playStopVideoRecording()
 }

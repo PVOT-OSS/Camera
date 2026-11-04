@@ -21,6 +21,7 @@ import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import java.util.concurrent.Executor
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
 import org.prauga.camera.capture.models.Camera
@@ -32,7 +33,6 @@ import org.prauga.camera.capture.models.PhotoCaptureMode
 import org.prauga.camera.capture.models.PhotoOutputFormat
 import org.prauga.camera.capture.models.VideoMirrorMode
 import org.prauga.camera.capture.models.VideoStabilizationMode
-import java.util.concurrent.Executor
 
 @OptIn(ExperimentalCamera2Interop::class, ExperimentalZeroShutterLag::class)
 class CameraXBinder(
@@ -54,9 +54,7 @@ class CameraXBinder(
 
         // Make sure the extension mode is supported
         require(
-            cameraConfiguration.camera.supportsExtensionMode(
-                cameraConfiguration.extensionMode
-            )
+            cameraConfiguration.camera.supportsExtensionMode(cameraConfiguration.extensionMode)
         ) {
             "Selected extension mode (${
                 cameraConfiguration.extensionMode
@@ -64,118 +62,120 @@ class CameraXBinder(
         }
 
         // Initialize the use case we want and set its properties
-        val cameraUseCases = when (cameraConfiguration) {
-            is CameraConfiguration.Photo -> {
-                require(
-                    cameraConfiguration.photoCaptureMode != PhotoCaptureMode.ZERO_SHUTTER_LAG
-                            || cameraConfiguration.camera.supportsZsl
-                ) {
-                    "Requested ZSL capture mode when the camera doesn't support it"
-                }
-
-                require(
-                    cameraConfiguration.camera.supportedPhotoOutputFormats.contains(
-                        cameraConfiguration.photoOutputFormat
-                    )
-                ) {
-                    "Selected photo output format (${
-                        cameraConfiguration.photoOutputFormat
-                    } not supported by camera ${cameraConfiguration.camera.cameraId})"
-                }
-
-                cameraController.imageCaptureMode = cameraConfiguration.photoCaptureMode.toCameraXCaptureMode()
-
-                cameraController.imageOutputFormat = when (
-                    cameraConfiguration.photoOutputFormat
-                ) {
-                    PhotoOutputFormat.JPEG -> ImageCapture.OUTPUT_FORMAT_JPEG
-                    PhotoOutputFormat.JPEG_ULTRA_HDR -> ImageCapture.OUTPUT_FORMAT_JPEG_ULTRA_HDR
-                    PhotoOutputFormat.RAW -> ImageCapture.OUTPUT_FORMAT_RAW
-                    PhotoOutputFormat.RAW_JPEG -> ImageCapture.OUTPUT_FORMAT_RAW_JPEG
-                }
-
-                cameraController.imageCaptureResolutionSelector =
-                    ResolutionSelector.Builder()
-                        .setAspectRatioStrategy(
-                            AspectRatioStrategy(
-                                cameraConfiguration.photoAspectRatio.toCameraXAspectRatio(),
-                                AspectRatioStrategy.FALLBACK_RULE_AUTO,
-                            )
-                        )
-                        .setAllowedResolutionMode(
-                            if (cameraConfiguration.enableHighResolution) {
-                                ResolutionSelector.PREFER_HIGHER_RESOLUTION_OVER_CAPTURE_RATE
-                            } else {
-                                ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION
-                            }
-                        )
-                        .build()
-
-                CameraController.IMAGE_CAPTURE
-            }
-
-            is CameraConfiguration.Video -> {
-                // Check whether or not the video quality is supported
-                val videoQualityInfo = cameraConfiguration.camera.supportedVideoQualities[
-                    cameraConfiguration.videoQuality
-                ] ?: error("Video quality not supported by the camera")
-
-                require(
-                    videoQualityInfo.supportedFrameRates.contains(
-                        cameraConfiguration.videoFrameRate
-                    )
-                ) {
-                    "Video frame rate not supported with the requested video quality"
-                }
-
-                require(
-                    videoQualityInfo.supportedDynamicRanges.contains(
-                        cameraConfiguration.videoDynamicRange
-                    )
-                ) {
-                    "Video dynamic range not supported with the requested video quality"
-                }
-
-                // Set the quality
-                cameraController.videoCaptureQualitySelector =
-                    QualitySelector.from(cameraConfiguration.videoQuality.toCameraXQuality())
-
-                // Set the dynamic range
-                cameraController.videoCaptureDynamicRange =
-                    cameraConfiguration.videoDynamicRange.toCameraXDynamicRange()
-
-                // Set video mirror mode
-                cameraController.videoCaptureMirrorMode =
-                    when (cameraConfiguration.videoMirrorMode) {
-                        VideoMirrorMode.OFF -> MirrorMode.MIRROR_MODE_OFF
-                        VideoMirrorMode.ON -> MirrorMode.MIRROR_MODE_ON
-                        VideoMirrorMode.ON_FFC_ONLY -> when (
-                            cameraConfiguration.camera.cameraFacing
-                        ) {
-                            CameraFacing.FRONT -> MirrorMode.MIRROR_MODE_ON
-                            else -> MirrorMode.MIRROR_MODE_OFF
-                        }
+        val cameraUseCases =
+            when (cameraConfiguration) {
+                is CameraConfiguration.Photo -> {
+                    require(
+                        cameraConfiguration.photoCaptureMode != PhotoCaptureMode.ZERO_SHUTTER_LAG ||
+                            cameraConfiguration.camera.supportsZsl
+                    ) {
+                        "Requested ZSL capture mode when the camera doesn't support it"
                     }
 
-                CameraController.VIDEO_CAPTURE
-            }
+                    require(
+                        cameraConfiguration.camera.supportedPhotoOutputFormats.contains(
+                            cameraConfiguration.photoOutputFormat
+                        )
+                    ) {
+                        "Selected photo output format (${
+                        cameraConfiguration.photoOutputFormat
+                    } not supported by camera ${cameraConfiguration.camera.cameraId})"
+                    }
 
-            is CameraConfiguration.Qr -> {
-                cameraController.setImageAnalysisAnalyzer(analyzerExecutor, qrImageAnalyzer)
+                    cameraController.imageCaptureMode =
+                        cameraConfiguration.photoCaptureMode.toCameraXCaptureMode()
 
-                CameraController.IMAGE_ANALYSIS
+                    cameraController.imageOutputFormat =
+                        when (cameraConfiguration.photoOutputFormat) {
+                            PhotoOutputFormat.JPEG -> ImageCapture.OUTPUT_FORMAT_JPEG
+                            PhotoOutputFormat.JPEG_ULTRA_HDR ->
+                                ImageCapture.OUTPUT_FORMAT_JPEG_ULTRA_HDR
+                            PhotoOutputFormat.RAW -> ImageCapture.OUTPUT_FORMAT_RAW
+                            PhotoOutputFormat.RAW_JPEG -> ImageCapture.OUTPUT_FORMAT_RAW_JPEG
+                        }
+
+                    cameraController.imageCaptureResolutionSelector =
+                        ResolutionSelector.Builder()
+                            .setAspectRatioStrategy(
+                                AspectRatioStrategy(
+                                    cameraConfiguration.photoAspectRatio.toCameraXAspectRatio(),
+                                    AspectRatioStrategy.FALLBACK_RULE_AUTO,
+                                )
+                            )
+                            .setAllowedResolutionMode(
+                                if (cameraConfiguration.enableHighResolution) {
+                                    ResolutionSelector.PREFER_HIGHER_RESOLUTION_OVER_CAPTURE_RATE
+                                } else {
+                                    ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION
+                                }
+                            )
+                            .build()
+
+                    CameraController.IMAGE_CAPTURE
+                }
+
+                is CameraConfiguration.Video -> {
+                    // Check whether or not the video quality is supported
+                    val videoQualityInfo =
+                        cameraConfiguration.camera.supportedVideoQualities[
+                                cameraConfiguration.videoQuality]
+                            ?: error("Video quality not supported by the camera")
+
+                    require(
+                        videoQualityInfo.supportedFrameRates.contains(
+                            cameraConfiguration.videoFrameRate
+                        )
+                    ) {
+                        "Video frame rate not supported with the requested video quality"
+                    }
+
+                    require(
+                        videoQualityInfo.supportedDynamicRanges.contains(
+                            cameraConfiguration.videoDynamicRange
+                        )
+                    ) {
+                        "Video dynamic range not supported with the requested video quality"
+                    }
+
+                    // Set the quality
+                    cameraController.videoCaptureQualitySelector =
+                        QualitySelector.from(cameraConfiguration.videoQuality.toCameraXQuality())
+
+                    // Set the dynamic range
+                    cameraController.videoCaptureDynamicRange =
+                        cameraConfiguration.videoDynamicRange.toCameraXDynamicRange()
+
+                    // Set video mirror mode
+                    cameraController.videoCaptureMirrorMode =
+                        when (cameraConfiguration.videoMirrorMode) {
+                            VideoMirrorMode.OFF -> MirrorMode.MIRROR_MODE_OFF
+                            VideoMirrorMode.ON -> MirrorMode.MIRROR_MODE_ON
+                            VideoMirrorMode.ON_FFC_ONLY ->
+                                when (cameraConfiguration.camera.cameraFacing) {
+                                    CameraFacing.FRONT -> MirrorMode.MIRROR_MODE_ON
+                                    else -> MirrorMode.MIRROR_MODE_OFF
+                                }
+                        }
+
+                    CameraController.VIDEO_CAPTURE
+                }
+
+                is CameraConfiguration.Qr -> {
+                    cameraController.setImageAnalysisAnalyzer(analyzerExecutor, qrImageAnalyzer)
+
+                    CameraController.IMAGE_ANALYSIS
+                }
             }
-        }
 
         // Get the camera selector
-        val cameraSelector = extensionCameraSelector(
-            cameraConfiguration.camera, cameraConfiguration.extensionMode
-        )
+        val cameraSelector =
+            extensionCameraSelector(cameraConfiguration.camera, cameraConfiguration.extensionMode)
 
         // Workaround: We cannot set flash mode to screen with a non front facing camera.
         // VM will set the correct value later on
-        if (cameraConfiguration.camera.cameraFacing != CameraFacing.FRONT
-            && cameraController.flashMode == FlashMode.SCREEN
+        if (
+            cameraConfiguration.camera.cameraFacing != CameraFacing.FRONT &&
+                cameraController.flashMode == FlashMode.SCREEN
         ) {
             cameraController.flashMode = FlashMode.OFF
         }
@@ -196,40 +196,42 @@ class CameraXBinder(
     }
 
     private fun applyCamera2Options(cameraConfiguration: CameraConfiguration) {
-        val camera2CameraControl = cameraController.camera2CameraControl ?: run {
-            Log.wtf(LOG_TAG, "Camera2CameraControl not available even with camera ready?")
-            return
-        }
+        val camera2CameraControl =
+            cameraController.camera2CameraControl
+                ?: run {
+                    Log.wtf(LOG_TAG, "Camera2CameraControl not available even with camera ready?")
+                    return
+                }
 
         val camera2Options = cameraConfiguration.camera2Options
 
         // Set Camera2 CaptureRequest options
-        camera2CameraControl.setCaptureRequestOptions(CaptureRequestOptions.Builder()
-            .setFrameRate(
-                when (cameraConfiguration) {
-                    is CameraConfiguration.Video -> cameraConfiguration.videoFrameRate
-                    else -> null
-                }
-            )
-            .setVideoStabilizationMode(
-                when (cameraConfiguration) {
-                    is CameraConfiguration.Video -> when (
-                        cameraConfiguration.enableVideoStabilization
-                    ) {
-                        true -> VideoStabilizationMode.getMode(cameraConfiguration.camera)
-                        false -> null
+        camera2CameraControl.setCaptureRequestOptions(
+            CaptureRequestOptions.Builder()
+                .setFrameRate(
+                    when (cameraConfiguration) {
+                        is CameraConfiguration.Video -> cameraConfiguration.videoFrameRate
+                        else -> null
                     }
+                )
+                .setVideoStabilizationMode(
+                    when (cameraConfiguration) {
+                        is CameraConfiguration.Video ->
+                            when (cameraConfiguration.enableVideoStabilization) {
+                                true -> VideoStabilizationMode.getMode(cameraConfiguration.camera)
+                                false -> null
+                            }
 
-                    else -> null
-                } ?: VideoStabilizationMode.OFF
-            )
-            .setEdgeMode(camera2Options.edgeMode)
-            .setNoiseReductionMode(camera2Options.noiseReductionMode)
-            .setShadingMode(camera2Options.shadingMode)
-            .setColorCorrectionAberrationMode(camera2Options.colorCorrectionAberrationMode)
-            .setDistortionCorrectionMode(camera2Options.distortionCorrectionMode)
-            .setHotPixelMode(camera2Options.hotPixelMode)
-            .build()
+                        else -> null
+                    } ?: VideoStabilizationMode.OFF
+                )
+                .setEdgeMode(camera2Options.edgeMode)
+                .setNoiseReductionMode(camera2Options.noiseReductionMode)
+                .setShadingMode(camera2Options.shadingMode)
+                .setColorCorrectionAberrationMode(camera2Options.colorCorrectionAberrationMode)
+                .setDistortionCorrectionMode(camera2Options.distortionCorrectionMode)
+                .setHotPixelMode(camera2Options.hotPixelMode)
+                .build()
         )
     }
 

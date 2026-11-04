@@ -109,21 +109,16 @@ class Camera2Session(
     private var deviceOrientation = 0
     private var photoTimestamp = 0L
 
-    @Volatile
-    private var zoomRatio = 1f
+    @Volatile private var zoomRatio = 1f
 
-    @Volatile
-    private var zoomRatioRange = 1f..1f
+    @Volatile private var zoomRatioRange = 1f..1f
     private var zoomAnimator: ValueAnimator? = null
 
-    @Volatile
-    private var flashMode = FlashMode.OFF
+    @Volatile private var flashMode = FlashMode.OFF
 
-    @Volatile
-    private var exposureCompensationIndex = 0
+    @Volatile private var exposureCompensationIndex = 0
 
-    @Volatile
-    private var meteringRegions: Array<MeteringRectangle>? = null
+    @Volatile private var meteringRegions: Array<MeteringRectangle>? = null
     private var focusTapPoint: PointF? = null
     private var focusState = FocusState.IDLE
     private var activeArraySize: Rect? = null
@@ -139,13 +134,14 @@ class Camera2Session(
     private var precaptureState = PrecaptureState.IDLE
     private val precaptureTimeout = Runnable { finishPrecapture() }
 
-    private val orientationListener = object : OrientationEventListener(context) {
-        override fun onOrientationChanged(orientation: Int) {
-            if (orientation != ORIENTATION_UNKNOWN) {
-                deviceOrientation = (orientation + 45) / 90 * 90 % 360
+    private val orientationListener =
+        object : OrientationEventListener(context) {
+            override fun onOrientationChanged(orientation: Int) {
+                if (orientation != ORIENTATION_UNKNOWN) {
+                    deviceOrientation = (orientation + 45) / 90 * 90 % 360
+                }
             }
         }
-    }
 
     private val _previewStreaming = MutableStateFlow(false)
     override val previewStreaming = _previewStreaming.asStateFlow()
@@ -167,19 +163,28 @@ class Camera2Session(
         }
     }
 
-    private val surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-        override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
-            openCamera()
+    private val surfaceTextureListener =
+        object : TextureView.SurfaceTextureListener {
+            override fun onSurfaceTextureAvailable(
+                surface: SurfaceTexture,
+                width: Int,
+                height: Int,
+            ) {
+                openCamera()
+            }
+
+            override fun onSurfaceTextureSizeChanged(
+                surface: SurfaceTexture,
+                width: Int,
+                height: Int,
+            ) {
+                updatePreviewScale()
+            }
+
+            override fun onSurfaceTextureDestroyed(surface: SurfaceTexture) = true
+
+            override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
         }
-
-        override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {
-            updatePreviewScale()
-        }
-
-        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture) = true
-
-        override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
-    }
 
     override fun attachPreview(target: PreviewTarget) {
         require(target is Camera2PreviewTarget) { "Unsupported preview target $target" }
@@ -199,7 +204,10 @@ class Camera2Session(
         return textureView.getBitmap(width, height)
     }
 
-    override fun configure(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner) {
+    override fun configure(
+        cameraConfiguration: CameraConfiguration,
+        lifecycleOwner: LifecycleOwner,
+    ) {
         require(cameraConfiguration is CameraConfiguration.Photo) {
             "Camera2 only supports photo mode, got $cameraConfiguration"
         }
@@ -210,21 +218,24 @@ class Camera2Session(
         this.lifecycleOwner = lifecycleOwner
 
         val container = container ?: error("No preview target attached")
-        container.children.filter { it.isVisible }.forEach {
-            it.isVisible = false
-            hiddenViews.add(it)
-        }
-        textureView = TextureView(container.context).also {
-            it.surfaceTextureListener = surfaceTextureListener
-            container.addView(
-                it,
-                0,
-                ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                ),
-            )
-        }
+        container.children
+            .filter { it.isVisible }
+            .forEach {
+                it.isVisible = false
+                hiddenViews.add(it)
+            }
+        textureView =
+            TextureView(container.context).also {
+                it.surfaceTextureListener = surfaceTextureListener
+                container.addView(
+                    it,
+                    0,
+                    ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                    ),
+                )
+            }
 
         lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
     }
@@ -256,15 +267,14 @@ class Camera2Session(
         val screenFlash = screenFlash
         if (flashMode == FlashMode.SCREEN && screenFlash != null) {
             screenFlashApplied = true
-            screenFlash.apply {
-                cameraHandler.post { startPrecapture() }
-            }
+            screenFlash.apply { cameraHandler.post { startPrecapture() } }
             return
         }
 
         cameraHandler.post {
             when (flashMode) {
-                FlashMode.AUTO, FlashMode.ON -> startPrecapture()
+                FlashMode.AUTO,
+                FlashMode.ON -> startPrecapture()
                 else -> capturePhoto()
             }
         }
@@ -280,14 +290,18 @@ class Camera2Session(
             return
         }
 
-        val request = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
-            addTarget(previewSurface)
-            applyControls()
-            set(
-                CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                CameraMetadata.CONTROL_AE_PRECAPTURE_TRIGGER_START,
-            )
-        }.build()
+        val request =
+            camera
+                .createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                .apply {
+                    addTarget(previewSurface)
+                    applyControls()
+                    set(
+                        CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                        CameraMetadata.CONTROL_AE_PRECAPTURE_TRIGGER_START,
+                    )
+                }
+                .build()
 
         precaptureState = PrecaptureState.WAITING_START
         cameraHandler.postDelayed(precaptureTimeout, PRECAPTURE_TIMEOUT_MS)
@@ -296,11 +310,13 @@ class Camera2Session(
 
     private fun onPreviewResult(result: CaptureResult) {
         if (focusState == FocusState.SCANNING) {
-            val focused = when (result.get(CaptureResult.CONTROL_AF_STATE)) {
-                CameraMetadata.CONTROL_AF_STATE_FOCUSED_LOCKED -> FocusEvent.State.FOCUSED
-                CameraMetadata.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED -> FocusEvent.State.NOT_FOCUSED
-                else -> if (maxAfRegions == 0) FocusEvent.State.FOCUSED else null
-            }
+            val focused =
+                when (result.get(CaptureResult.CONTROL_AF_STATE)) {
+                    CameraMetadata.CONTROL_AF_STATE_FOCUSED_LOCKED -> FocusEvent.State.FOCUSED
+                    CameraMetadata.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED ->
+                        FocusEvent.State.NOT_FOCUSED
+                    else -> if (maxAfRegions == 0) FocusEvent.State.FOCUSED else null
+                }
 
             focused?.let {
                 focusState = FocusState.LOCKED
@@ -314,19 +330,21 @@ class Camera2Session(
         when (precaptureState) {
             PrecaptureState.IDLE -> {}
 
-            PrecaptureState.WAITING_START -> when (aeState) {
-                CameraMetadata.CONTROL_AE_STATE_PRECAPTURE -> {
-                    precaptureState = PrecaptureState.WAITING_DONE
+            PrecaptureState.WAITING_START ->
+                when (aeState) {
+                    CameraMetadata.CONTROL_AE_STATE_PRECAPTURE -> {
+                        precaptureState = PrecaptureState.WAITING_DONE
+                    }
+
+                    null,
+                    CameraMetadata.CONTROL_AE_STATE_CONVERGED,
+                    CameraMetadata.CONTROL_AE_STATE_FLASH_REQUIRED -> finishPrecapture()
                 }
 
-                null,
-                CameraMetadata.CONTROL_AE_STATE_CONVERGED,
-                CameraMetadata.CONTROL_AE_STATE_FLASH_REQUIRED -> finishPrecapture()
-            }
-
-            PrecaptureState.WAITING_DONE -> if (aeState != CameraMetadata.CONTROL_AE_STATE_PRECAPTURE) {
-                finishPrecapture()
-            }
+            PrecaptureState.WAITING_DONE ->
+                if (aeState != CameraMetadata.CONTROL_AE_STATE_PRECAPTURE) {
+                    finishPrecapture()
+                }
         }
     }
 
@@ -353,77 +371,82 @@ class Camera2Session(
 
         val burstRecorder = burstRecorder
         val frames = if (burstRecorder != null) Camera2BurstRecorder.FRAMES else 1
-        val requests = List(frames) { index ->
-            camera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE).apply {
-                setTag(index)
-                if (index == 0) {
-                    addTarget(imageReader.surface)
-                }
-                applyControls()
-                set(CaptureRequest.JPEG_ORIENTATION, jpegOrientation())
-                if (!inSingleCaptureMode.value) {
-                    location()?.let { set(CaptureRequest.JPEG_GPS_LOCATION, it) }
-                }
-                burstRecorder?.let {
-                    addTarget(it.imageReader.surface)
-                    set(CaptureRequest.CONTROL_AE_LOCK, true)
-                    set(
-                        CaptureRequest.STATISTICS_LENS_SHADING_MAP_MODE,
-                        CameraMetadata.STATISTICS_LENS_SHADING_MAP_MODE_ON,
-                    )
-                }
-            }.build()
-        }
+        val requests =
+            List(frames) { index ->
+                camera
+                    .createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
+                    .apply {
+                        setTag(index)
+                        if (index == 0) {
+                            addTarget(imageReader.surface)
+                        }
+                        applyControls()
+                        set(CaptureRequest.JPEG_ORIENTATION, jpegOrientation())
+                        if (!inSingleCaptureMode.value) {
+                            location()?.let { set(CaptureRequest.JPEG_GPS_LOCATION, it) }
+                        }
+                        burstRecorder?.let {
+                            addTarget(it.imageReader.surface)
+                            set(CaptureRequest.CONTROL_AE_LOCK, true)
+                            set(
+                                CaptureRequest.STATISTICS_LENS_SHADING_MAP_MODE,
+                                CameraMetadata.STATISTICS_LENS_SHADING_MAP_MODE_ON,
+                            )
+                        }
+                    }
+                    .build()
+            }
 
         photoTimestamp = System.currentTimeMillis()
         burstRecorder?.start(jpegOrientation())
 
-        val callback = object : CameraCaptureSession.CaptureCallback() {
-            override fun onCaptureStarted(
-                session: CameraCaptureSession,
-                request: CaptureRequest,
-                timestamp: Long,
-                frameNumber: Long,
-            ) {
-                if (request.tag != 0) {
-                    return
+        val callback =
+            object : CameraCaptureSession.CaptureCallback() {
+                override fun onCaptureStarted(
+                    session: CameraCaptureSession,
+                    request: CaptureRequest,
+                    timestamp: Long,
+                    frameNumber: Long,
+                ) {
+                    if (request.tag != 0) {
+                        return
+                    }
+
+                    onPhotoCaptureStatus(PhotoCaptureStatus.CaptureStarted)
+
+                    captureSounds.playShutterClick()
                 }
 
-                onPhotoCaptureStatus(PhotoCaptureStatus.CaptureStarted)
+                override fun onCaptureCompleted(
+                    session: CameraCaptureSession,
+                    request: CaptureRequest,
+                    result: TotalCaptureResult,
+                ) {
+                    burstRecorder?.onCaptureCompleted(result)
 
-                captureSounds.playShutterClick()
-            }
+                    if (request.tag == 0) {
+                        clearScreenFlash()
+                    }
+                }
 
-            override fun onCaptureCompleted(
-                session: CameraCaptureSession,
-                request: CaptureRequest,
-                result: TotalCaptureResult,
-            ) {
-                burstRecorder?.onCaptureCompleted(result)
+                override fun onCaptureFailed(
+                    session: CameraCaptureSession,
+                    request: CaptureRequest,
+                    failure: CaptureFailure,
+                ) {
+                    if (request.tag != 0) {
+                        Log.w(LOG_TAG, "Burst frame ${request.tag} failed: ${failure.reason}")
+                        return
+                    }
 
-                if (request.tag == 0) {
                     clearScreenFlash()
+                    Log.e(LOG_TAG, "Photo capture failed: ${failure.reason}")
+                    onPhotoCaptureStatus(
+                        PhotoCaptureStatus.Error(Exception("Capture failed: ${failure.reason}"))
+                    )
+                    captureStateMachine.endPhoto()
                 }
             }
-
-            override fun onCaptureFailed(
-                session: CameraCaptureSession,
-                request: CaptureRequest,
-                failure: CaptureFailure,
-            ) {
-                if (request.tag != 0) {
-                    Log.w(LOG_TAG, "Burst frame ${request.tag} failed: ${failure.reason}")
-                    return
-                }
-
-                clearScreenFlash()
-                Log.e(LOG_TAG, "Photo capture failed: ${failure.reason}")
-                onPhotoCaptureStatus(
-                    PhotoCaptureStatus.Error(Exception("Capture failed: ${failure.reason}"))
-                )
-                captureStateMachine.endPhoto()
-            }
-        }
 
         when (requests.size) {
             1 -> session.capture(requests.first(), callback, cameraHandler)
@@ -432,10 +455,11 @@ class Camera2Session(
     }
 
     private fun onImageAvailable(imageReader: ImageReader) {
-        val bytes = imageReader.acquireNextImage()?.use { image ->
-            val buffer = image.planes[0].buffer
-            ByteArray(buffer.remaining()).also { buffer.get(it) }
-        } ?: return
+        val bytes =
+            imageReader.acquireNextImage()?.use { image ->
+                val buffer = image.planes[0].buffer
+                ByteArray(buffer.remaining()).also { buffer.get(it) }
+            } ?: return
         if (lensFacing == CameraMetadata.LENS_FACING_FRONT && photoFfcMirror()) {
             JpegExif.flipHorizontally(bytes)
         }
@@ -449,9 +473,8 @@ class Camera2Session(
                     captureStateMachine.endPhoto()
                     onPhotoCaptureStatus(PhotoCaptureStatus.ImageSaved(null, photoOutputStream))
                 } else {
-                    val uri = Camera2MediaStore.savePhoto(
-                        contentResolver, bytes, "image/jpeg", timestamp
-                    )
+                    val uri =
+                        Camera2MediaStore.savePhoto(contentResolver, bytes, "image/jpeg", timestamp)
                     Log.d(LOG_TAG, "Photo capture succeeded: $uri")
                     onNewPicture(uri)
                     captureStateMachine.endPhoto()
@@ -475,10 +498,11 @@ class Camera2Session(
     }
 
     private fun jpegOrientation(): Int {
-        val orientation = when (lensFacing) {
-            CameraMetadata.LENS_FACING_FRONT -> -deviceOrientation
-            else -> deviceOrientation
-        }
+        val orientation =
+            when (lensFacing) {
+                CameraMetadata.LENS_FACING_FRONT -> -deviceOrientation
+                else -> deviceOrientation
+            }
 
         return (sensorOrientation + orientation + 360) % 360
     }
@@ -512,14 +536,23 @@ class Camera2Session(
         }
 
         val u = ((x - (textureView.width - displayedWidth) / 2f) / displayedWidth).coerceIn(0f, 1f)
-        val v = ((y - (textureView.height - displayedHeight) / 2f) / displayedHeight).coerceIn(0f, 1f)
+        val v =
+            ((y - (textureView.height - displayedHeight) / 2f) / displayedHeight).coerceIn(0f, 1f)
 
-        val (sensorX, sensorY) = Camera2Metering.viewToSensor(
-            u, v, sensorOrientation, lensFacing == CameraMetadata.LENS_FACING_FRONT
-        )
-        val region = Camera2Metering.region(
-            sensorX, sensorY, activeArraySize.width(), activeArraySize.height()
-        )
+        val (sensorX, sensorY) =
+            Camera2Metering.viewToSensor(
+                u,
+                v,
+                sensorOrientation,
+                lensFacing == CameraMetadata.LENS_FACING_FRONT,
+            )
+        val region =
+            Camera2Metering.region(
+                sensorX,
+                sensorY,
+                activeArraySize.width(),
+                activeArraySize.height(),
+            )
 
         cameraHandler.post {
             cameraHandler.removeCallbacks(cancelFocus)
@@ -527,7 +560,9 @@ class Camera2Session(
             meteringRegions = arrayOf(region)
             focusTapPoint = PointF(x, y)
             focusState = FocusState.SCANNING
-            scope.launch { tapToFocusInfoState.emit(FocusEvent(FocusEvent.State.STARTED, PointF(x, y))) }
+            scope.launch {
+                tapToFocusInfoState.emit(FocusEvent(FocusEvent.State.STARTED, PointF(x, y)))
+            }
 
             updatePreview()
             sendAfTrigger(CameraMetadata.CONTROL_AF_TRIGGER_START)
@@ -541,11 +576,15 @@ class Camera2Session(
         val session = captureSession ?: return
         val previewSurface = previewSurface ?: return
 
-        val request = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
-            addTarget(previewSurface)
-            applyControls()
-            set(CaptureRequest.CONTROL_AF_TRIGGER, trigger)
-        }.build()
+        val request =
+            camera
+                .createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                .apply {
+                    addTarget(previewSurface)
+                    applyControls()
+                    set(CaptureRequest.CONTROL_AF_TRIGGER, trigger)
+                }
+                .build()
 
         try {
             session.capture(request, null, cameraHandler)
@@ -564,12 +603,11 @@ class Camera2Session(
             return
         }
 
-        zoomAnimator = ValueAnimator.ofFloat(
-            this.zoomRatio, zoomRatio.coerceIn(zoomRatioRange)
-        ).apply {
-            addUpdateListener { setZoomRatio(it.animatedValue as Float) }
-            start()
-        }
+        zoomAnimator =
+            ValueAnimator.ofFloat(this.zoomRatio, zoomRatio.coerceIn(zoomRatioRange)).apply {
+                addUpdateListener { setZoomRatio(it.animatedValue as Float) }
+                start()
+            }
     }
 
     override fun resetZoom() = smoothZoom(1f)
@@ -612,38 +650,40 @@ class Camera2Session(
         val cameraId = cameraConfiguration.camera.cameraId
         val characteristics = cameraManager.getCameraCharacteristics(cameraId)
         sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) ?: 0
-        lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING)
-            ?: CameraMetadata.LENS_FACING_BACK
+        lensFacing =
+            characteristics.get(CameraCharacteristics.LENS_FACING)
+                ?: CameraMetadata.LENS_FACING_BACK
         activeArraySize = characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
         maxAfRegions = characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AF) ?: 0
         maxAeRegions = characteristics.get(CameraCharacteristics.CONTROL_MAX_REGIONS_AE) ?: 0
 
-        val photoFormat = when (cameraConfiguration.photoOutputFormat) {
-            PhotoOutputFormat.JPEG_ULTRA_HDR -> ImageFormat.JPEG_R
-            else -> ImageFormat.JPEG
-        }
-        val photoSize = Camera2Sizes.jpegSize(
-            characteristics,
-            cameraConfiguration.photoAspectRatio,
-            photoFormat,
-            cameraConfiguration.enableHighResolution,
-        )
-        val imageReader = ImageReader.newInstance(
-            photoSize.width, photoSize.height, photoFormat, 2
-        ).apply {
-            setOnImageAvailableListener(::onImageAvailable, cameraHandler)
-        }
+        val photoFormat =
+            when (cameraConfiguration.photoOutputFormat) {
+                PhotoOutputFormat.JPEG_ULTRA_HDR -> ImageFormat.JPEG_R
+                else -> ImageFormat.JPEG
+            }
+        val photoSize =
+            Camera2Sizes.jpegSize(
+                characteristics,
+                cameraConfiguration.photoAspectRatio,
+                photoFormat,
+                cameraConfiguration.enableHighResolution,
+            )
+        val imageReader =
+            ImageReader.newInstance(photoSize.width, photoSize.height, photoFormat, 2).apply {
+                setOnImageAvailableListener(::onImageAvailable, cameraHandler)
+            }
         this.imageReader = imageReader
-        val burstRecorder = when (recordBursts()) {
-            true -> Camera2BurstRecorder.create(context, scope, cameraHandler, characteristics)
-            false -> null
-        }
+        val burstRecorder =
+            when (recordBursts()) {
+                true -> Camera2BurstRecorder.create(context, scope, cameraHandler, characteristics)
+                false -> null
+            }
         this.burstRecorder = burstRecorder
         orientationListener.enable()
 
-        val previewSize = Camera2Sizes.previewSize(
-            characteristics, cameraConfiguration.photoAspectRatio
-        )
+        val previewSize =
+            Camera2Sizes.previewSize(characteristics, cameraConfiguration.photoAspectRatio)
         this.previewSize = previewSize
         surfaceTexture.setDefaultBufferSize(previewSize.width, previewSize.height)
         updatePreviewScale()
@@ -655,44 +695,45 @@ class Camera2Session(
         zoomRatio = 1f.coerceIn(zoomRatioRange)
         _zoomState.value = Camera2Zoom.zoomInfo(zoomRatioRange, zoomRatio)
 
-        cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
-            override fun onOpened(camera: CameraDevice) {
-                cameraDevice = camera
-                createCaptureSession(
-                    camera,
-                    listOfNotNull(
-                        previewSurface,
-                        imageReader.surface,
-                        burstRecorder?.imageReader?.surface,
-                    ),
-                )
-            }
+        cameraManager.openCamera(
+            cameraId,
+            object : CameraDevice.StateCallback() {
+                override fun onOpened(camera: CameraDevice) {
+                    cameraDevice = camera
+                    createCaptureSession(
+                        camera,
+                        listOfNotNull(
+                            previewSurface,
+                            imageReader.surface,
+                            burstRecorder?.imageReader?.surface,
+                        ),
+                    )
+                }
 
-            override fun onDisconnected(camera: CameraDevice) {
-                camera.close()
-                if (cameraDevice == camera) {
-                    cameraDevice = null
+                override fun onDisconnected(camera: CameraDevice) {
+                    camera.close()
+                    if (cameraDevice == camera) {
+                        cameraDevice = null
+                    }
                 }
-            }
 
-            override fun onError(camera: CameraDevice, error: Int) {
-                Log.e(LOG_TAG, "Camera $cameraId error $error")
-                camera.close()
-                if (cameraDevice == camera) {
-                    cameraDevice = null
+                override fun onError(camera: CameraDevice, error: Int) {
+                    Log.e(LOG_TAG, "Camera $cameraId error $error")
+                    camera.close()
+                    if (cameraDevice == camera) {
+                        cameraDevice = null
+                    }
+                    if (error == ERROR_CAMERA_DEVICE || error == ERROR_CAMERA_SERVICE) {
+                        fail()
+                    }
                 }
-                if (error == ERROR_CAMERA_DEVICE || error == ERROR_CAMERA_SERVICE) {
-                    fail()
-                }
-            }
-        }, cameraHandler)
+            },
+            cameraHandler,
+        )
     }
 
     @Suppress("DEPRECATION")
-    private fun createCaptureSession(
-        camera: CameraDevice,
-        outputs: List<Surface>,
-    ) {
+    private fun createCaptureSession(camera: CameraDevice, outputs: List<Surface>) {
         camera.createCaptureSession(
             outputs,
             object : CameraCaptureSession.StateCallback() {
@@ -714,34 +755,40 @@ class Camera2Session(
         )
     }
 
-    private val previewCallback = object : CameraCaptureSession.CaptureCallback() {
-        override fun onCaptureCompleted(
-            session: CameraCaptureSession,
-            request: CaptureRequest,
-            result: TotalCaptureResult,
-        ) {
-            _previewStreaming.value = true
+    private val previewCallback =
+        object : CameraCaptureSession.CaptureCallback() {
+            override fun onCaptureCompleted(
+                session: CameraCaptureSession,
+                request: CaptureRequest,
+                result: TotalCaptureResult,
+            ) {
+                _previewStreaming.value = true
 
-            onPreviewResult(result)
+                onPreviewResult(result)
+            }
         }
-    }
 
-    private fun updatePreview() = cameraHandler.post {
-        val camera = cameraDevice ?: return@post
-        val session = captureSession ?: return@post
-        val previewSurface = previewSurface ?: return@post
+    private fun updatePreview() =
+        cameraHandler.post {
+            val camera = cameraDevice ?: return@post
+            val session = captureSession ?: return@post
+            val previewSurface = previewSurface ?: return@post
 
-        val request = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
-            addTarget(previewSurface)
-            applyControls()
-        }.build()
+            val request =
+                camera
+                    .createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                    .apply {
+                        addTarget(previewSurface)
+                        applyControls()
+                    }
+                    .build()
 
-        try {
-            session.setRepeatingRequest(request, previewCallback, cameraHandler)
-        } catch (e: Exception) {
-            Log.w(LOG_TAG, "Unable to update the preview", e)
+            try {
+                session.setRepeatingRequest(request, previewCallback, cameraHandler)
+            } catch (e: Exception) {
+                Log.w(LOG_TAG, "Unable to update the preview", e)
+            }
         }
-    }
 
     private fun CaptureRequest.Builder.applyControls() {
         val meteringRegions = meteringRegions
@@ -814,13 +861,14 @@ class Camera2Session(
         val textureView = textureView ?: return
         val previewSize = previewSize ?: return
 
-        val (scaleX, scaleY) = Camera2Sizes.fitCenterScale(
-            textureView.width,
-            textureView.height,
-            previewSize.width,
-            previewSize.height,
-            sensorOrientation,
-        )
+        val (scaleX, scaleY) =
+            Camera2Sizes.fitCenterScale(
+                textureView.width,
+                textureView.height,
+                previewSize.width,
+                previewSize.height,
+                sensorOrientation,
+            )
         textureView.scaleX = scaleX
         textureView.scaleY = scaleY
     }
@@ -832,10 +880,11 @@ class Camera2Session(
 
         val isSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 
-        fun supports(cameraConfiguration: CameraConfiguration) = isSupported
-                && cameraConfiguration is CameraConfiguration.Photo
-                && cameraConfiguration.extensionMode == ExtensionMode.NONE
-                && when (cameraConfiguration.photoOutputFormat) {
+        fun supports(cameraConfiguration: CameraConfiguration) =
+            isSupported &&
+                cameraConfiguration is CameraConfiguration.Photo &&
+                cameraConfiguration.extensionMode == ExtensionMode.NONE &&
+                when (cameraConfiguration.photoOutputFormat) {
                     PhotoOutputFormat.JPEG -> true
                     PhotoOutputFormat.JPEG_ULTRA_HDR ->
                         Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE

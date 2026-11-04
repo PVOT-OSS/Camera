@@ -40,24 +40,12 @@ class QrBottomSheetDialog(context: Context) : BottomSheetDialog(context) {
     private val actionsRecyclerView by lazy {
         findViewById<RecyclerView>(R.id.actionsRecyclerView)!!
     }
-    private val cardView by lazy {
-        findViewById<CardView>(R.id.cardView)!!
-    }
-    private val copyImageButton by lazy {
-        findViewById<ImageButton>(R.id.copyImageButton)!!
-    }
-    private val dataTextView by lazy {
-        findViewById<TextView>(R.id.dataTextView)!!
-    }
-    private val iconImageView by lazy {
-        findViewById<ImageView>(R.id.iconImageView)!!
-    }
-    private val shareImageButton by lazy {
-        findViewById<ImageButton>(R.id.shareImageButton)!!
-    }
-    private val titleTextView by lazy {
-        findViewById<TextView>(R.id.titleTextView)!!
-    }
+    private val cardView by lazy { findViewById<CardView>(R.id.cardView)!! }
+    private val copyImageButton by lazy { findViewById<ImageButton>(R.id.copyImageButton)!! }
+    private val dataTextView by lazy { findViewById<TextView>(R.id.dataTextView)!! }
+    private val iconImageView by lazy { findViewById<ImageView>(R.id.iconImageView)!! }
+    private val shareImageButton by lazy { findViewById<ImageButton>(R.id.shareImageButton)!! }
+    private val titleTextView by lazy { findViewById<TextView>(R.id.titleTextView)!! }
 
     private val textAction by lazy {
         QrResult.Action(context) {
@@ -69,10 +57,11 @@ class QrBottomSheetDialog(context: Context) : BottomSheetDialog(context) {
 
     // RecyclerView
     private val actionsAdapter by lazy {
-        object : SimpleListAdapter<QrResult.Action, MaterialButton>(
-            UniqueItemDiffCallback(),
-            R.layout.qr_bottom_sheet_action_button,
-        ) {
+        object :
+            SimpleListAdapter<QrResult.Action, MaterialButton>(
+                UniqueItemDiffCallback(),
+                R.layout.qr_bottom_sheet_action_button,
+            ) {
             override fun ViewHolder.onBindView(item: QrResult.Action) {
                 view.text = item.title
                 view.contentDescription = item.contentDescription
@@ -81,23 +70,20 @@ class QrBottomSheetDialog(context: Context) : BottomSheetDialog(context) {
                         item.pendingIntent?.sendWithBalAllowed()
                     } catch (_: PendingIntent.CanceledException) {
                         Toast.makeText(
-                            context,
-                            R.string.qr_no_app_available_for_action,
-                            Toast.LENGTH_SHORT
-                        ).show()
+                                context,
+                                R.string.qr_no_app_available_for_action,
+                                Toast.LENGTH_SHORT,
+                            )
+                            .show()
                     }
                 }
                 if (item.canTintIcon) {
-                    item.icon?.setTint(
-                        context.getThemeColor(MaterialR.attr.colorOnBackground)
-                    )
+                    item.icon?.setTint(context.getThemeColor(MaterialR.attr.colorOnBackground))
                 }
                 item.icon?.loadDrawable(context)?.also { drawable ->
                     drawable.setBounds(0, 0, 15.px, 15.px)
 
-                    view.setCompoundDrawables(
-                        drawable, null, null, null
-                    )
+                    view.setCompoundDrawables(drawable, null, null, null)
                 } ?: view.setCompoundDrawables(null, null, null, null)
             }
         }
@@ -114,20 +100,17 @@ class QrBottomSheetDialog(context: Context) : BottomSheetDialog(context) {
                     action.pendingIntent?.sendWithBalAllowed()
                 } catch (_: PendingIntent.CanceledException) {
                     Toast.makeText(
-                        context,
-                        R.string.qr_no_app_available_for_action,
-                        Toast.LENGTH_SHORT
-                    ).show()
+                            context,
+                            R.string.qr_no_app_available_for_action,
+                            Toast.LENGTH_SHORT,
+                        )
+                        .show()
                 }
             }
         }
 
         copyImageButton.setOnClickListener {
-            qrResult?.let {
-                clipboardManager.setPrimaryClip(
-                    ClipData.newPlainText("", it.text)
-                )
-            }
+            qrResult?.let { clipboardManager.setPrimaryClip(ClipData.newPlainText("", it.text)) }
         }
 
         shareImageButton.setOnClickListener {
@@ -160,18 +143,17 @@ class QrBottomSheetDialog(context: Context) : BottomSheetDialog(context) {
         cardView.contentDescription = firstAction.contentDescription
         titleTextView.text = firstAction.title
         if (firstAction.canTintIcon) {
-            firstAction.icon?.setTint(
-                context.getThemeColor(MaterialR.attr.colorOnBackground)
-            )
+            firstAction.icon?.setTint(context.getThemeColor(MaterialR.attr.colorOnBackground))
         }
         iconImageView.isVisible = firstAction.icon != null
         iconImageView.setImageIcon(firstAction.icon)
 
         // Make links clickable if not on locked keyguard
-        dataTextView.movementMethod = when (keyguardManager.isKeyguardLocked) {
-            true -> null
-            false -> LinkMovementMethod.getInstance()
-        }
+        dataTextView.movementMethod =
+            when (keyguardManager.isKeyguardLocked) {
+                true -> null
+                false -> LinkMovementMethod.getInstance()
+            }
 
         actionsAdapter.submitList(qrResult.actions.drop(1))
 

@@ -28,48 +28,50 @@ import org.prauga.camera.capture.models.ProcessingTier
 class RoutingCameraSessionTest {
     private val primary = FakeCameraSession()
     private val photo = FakeCameraSession()
-    private val session = RoutingCameraSession(
-        CoroutineScope(Dispatchers.Unconfined),
-        primary,
-        photo,
-    ) { it is CameraConfiguration.Photo }
+    private val session =
+        RoutingCameraSession(CoroutineScope(Dispatchers.Unconfined), primary, photo) {
+            it is CameraConfiguration.Photo
+        }
 
-    private val lifecycleOwner = object : LifecycleOwner {
-        override val lifecycle: Lifecycle
-            get() = error("Not used by the fake sessions")
-    }
+    private val lifecycleOwner =
+        object : LifecycleOwner {
+            override val lifecycle: Lifecycle
+                get() = error("Not used by the fake sessions")
+        }
 
-    private val camera = Camera(
-        cameraId = "0",
-        cameraFacing = CameraFacing.BACK,
-        hardwareLevel = HardwareLevel.FULL,
-        processingTier = ProcessingTier.A,
-        exposureCompensationRange = -12..12,
-        intrinsicZoomRatio = 1f,
-        logicalZoomRatios = sortedMapOf(1f to 1f),
-        supportedExtensionModes = setOf(ExtensionMode.NONE),
-        supportedPhotoOutputFormats = listOf(PhotoOutputFormat.JPEG),
-        supportedVideoQualities = mapOf(),
-        supportedVideoStabilizationModes = listOf(),
-        supportsZsl = false,
-        supportedEdgeModes = setOf(),
-        supportedNoiseReductionModes = setOf(),
-        supportedShadingModes = setOf(),
-        supportedColorCorrectionAberrationModes = setOf(),
-        supportedDistortionCorrectionModes = setOf(),
-        supportedHotPixelModes = setOf(),
-        supportedFlashModes = setOf(FlashMode.OFF),
-    )
+    private val camera =
+        Camera(
+            cameraId = "0",
+            cameraFacing = CameraFacing.BACK,
+            hardwareLevel = HardwareLevel.FULL,
+            processingTier = ProcessingTier.A,
+            exposureCompensationRange = -12..12,
+            intrinsicZoomRatio = 1f,
+            logicalZoomRatios = sortedMapOf(1f to 1f),
+            supportedExtensionModes = setOf(ExtensionMode.NONE),
+            supportedPhotoOutputFormats = listOf(PhotoOutputFormat.JPEG),
+            supportedVideoQualities = mapOf(),
+            supportedVideoStabilizationModes = listOf(),
+            supportsZsl = false,
+            supportedEdgeModes = setOf(),
+            supportedNoiseReductionModes = setOf(),
+            supportedShadingModes = setOf(),
+            supportedColorCorrectionAberrationModes = setOf(),
+            supportedDistortionCorrectionModes = setOf(),
+            supportedHotPixelModes = setOf(),
+            supportedFlashModes = setOf(FlashMode.OFF),
+        )
 
-    private val photoConfiguration = CameraConfiguration.Photo(
-        camera = camera,
-        extensionMode = ExtensionMode.NONE,
-        camera2Options = CameraConfiguration.Camera2Options.DEFAULT,
-        photoCaptureMode = PhotoCaptureMode.MINIMIZE_LATENCY,
-        photoAspectRatio = PhotoAspectRatio.RATIO_4_3,
-        enableHighResolution = true,
-        photoOutputFormat = PhotoOutputFormat.JPEG,
-    )
+    private val photoConfiguration =
+        CameraConfiguration.Photo(
+            camera = camera,
+            extensionMode = ExtensionMode.NONE,
+            camera2Options = CameraConfiguration.Camera2Options.DEFAULT,
+            photoCaptureMode = PhotoCaptureMode.MINIMIZE_LATENCY,
+            photoAspectRatio = PhotoAspectRatio.RATIO_4_3,
+            enableHighResolution = true,
+            photoOutputFormat = PhotoOutputFormat.JPEG,
+        )
 
     private val qrConfiguration = CameraConfiguration.Qr(camera)
 

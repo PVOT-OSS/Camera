@@ -9,9 +9,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import org.prauga.camera.CameraApplication
 
-/**
- * Base view model for all app view models.
- */
+/** Base view model for all app view models. */
 abstract class CameraBaseViewModel(application: Application) : AndroidViewModel(application) {
     protected val container = getApplication<CameraApplication>().container
 
