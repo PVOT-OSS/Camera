@@ -84,6 +84,8 @@ class FakeCameraSession : CameraSession {
 
     override fun pinchToZoom(scaleFactor: Float) {}
 
+    override fun setZoomRatio(zoomRatio: Float) {}
+
     override fun smoothZoom(zoomRatio: Float) {}
 
     override fun resetZoom() {}

@@ -643,7 +643,7 @@ class Camera2Session(
 
     override fun zoomOut() = smoothZoom(zoomRatio.previousPowerOfTwo())
 
-    private fun setZoomRatio(zoomRatio: Float) {
+    override fun setZoomRatio(zoomRatio: Float) {
         this.zoomRatio = zoomRatio.coerceIn(zoomRatioRange)
         _zoomState.value = Camera2Zoom.zoomInfo(zoomRatioRange, this.zoomRatio)
 

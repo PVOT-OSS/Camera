@@ -128,6 +128,8 @@ class RoutingCameraSession(
 
     override fun pinchToZoom(scaleFactor: Float) = active.pinchToZoom(scaleFactor)
 
+    override fun setZoomRatio(zoomRatio: Float) = active.setZoomRatio(zoomRatio)
+
     override fun smoothZoom(zoomRatio: Float) = active.smoothZoom(zoomRatio)
 
     override fun resetZoom() = active.resetZoom()

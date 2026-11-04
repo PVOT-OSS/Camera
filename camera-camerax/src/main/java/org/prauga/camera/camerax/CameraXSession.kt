@@ -165,6 +165,10 @@ class CameraXSession(
         cameraController.onPinchToZoom(scaleFactor)
     }
 
+    override fun setZoomRatio(zoomRatio: Float) {
+        cameraController.setZoomRatio(zoomRatio)
+    }
+
     override fun smoothZoom(zoomRatio: Float) = zoom.smoothZoom(zoomRatio)
 
     override fun resetZoom() = zoom.resetZoom()

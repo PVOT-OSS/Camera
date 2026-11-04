@@ -51,6 +51,8 @@ interface CameraSession {
 
     fun pinchToZoom(scaleFactor: Float)
 
+    fun setZoomRatio(zoomRatio: Float)
+
     fun smoothZoom(zoomRatio: Float)
 
     fun resetZoom()

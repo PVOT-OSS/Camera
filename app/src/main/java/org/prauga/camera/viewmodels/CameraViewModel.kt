@@ -1072,6 +1072,8 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
 
     fun pinchToZoom(scaleFactor: Float) = cameraSession.pinchToZoom(scaleFactor)
 
+    fun setZoomRatio(zoomRatio: Float) = cameraSession.setZoomRatio(zoomRatio)
+
     fun smoothZoom(zoomRatio: Float) = cameraSession.smoothZoom(zoomRatio)
 
     fun resetZoom() = cameraSession.resetZoom()
