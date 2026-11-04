@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.prauga.camera.camerax
+package org.prauga.camera.capture
 
 import kotlin.math.pow
 
