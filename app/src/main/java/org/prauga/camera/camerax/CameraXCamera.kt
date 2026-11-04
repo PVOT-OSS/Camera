@@ -19,7 +19,6 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionsManager
 import androidx.camera.video.Recorder
 import androidx.core.util.toClosedRange
-import org.prauga.camera.ext.getSupportedModes
 import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.ColorCorrectionAberrationMode

@@ -11,8 +11,6 @@ import androidx.camera.view.LifecycleCameraController
 import androidx.core.animation.addListener
 import kotlinx.coroutines.sync.Mutex
 import org.prauga.camera.camerax.CameraXZoom
-import org.prauga.camera.ext.nextPowerOfTwo
-import org.prauga.camera.ext.previousPowerOfTwo
 
 class CameraXZoom(
     private val cameraController: LifecycleCameraController,

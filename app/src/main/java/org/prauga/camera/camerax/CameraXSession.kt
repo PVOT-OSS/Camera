@@ -20,7 +20,6 @@ import kotlinx.coroutines.flow.map
 import org.prauga.camera.capture.CameraSession
 import org.prauga.camera.capture.CaptureStateMachine
 import org.prauga.camera.capture.PreviewTarget
-import org.prauga.camera.ext.flashMode
 import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraConfiguration
 import org.prauga.camera.models.CameraFacing

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.prauga.camera.ext
+package org.prauga.camera.camerax
 
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest

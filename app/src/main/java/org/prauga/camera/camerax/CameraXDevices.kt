@@ -7,6 +7,7 @@ package org.prauga.camera.camerax
 
 import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import androidx.annotation.OptIn as AndroidXOptIn
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
@@ -15,6 +16,7 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.ExperimentalLensFacing
 import androidx.camera.extensions.ExtensionsManager
 import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.asFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +28,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
 import org.prauga.camera.capture.CameraDevices
-import org.prauga.camera.ext.permissionGranted
 import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.ExtensionMode
@@ -135,7 +136,9 @@ class CameraXDevices(
     )
 
     private fun requireCameraPermission() = require(
-        context.permissionGranted(Manifest.permission.CAMERA)
+        ContextCompat.checkSelfPermission(
+            context, Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
     ) { "Camera permission not granted" }
 
     companion object {

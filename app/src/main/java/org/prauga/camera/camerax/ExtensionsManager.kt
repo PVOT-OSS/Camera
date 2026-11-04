@@ -3,11 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.prauga.camera.ext
+package org.prauga.camera.camerax
 
 import androidx.camera.core.CameraSelector
 import androidx.camera.extensions.ExtensionsManager
-import org.prauga.camera.camerax.toCameraXExtensionMode
 import org.prauga.camera.models.ExtensionMode
 
 internal fun ExtensionsManager.getSupportedModes(

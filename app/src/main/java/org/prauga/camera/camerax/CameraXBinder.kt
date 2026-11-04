@@ -23,16 +23,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
-import org.prauga.camera.ext.camera2CameraControl
-import org.prauga.camera.ext.flashMode
-import org.prauga.camera.ext.setColorCorrectionAberrationMode
-import org.prauga.camera.ext.setDistortionCorrectionMode
-import org.prauga.camera.ext.setEdgeMode
-import org.prauga.camera.ext.setFrameRate
-import org.prauga.camera.ext.setHotPixelMode
-import org.prauga.camera.ext.setNoiseReductionMode
-import org.prauga.camera.ext.setShadingMode
-import org.prauga.camera.ext.setVideoStabilizationMode
 import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraConfiguration
 import org.prauga.camera.models.CameraFacing

@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
-import org.prauga.camera.ext.flashMode
 import org.prauga.camera.ext.next
 import org.prauga.camera.models.CameraConfiguration
 import org.prauga.camera.models.CameraMode
