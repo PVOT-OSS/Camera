@@ -521,7 +521,10 @@ class Camera2Session(
             else -> ImageFormat.JPEG
         }
         val photoSize = Camera2Sizes.jpegSize(
-            characteristics, cameraConfiguration.photoAspectRatio, photoFormat
+            characteristics,
+            cameraConfiguration.photoAspectRatio,
+            photoFormat,
+            cameraConfiguration.enableHighResolution,
         )
         val imageReader = ImageReader.newInstance(
             photoSize.width, photoSize.height, photoFormat, 2

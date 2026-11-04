@@ -28,11 +28,18 @@ object Camera2Sizes {
         characteristics: CameraCharacteristics,
         photoAspectRatio: PhotoAspectRatio,
         format: Int = ImageFormat.JPEG,
-    ) = choose(
-        streamConfigurationMap(characteristics).getOutputSizes(format),
-        photoAspectRatio,
-        Int.MAX_VALUE,
-    )
+        highResolution: Boolean = false,
+    ): Size {
+        val streamConfigurationMap = streamConfigurationMap(characteristics)
+        val outputSizes: Array<Size> = streamConfigurationMap.getOutputSizes(format) ?: arrayOf()
+        val highResolutionSizes: Array<Size> = when (highResolution) {
+            true -> streamConfigurationMap.getHighResolutionOutputSizes(format) ?: arrayOf()
+            false -> arrayOf()
+        }
+        val sizes = outputSizes + highResolutionSizes
+
+        return choose(sizes, photoAspectRatio, Int.MAX_VALUE)
+    }
 
     private fun streamConfigurationMap(characteristics: CameraCharacteristics) =
         characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
