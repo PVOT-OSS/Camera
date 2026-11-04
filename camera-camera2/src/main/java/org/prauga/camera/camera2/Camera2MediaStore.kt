@@ -30,11 +30,12 @@ object Camera2MediaStore {
         contentResolver: ContentResolver,
         mimeType: String,
         timestamp: Long,
+        suffix: String = "",
         write: (OutputStream) -> Unit,
     ): Uri {
         val contentValues =
             ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, getTimeString(timestamp))
+                put(MediaStore.MediaColumns.DISPLAY_NAME, getTimeString(timestamp) + suffix)
                 put(MediaStore.MediaColumns.MIME_TYPE, mimeType)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     put(MediaStore.Images.Media.RELATIVE_PATH, STORAGE_DESTINATION)

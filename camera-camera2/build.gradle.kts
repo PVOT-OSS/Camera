@@ -10,6 +10,7 @@ android { namespace = "org.prauga.camera.camera2" }
 dependencies {
     api(project(":camera"))
     api(project(":device"))
+    implementation(project(":processing"))
 
     implementation(libs.androidx.core.ktx)
 

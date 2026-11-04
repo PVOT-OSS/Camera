@@ -30,6 +30,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
+import org.prauga.camera.processing.RawFrame
 
 class Camera2BurstRecorder
 private constructor(
@@ -41,6 +42,7 @@ private constructor(
     height: Int,
 ) {
     private val outputDirectory = context.getExternalFilesDir(DIRECTORY)
+    private val merger = Camera2BurstMerger(context, characteristics)
     private val sensorManager = context.getSystemService(SensorManager::class.java)
     private val gyroscope = sensorManager?.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
 
@@ -56,7 +58,10 @@ private constructor(
 
     private var burst: Burst? = null
 
-    private class Burst(val directory: File, val exifOrientation: Int) {
+    private class Burst(val directory: File, val jpegOrientation: Int) {
+        val exifOrientation = Camera2RawCapture.exifOrientation(jpegOrientation)
+        val rawFrames = arrayOfNulls<RawFrame>(FRAMES)
+        var referenceResult: TotalCaptureResult? = null
         val results = mutableMapOf<Long, TotalCaptureResult>()
         val images = mutableMapOf<Long, Image>()
         val frames = JSONArray()
@@ -87,7 +92,7 @@ private constructor(
         val name = SimpleDateFormat(DIRECTORY_FORMAT, Locale.US).format(System.currentTimeMillis())
         val directory = File(outputDirectory, name).apply { mkdirs() }
 
-        burst = Burst(directory, Camera2RawCapture.exifOrientation(jpegOrientation))
+        burst = Burst(directory, jpegOrientation)
 
         gyroscope?.let {
             try {
@@ -140,6 +145,12 @@ private constructor(
             val index = burst.started++
 
             burst.frames.put(frameMetadata(index, result))
+            if (index < FRAMES) {
+                burst.rawFrames[index] = Camera2BurstMerger.copy(image)
+                if (index == 0) {
+                    burst.referenceResult = result
+                }
+            }
 
             scope.launch(Dispatchers.IO) {
                 try {
@@ -185,6 +196,16 @@ private constructor(
             File(burst.directory, "gyro.csv").writeText(burst.gyro.toString())
 
             Log.i(LOG_TAG, "Recorded $FRAMES frames to ${burst.directory}")
+        }
+
+        val rawFrames = burst.rawFrames.filterNotNull()
+        val referenceResult = burst.referenceResult ?: return
+        scope.launch(Dispatchers.Default) {
+            try {
+                merger.merge(rawFrames, referenceResult, burst.jpegOrientation, burst.directory)
+            } catch (e: Throwable) {
+                Log.e(LOG_TAG, "Unable to merge ${burst.directory}", e)
+            }
         }
     }
 
