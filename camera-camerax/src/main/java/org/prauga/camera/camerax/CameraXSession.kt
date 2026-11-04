@@ -76,6 +76,8 @@ class CameraXSession(
 
     private val zoom = CameraXZoom(cameraController) { cameraController.zoomState.value }
 
+    private var previewView: PreviewView? = null
+
     private val _previewStreaming = MutableStateFlow(false)
     override val previewStreaming = _previewStreaming.asStateFlow()
 
@@ -96,12 +98,17 @@ class CameraXSession(
     override fun attachPreview(target: PreviewTarget) {
         require(target is CameraXPreviewTarget) { "Unsupported preview target $target" }
 
+        previewView = target.previewView
         target.previewView.controller = cameraController
         target.screenFlashView.setController(cameraController)
         target.previewView.previewStreamState.observeForever {
             _previewStreaming.value = it == PreviewView.StreamState.STREAMING
         }
     }
+
+    override fun previewBitmap() = previewView?.takeUnless {
+        it.height <= 0 || it.width <= 0
+    }?.bitmap
 
     override fun configure(
         cameraConfiguration: CameraConfiguration,

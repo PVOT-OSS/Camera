@@ -6,12 +6,12 @@
 package org.prauga.camera.ui.views
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
 import android.util.AttributeSet
 import androidx.appcompat.widget.AppCompatImageView
-import androidx.camera.view.PreviewView
 import org.prauga.camera.ext.stackBlur
 
 /**
@@ -20,7 +20,7 @@ import org.prauga.camera.ext.stackBlur
 class PreviewBlurView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : AppCompatImageView(context, attrs, defStyleAttr) {
-    var previewView: PreviewView? = null
+    var previewBitmap: () -> Bitmap? = { null }
 
     init {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -29,7 +29,7 @@ class PreviewBlurView @JvmOverloads constructor(
     }
 
     fun freeze() {
-        previewView?.takeUnless { it.height <= 0 || it.width <= 0 }?.bitmap?.also {
+        previewBitmap()?.also {
             setImageBitmap(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     it

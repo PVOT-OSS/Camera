@@ -58,6 +58,8 @@ class RoutingCameraSession(
         photo.attachPreview(target.photo)
     }
 
+    override fun previewBitmap() = active.previewBitmap()
+
     override fun configure(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner) {
         val next = if (usePhotoSession(cameraConfiguration)) photo else primary
 

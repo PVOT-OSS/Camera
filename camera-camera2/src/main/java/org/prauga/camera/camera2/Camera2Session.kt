@@ -8,6 +8,7 @@ package org.prauga.camera.camera2
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.ImageFormat
 import android.graphics.PointF
 import android.graphics.Rect
@@ -41,6 +42,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import java.io.ByteArrayOutputStream
+import kotlin.math.roundToInt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -176,6 +178,17 @@ class Camera2Session(
         require(target is Camera2PreviewTarget) { "Unsupported preview target $target" }
 
         container = target.container
+    }
+
+    override fun previewBitmap(): Bitmap? {
+        val textureView = textureView?.takeIf { it.isAvailable } ?: return null
+        val width = (textureView.width * textureView.scaleX).roundToInt()
+        val height = (textureView.height * textureView.scaleY).roundToInt()
+        if (width <= 0 || height <= 0) {
+            return null
+        }
+
+        return textureView.getBitmap(width, height)
     }
 
     override fun configure(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner) {

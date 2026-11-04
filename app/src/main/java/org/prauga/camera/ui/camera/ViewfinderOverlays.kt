@@ -68,7 +68,7 @@ class ViewfinderOverlays(
     }
 
     init {
-        previewBlurView.previewView = viewFinder
+        previewBlurView.previewBitmap = viewModel::previewBitmap
 
         zoomLevel.onProgressChangedByUser = {
             viewModel.setLinearZoom(it)

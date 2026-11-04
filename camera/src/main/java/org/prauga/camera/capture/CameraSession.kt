@@ -5,6 +5,7 @@
 
 package org.prauga.camera.capture
 
+import android.graphics.Bitmap
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
@@ -21,6 +22,7 @@ interface CameraSession {
     val videoRecordEvent: SharedFlow<RecordingEvent>
 
     fun attachPreview(target: PreviewTarget)
+    fun previewBitmap(): Bitmap?
     fun configure(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner)
     fun release()
     fun close()

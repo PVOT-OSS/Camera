@@ -5,6 +5,7 @@
 
 package org.prauga.camera.capture
 
+import android.graphics.Bitmap
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +29,8 @@ class FakeCameraSession : CameraSession {
     override fun attachPreview(target: PreviewTarget) {
         calls += "attachPreview"
     }
+
+    override fun previewBitmap(): Bitmap? = null
 
     override fun configure(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner) {
         calls += "configure"

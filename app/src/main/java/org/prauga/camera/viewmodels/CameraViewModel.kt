@@ -864,6 +864,8 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
 
     fun attachPreview(target: PreviewTarget) = cameraSession.attachPreview(target)
 
+    fun previewBitmap() = cameraSession.previewBitmap()
+
     fun bindCamera(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner) =
         cameraSession.configure(cameraConfiguration, lifecycleOwner)
 
