@@ -165,7 +165,10 @@ private fun CameraContent(
             when {
                 uiState.cameraMode == CameraMode.VIDEO -> 16f / 9f
                 uiState.cameraMode == CameraMode.PHOTO &&
-                    uiState.photoAspectRatio == PhotoAspectRatio.RATIO_16_9 -> 16f / 9f
+                    uiState.photoAspectRatio == PhotoAspectRatio.RATIO_16_9 &&
+                    (cameraConfiguration as? CameraConfiguration.Photo)
+                        ?.photoOutputFormat
+                        ?.isRaw != true -> 16f / 9f
                 else -> 4f / 3f
             }
         val isVideoFrame = aspectRatio != 4f / 3f

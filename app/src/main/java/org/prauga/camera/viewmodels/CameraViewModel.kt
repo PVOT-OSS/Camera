@@ -977,6 +977,9 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         }
 
     fun setPhotoOutputFormat(photoOutputFormat: PhotoOutputFormat) {
+        if (photoOutputFormat.isRaw) {
+            preferencesRepository.photoAspectRatio.value = PhotoAspectRatio.RATIO_4_3
+        }
         preferencesRepository.usePhotoJpegUltraHdr.value =
             photoOutputFormat == PhotoOutputFormat.JPEG_ULTRA_HDR
         preferencesRepository.enableRawImageCapture.value =

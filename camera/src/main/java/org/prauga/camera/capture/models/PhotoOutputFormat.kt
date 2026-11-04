@@ -16,5 +16,8 @@ enum class PhotoOutputFormat {
     RAW,
 
     /** RAW + JPEG format. */
-    RAW_JPEG,
+    RAW_JPEG;
+
+    val isRaw: Boolean
+        get() = this == RAW || this == RAW_JPEG
 }

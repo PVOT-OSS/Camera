@@ -101,7 +101,7 @@ fun Panels(
             enter = fadeIn(tween(220)) + scaleIn(tween(220), initialScale = 0.92f),
             exit = fadeOut(tween(220)) + scaleOut(tween(220), targetScale = 0.92f),
         ) {
-            ControlsPanel(tiles = controlTiles(uiState, state, viewModel, actions))
+            ControlsPanel(tiles = controlTiles(uiState, cameraConfiguration, state, viewModel, actions))
         }
 
         AnimatedVisibility(
@@ -130,6 +130,7 @@ fun Panels(
 @Composable
 private fun controlTiles(
     uiState: CameraUiState,
+    cameraConfiguration: CameraConfiguration?,
     state: CameraScreenState,
     viewModel: CameraViewModel,
     actions: CameraScreenActions,
@@ -204,7 +205,11 @@ private fun controlTiles(
                 Tile(
                     icon = R.drawable.ic_cam_aspect,
                     label = stringResource(R.string.control_aspect),
-                    enabled = isIdle,
+                    enabled =
+                        isIdle &&
+                            (cameraConfiguration as? CameraConfiguration.Photo)
+                                ?.photoOutputFormat
+                                ?.isRaw != true,
                     badge =
                         stringResource(
                             when (uiState.photoAspectRatio) {

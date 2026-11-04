@@ -16,6 +16,7 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.MirrorMode
 import androidx.camera.core.resolutionselector.AspectRatioStrategy
 import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.camera.video.QualitySelector
 import androidx.camera.view.CameraController
 import androidx.camera.view.LifecycleCameraController
@@ -95,21 +96,37 @@ class CameraXBinder(
                         }
 
                     cameraController.imageCaptureResolutionSelector =
-                        ResolutionSelector.Builder()
-                            .setAspectRatioStrategy(
-                                AspectRatioStrategy(
-                                    cameraConfiguration.photoAspectRatio.toCameraXAspectRatio(),
-                                    AspectRatioStrategy.FALLBACK_RULE_AUTO,
-                                )
-                            )
-                            .setAllowedResolutionMode(
-                                if (cameraConfiguration.enableHighResolution) {
-                                    ResolutionSelector.PREFER_HIGHER_RESOLUTION_OVER_CAPTURE_RATE
-                                } else {
-                                    ResolutionSelector.PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION
-                                }
-                            )
-                            .build()
+                        when (cameraConfiguration.photoOutputFormat.isRaw) {
+                            true ->
+                                ResolutionSelector.Builder()
+                                    .setAspectRatioStrategy(
+                                        AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY
+                                    )
+                                    .setResolutionStrategy(
+                                        ResolutionStrategy.HIGHEST_AVAILABLE_STRATEGY
+                                    )
+                                    .build()
+
+                            false ->
+                                ResolutionSelector.Builder()
+                                    .setAspectRatioStrategy(
+                                        AspectRatioStrategy(
+                                            cameraConfiguration.photoAspectRatio
+                                                .toCameraXAspectRatio(),
+                                            AspectRatioStrategy.FALLBACK_RULE_AUTO,
+                                        )
+                                    )
+                                    .setAllowedResolutionMode(
+                                        if (cameraConfiguration.enableHighResolution) {
+                                            ResolutionSelector
+                                                .PREFER_HIGHER_RESOLUTION_OVER_CAPTURE_RATE
+                                        } else {
+                                            ResolutionSelector
+                                                .PREFER_CAPTURE_RATE_OVER_HIGHER_RESOLUTION
+                                        }
+                                    )
+                                    .build()
+                        }
 
                     CameraController.IMAGE_CAPTURE
                 }
