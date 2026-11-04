@@ -5,6 +5,7 @@
 
 package org.prauga.camera.camera2
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.ImageFormat
@@ -57,6 +58,8 @@ import org.prauga.camera.capture.models.CameraConfiguration
 import org.prauga.camera.capture.models.ExtensionMode
 import org.prauga.camera.capture.models.FlashMode
 import org.prauga.camera.capture.models.PhotoOutputFormat
+import org.prauga.camera.capture.nextPowerOfTwo
+import org.prauga.camera.capture.previousPowerOfTwo
 
 class Camera2Session(
     context: Context,
@@ -90,6 +93,13 @@ class Camera2Session(
     private var lensFacing = CameraMetadata.LENS_FACING_BACK
     private var deviceOrientation = 0
     private var photoTimestamp = 0L
+
+    @Volatile
+    private var zoomRatio = 1f
+
+    @Volatile
+    private var zoomRatioRange = 1f..1f
+    private var zoomAnimator: ValueAnimator? = null
 
     private val orientationListener = object : OrientationEventListener(context) {
         override fun onOrientationChanged(orientation: Int) {
@@ -203,10 +213,7 @@ class Camera2Session(
 
         val request = camera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE).apply {
             addTarget(imageReader.surface)
-            set(
-                CaptureRequest.CONTROL_AF_MODE,
-                CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE,
-            )
+            applyControls()
             set(CaptureRequest.JPEG_ORIENTATION, jpegOrientation())
             if (!inSingleCaptureMode.value) {
                 location()?.let { set(CaptureRequest.JPEG_GPS_LOCATION, it) }
@@ -291,17 +298,36 @@ class Camera2Session(
 
     override fun setExposureCompensationIndex(exposureCompensationIndex: Int) {}
 
-    override fun setLinearZoom(linearZoom: Float) {}
+    override fun setLinearZoom(linearZoom: Float) =
+        setZoomRatio(Camera2Zoom.zoomRatio(zoomRatioRange, linearZoom))
 
-    override fun pinchToZoom(scaleFactor: Float) {}
+    override fun pinchToZoom(scaleFactor: Float) = setZoomRatio(zoomRatio * scaleFactor)
 
-    override fun smoothZoom(zoomRatio: Float) {}
+    override fun smoothZoom(zoomRatio: Float) {
+        if (zoomAnimator?.isRunning == true) {
+            return
+        }
 
-    override fun resetZoom() {}
+        zoomAnimator = ValueAnimator.ofFloat(
+            this.zoomRatio, zoomRatio.coerceIn(zoomRatioRange)
+        ).apply {
+            addUpdateListener { setZoomRatio(it.animatedValue as Float) }
+            start()
+        }
+    }
 
-    override fun zoomIn() {}
+    override fun resetZoom() = smoothZoom(1f)
 
-    override fun zoomOut() {}
+    override fun zoomIn() = smoothZoom(zoomRatio.nextPowerOfTwo())
+
+    override fun zoomOut() = smoothZoom(zoomRatio.previousPowerOfTwo())
+
+    private fun setZoomRatio(zoomRatio: Float) {
+        this.zoomRatio = zoomRatio.coerceIn(zoomRatioRange)
+        _zoomState.value = Camera2Zoom.zoomInfo(zoomRatioRange, this.zoomRatio)
+
+        updatePreview()
+    }
 
     @SuppressLint("MissingPermission")
     private fun openCamera() {
@@ -345,7 +371,9 @@ class Camera2Session(
         val previewSurface = Surface(surfaceTexture)
         this.previewSurface = previewSurface
 
-        _zoomState.value = Camera2Zoom.zoomInfo(characteristics, 1f)
+        zoomRatioRange = Camera2Zoom.zoomRatioRange(characteristics)
+        zoomRatio = 1f.coerceIn(zoomRatioRange)
+        _zoomState.value = Camera2Zoom.zoomInfo(zoomRatioRange, zoomRatio)
 
         cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
             override fun onOpened(camera: CameraDevice) {
@@ -385,7 +413,7 @@ class Camera2Session(
                         return
                     }
                     captureSession = session
-                    startPreview(camera, session, previewSurface)
+                    updatePreview()
                 }
 
                 override fun onConfigureFailed(session: CameraCaptureSession) {
@@ -396,28 +424,38 @@ class Camera2Session(
         )
     }
 
-    private fun startPreview(
-        camera: CameraDevice,
-        session: CameraCaptureSession,
-        previewSurface: Surface,
-    ) {
+    private val previewCallback = object : CameraCaptureSession.CaptureCallback() {
+        override fun onCaptureCompleted(
+            session: CameraCaptureSession,
+            request: CaptureRequest,
+            result: TotalCaptureResult,
+        ) {
+            _previewStreaming.value = true
+        }
+    }
+
+    private fun updatePreview() = cameraHandler.post {
+        val camera = cameraDevice ?: return@post
+        val session = captureSession ?: return@post
+        val previewSurface = previewSurface ?: return@post
+
         val request = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
             addTarget(previewSurface)
-            set(
-                CaptureRequest.CONTROL_AF_MODE,
-                CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE,
-            )
+            applyControls()
         }.build()
 
-        session.setRepeatingRequest(request, object : CameraCaptureSession.CaptureCallback() {
-            override fun onCaptureCompleted(
-                session: CameraCaptureSession,
-                request: CaptureRequest,
-                result: TotalCaptureResult,
-            ) {
-                _previewStreaming.value = true
-            }
-        }, cameraHandler)
+        try {
+            session.setRepeatingRequest(request, previewCallback, cameraHandler)
+        } catch (e: Exception) {
+            Log.w(LOG_TAG, "Unable to update the preview", e)
+        }
+    }
+
+    private fun CaptureRequest.Builder.applyControls() {
+        set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            set(CaptureRequest.CONTROL_ZOOM_RATIO, zoomRatio)
+        }
     }
 
     private fun closeCamera() {
