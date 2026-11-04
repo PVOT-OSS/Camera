@@ -10,6 +10,7 @@ import androidx.camera.core.ZoomState
 import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraMode
 import org.prauga.camera.models.CameraState
+import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.FlashMode
 import org.prauga.camera.models.FrameRate
 import org.prauga.camera.models.GridMode
@@ -40,7 +41,7 @@ data class CameraUiState(
     val exposureCompensationRangeToLevel: Pair<ClosedRange<Int>, Float>?,
     val isShutterButtonEnabled: Boolean,
     val photoAspectRatio: PhotoAspectRatio,
-    val photoEffect: Int,
+    val photoEffect: ExtensionMode,
     val isPhotoEffectButtonVisible: Boolean,
     val videoQuality: VideoQuality,
     val isVideoQualityButtonEnabled: Boolean,

@@ -36,6 +36,7 @@ import org.prauga.camera.ext.setVideoStabilizationMode
 import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraConfiguration
 import org.prauga.camera.models.CameraFacing
+import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.FlashMode
 import org.prauga.camera.models.PhotoOutputFormat
 import org.prauga.camera.models.VideoMirrorMode
@@ -47,7 +48,7 @@ class CameraXBinder(
     private val cameraController: LifecycleCameraController,
     private val analyzerExecutor: Executor,
     private val qrImageAnalyzer: ImageAnalysis.Analyzer,
-    private val extensionCameraSelector: (Camera, Int) -> CameraSelector,
+    private val extensionCameraSelector: (Camera, ExtensionMode) -> CameraSelector,
 ) {
     fun bind(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner) {
         // Unbind previous use cases

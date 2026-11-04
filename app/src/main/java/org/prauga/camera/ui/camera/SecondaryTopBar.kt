@@ -9,7 +9,6 @@ import android.animation.ValueAnimator
 import android.view.View
 import android.widget.Button
 import android.widget.HorizontalScrollView
-import androidx.camera.extensions.ExtensionMode
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.children
 import androidx.core.view.isVisible
@@ -25,6 +24,7 @@ import org.prauga.camera.ext.slideDown
 import org.prauga.camera.ext.smoothRotate
 import org.prauga.camera.models.CameraMode
 import org.prauga.camera.models.CameraState
+import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.GridMode
 import org.prauga.camera.models.PhotoAspectRatio
 import org.prauga.camera.models.Rotation
@@ -197,7 +197,6 @@ class SecondaryTopBar(
                         ExtensionMode.NIGHT -> R.drawable.ic_clear_night
                         ExtensionMode.FACE_RETOUCH -> R.drawable.ic_face_retouching_natural
                         ExtensionMode.AUTO -> R.drawable.ic_hdr_auto
-                        else -> R.drawable.ic_blur_off
                     },
                     0,
                     0
@@ -210,7 +209,6 @@ class SecondaryTopBar(
                         ExtensionMode.NIGHT -> R.string.effect_night
                         ExtensionMode.FACE_RETOUCH -> R.string.effect_face_retouch
                         ExtensionMode.AUTO -> R.string.effect_auto
-                        else -> R.string.effect_none
                     }
                 )
             }

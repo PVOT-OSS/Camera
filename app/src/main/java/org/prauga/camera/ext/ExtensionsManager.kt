@@ -6,11 +6,12 @@
 package org.prauga.camera.ext
 
 import androidx.camera.core.CameraSelector
-import androidx.camera.extensions.ExtensionMode
 import androidx.camera.extensions.ExtensionsManager
-
-val extensionModes = IntProgression.fromClosedRange(ExtensionMode.NONE, ExtensionMode.AUTO, 1)
+import org.prauga.camera.camerax.toCameraXExtensionMode
+import org.prauga.camera.models.ExtensionMode
 
 internal fun ExtensionsManager.getSupportedModes(
     cameraSelector: CameraSelector,
-) = extensionModes.filter { isExtensionAvailable(cameraSelector, it) }.toSet()
+) = ExtensionMode.entries.filter {
+    isExtensionAvailable(cameraSelector, it.toCameraXExtensionMode())
+}.toSet()

@@ -5,8 +5,6 @@
 
 package org.prauga.camera.models
 
-import androidx.camera.extensions.ExtensionMode
-
 /**
  * Camera configuration. Should only contain information about the session that can only be
  * configured at binding time.
@@ -56,10 +54,9 @@ sealed interface CameraConfiguration {
     val cameraMode: CameraMode
 
     /**
-     * The [ExtensionMode.Mode] to use.
+     * The [ExtensionMode] to use.
      */
-    @ExtensionMode.Mode
-    val extensionMode: Int
+    val extensionMode: ExtensionMode
 
     /**
      * The [Camera2Options] to use.
@@ -76,7 +73,7 @@ sealed interface CameraConfiguration {
      */
     data class Photo(
         override val camera: Camera,
-        override val extensionMode: Int,
+        override val extensionMode: ExtensionMode,
         override val camera2Options: Camera2Options,
         val photoCaptureMode: Int,
         val photoAspectRatio: PhotoAspectRatio,

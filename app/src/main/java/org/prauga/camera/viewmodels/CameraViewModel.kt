@@ -12,7 +12,6 @@ import android.view.OrientationEventListener
 import androidx.annotation.OptIn as AndroidXOptIn
 import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.core.ImageCapture
-import androidx.camera.extensions.ExtensionMode
 import androidx.camera.view.PreviewView
 import androidx.camera.view.ScreenFlashView
 import androidx.lifecycle.LifecycleOwner
@@ -54,6 +53,7 @@ import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.CameraMode
 import org.prauga.camera.models.CameraState
 import org.prauga.camera.models.Event
+import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.GridMode
 import org.prauga.camera.models.HardwareKey
 import org.prauga.camera.models.LaunchRequest
@@ -500,7 +500,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
 
     /**
      * Photo effect.
-     * @see ExtensionMode.Mode
+     * @see ExtensionMode
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     private val photoEffect = cameraConfiguration

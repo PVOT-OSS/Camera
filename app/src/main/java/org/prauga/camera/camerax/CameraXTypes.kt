@@ -6,9 +6,20 @@
 package org.prauga.camera.camerax
 
 import androidx.camera.core.AspectRatio
+import androidx.camera.extensions.ExtensionMode as CameraXExtensionMode
 import androidx.camera.video.Quality
+import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.PhotoAspectRatio
 import org.prauga.camera.models.VideoQuality
+
+fun ExtensionMode.toCameraXExtensionMode() = when (this) {
+    ExtensionMode.NONE -> CameraXExtensionMode.NONE
+    ExtensionMode.BOKEH -> CameraXExtensionMode.BOKEH
+    ExtensionMode.HDR -> CameraXExtensionMode.HDR
+    ExtensionMode.NIGHT -> CameraXExtensionMode.NIGHT
+    ExtensionMode.FACE_RETOUCH -> CameraXExtensionMode.FACE_RETOUCH
+    ExtensionMode.AUTO -> CameraXExtensionMode.AUTO
+}
 
 fun PhotoAspectRatio.toCameraXAspectRatio() = when (this) {
     PhotoAspectRatio.RATIO_4_3 -> AspectRatio.RATIO_4_3

@@ -26,6 +26,7 @@ import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraConfiguration
 import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.Event
+import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.FlashMode
 import org.prauga.camera.repositories.MediaRepository
 import org.prauga.camera.utils.CameraSoundsUtils
@@ -38,7 +39,7 @@ class CameraXSession(
     captureStateMachine: CaptureStateMachine,
     inSingleCaptureMode: StateFlow<Boolean>,
     qrImageAnalyzer: ImageAnalysis.Analyzer,
-    extensionCameraSelector: (Camera, Int) -> CameraSelector,
+    extensionCameraSelector: (Camera, ExtensionMode) -> CameraSelector,
     location: () -> Location?,
     cameraFacing: () -> CameraFacing,
     photoFfcMirror: () -> Boolean,

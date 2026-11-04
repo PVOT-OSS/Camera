@@ -23,9 +23,11 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
+import org.prauga.camera.camerax.toCameraXExtensionMode
 import org.prauga.camera.ext.permissionGranted
 import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraFacing
+import org.prauga.camera.models.ExtensionMode
 
 /**
  * Repository that provides camera devices.
@@ -107,9 +109,9 @@ class CameraRepository(
      */
     fun getExtensionEnabledCameraSelector(
         camera: Camera,
-        mode: Int,
+        mode: ExtensionMode,
     ): CameraSelector = extensionsManager.getExtensionEnabledCameraSelector(
-        camera.cameraSelector, mode
+        camera.cameraSelector, mode.toCameraXExtensionMode()
     )
 
     private fun CameraInfo.isInternalCameraAllowed() =

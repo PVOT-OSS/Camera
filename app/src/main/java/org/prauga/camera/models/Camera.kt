@@ -38,7 +38,7 @@ class Camera private constructor(
     cameraInfo: CameraInfo,
     val logicalZoomRatios: SortedMap<Float, Float>,
     additionalVideoFrameRates: Map<VideoQuality, Map<FrameRate, Boolean>>,
-    val supportedExtensionModes: Set<Int>,
+    val supportedExtensionModes: Set<ExtensionMode>,
 ) {
     /**
      * The [androidx.camera.core.CameraSelector] for this camera.
@@ -259,7 +259,7 @@ class Camera private constructor(
 
     override fun hashCode() = this::class.qualifiedName.hashCode() + cameraId.hashCode()
 
-    fun supportsExtensionMode(extensionMode: Int): Boolean {
+    fun supportsExtensionMode(extensionMode: ExtensionMode): Boolean {
         return supportedExtensionModes.contains(extensionMode)
     }
 

@@ -7,7 +7,6 @@ package org.prauga.camera.repositories
 
 import android.content.Context
 import androidx.camera.core.ImageCapture
-import androidx.camera.extensions.ExtensionMode
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import kotlinx.coroutines.CoroutineScope
@@ -22,6 +21,7 @@ import org.prauga.camera.models.CameraMode
 import org.prauga.camera.models.ColorCorrectionAberrationMode
 import org.prauga.camera.models.DistortionCorrectionMode
 import org.prauga.camera.models.EdgeMode
+import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.FlashMode
 import org.prauga.camera.models.FrameRate
 import org.prauga.camera.models.GestureAction
