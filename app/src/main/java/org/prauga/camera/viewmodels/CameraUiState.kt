@@ -7,7 +7,6 @@ package org.prauga.camera.viewmodels
 
 import android.net.Uri
 import androidx.camera.core.ZoomState
-import androidx.camera.video.Quality
 import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraMode
 import org.prauga.camera.models.CameraState
@@ -19,6 +18,7 @@ import org.prauga.camera.models.Rotation
 import org.prauga.camera.models.ThermalStatus
 import org.prauga.camera.models.TimerMode
 import org.prauga.camera.models.VideoDynamicRange
+import org.prauga.camera.models.VideoQuality
 
 data class CameraUiState(
     val cameraMode: CameraMode,
@@ -41,7 +41,7 @@ data class CameraUiState(
     val photoAspectRatio: Int,
     val photoEffect: Int,
     val isPhotoEffectButtonVisible: Boolean,
-    val videoQuality: Quality,
+    val videoQuality: VideoQuality,
     val isVideoQualityButtonEnabled: Boolean,
     val videoFrameRate: FrameRate?,
     val isVideoFrameRateButtonEnabled: Boolean,

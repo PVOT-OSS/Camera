@@ -7,7 +7,6 @@ package org.prauga.camera.models
 
 import androidx.camera.core.AspectRatio
 import androidx.camera.extensions.ExtensionMode
-import androidx.camera.video.Quality
 
 /**
  * Camera configuration. Should only contain information about the session that can only be
@@ -91,7 +90,7 @@ sealed interface CameraConfiguration {
     /**
      * Video mode configuration.
      *
-     * @param videoQuality The [Quality] to use
+     * @param videoQuality The [VideoQuality] to use
      * @param videoFrameRate The [FrameRate] to use
      * @param videoDynamicRange The [VideoDynamicRange] to use
      * @param videoMirrorMode The [VideoMirrorMode] to use
@@ -100,7 +99,7 @@ sealed interface CameraConfiguration {
     data class Video(
         override val camera: Camera,
         override val camera2Options: Camera2Options,
-        val videoQuality: Quality,
+        val videoQuality: VideoQuality,
         val videoFrameRate: FrameRate?,
         val videoDynamicRange: VideoDynamicRange,
         val videoMirrorMode: VideoMirrorMode,

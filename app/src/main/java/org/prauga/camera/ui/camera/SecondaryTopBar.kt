@@ -11,7 +11,6 @@ import android.widget.Button
 import android.widget.HorizontalScrollView
 import androidx.camera.core.AspectRatio
 import androidx.camera.extensions.ExtensionMode
-import androidx.camera.video.Quality
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.children
 import androidx.core.view.isVisible
@@ -31,6 +30,7 @@ import org.prauga.camera.models.GridMode
 import org.prauga.camera.models.Rotation
 import org.prauga.camera.models.TimerMode
 import org.prauga.camera.models.VideoDynamicRange
+import org.prauga.camera.models.VideoQuality
 import org.prauga.camera.viewmodels.CameraViewModel
 
 class SecondaryTopBar(
@@ -229,24 +229,22 @@ class SecondaryTopBar(
                 videoQualityButton.setCompoundDrawablesWithIntrinsicBounds(
                     0,
                     when (videoQuality) {
-                        Quality.SD -> R.drawable.ic_sd
-                        Quality.HD -> R.drawable.ic_hd
-                        Quality.FHD -> R.drawable.ic_full_hd
-                        Quality.QHD -> R.drawable.ic_qhd
-                        Quality.UHD -> R.drawable.ic_4k
-                        else -> throw Exception("Unknown video quality $videoQuality")
+                        VideoQuality.SD -> R.drawable.ic_sd
+                        VideoQuality.HD -> R.drawable.ic_hd
+                        VideoQuality.FHD -> R.drawable.ic_full_hd
+                        VideoQuality.QHD -> R.drawable.ic_qhd
+                        VideoQuality.UHD -> R.drawable.ic_4k
                     },
                     0,
                     0
                 )
                 videoQualityButton.setText(
                     when (videoQuality) {
-                        Quality.SD -> R.string.video_quality_sd
-                        Quality.HD -> R.string.video_quality_hd
-                        Quality.FHD -> R.string.video_quality_fhd
-                        Quality.QHD -> R.string.video_quality_qhd
-                        Quality.UHD -> R.string.video_quality_uhd
-                        else -> throw Exception("Unknown video quality $videoQuality")
+                        VideoQuality.SD -> R.string.video_quality_sd
+                        VideoQuality.HD -> R.string.video_quality_hd
+                        VideoQuality.FHD -> R.string.video_quality_fhd
+                        VideoQuality.QHD -> R.string.video_quality_qhd
+                        VideoQuality.UHD -> R.string.video_quality_uhd
                     }
                 )
             }

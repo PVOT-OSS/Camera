@@ -18,10 +18,10 @@ import androidx.camera.core.ExperimentalLensFacing
 import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionsManager
-import androidx.camera.video.Quality
 import androidx.camera.video.Recorder
 import androidx.core.util.toClosedRange
 import androidx.lifecycle.asFlow
+import org.prauga.camera.camerax.toVideoQuality
 import org.prauga.camera.ext.getSupportedModes
 import java.util.SortedMap
 import kotlin.reflect.safeCast
@@ -37,7 +37,7 @@ import kotlin.reflect.safeCast
 class Camera private constructor(
     cameraInfo: CameraInfo,
     val logicalZoomRatios: SortedMap<Float, Float>,
-    additionalVideoFrameRates: Map<Quality, Map<FrameRate, Boolean>>,
+    additionalVideoFrameRates: Map<VideoQuality, Map<FrameRate, Boolean>>,
     val supportedExtensionModes: Set<Int>,
 ) {
     /**
@@ -94,7 +94,9 @@ class Camera private constructor(
     }
 
     private val videoQualityForDynamicRanges = supportedVideoDynamicRanges.associateWith {
-        videoCapabilities.getSupportedQualities(it.dynamicRange)
+        videoCapabilities.getSupportedQualities(it.dynamicRange).mapNotNull { quality ->
+            quality.toVideoQuality()
+        }
     }
 
     val supportedVideoQualities =

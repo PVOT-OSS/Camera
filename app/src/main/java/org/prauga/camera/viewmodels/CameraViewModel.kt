@@ -14,7 +14,6 @@ import androidx.camera.core.AspectRatio
 import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionMode
-import androidx.camera.video.Quality
 import androidx.camera.view.PreviewView
 import androidx.camera.view.ScreenFlashView
 import androidx.lifecycle.LifecycleOwner
@@ -62,6 +61,7 @@ import org.prauga.camera.models.LaunchRequest
 import org.prauga.camera.models.Rotation
 import org.prauga.camera.models.ThermalStatus
 import org.prauga.camera.models.TimerMode
+import org.prauga.camera.models.VideoQuality
 import org.prauga.camera.qr.QrImageAnalyzer
 import org.prauga.camera.utils.CameraSoundsUtils
 
@@ -1014,7 +1014,13 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             val videoQuality =
                 cameraConfiguration.camera.supportedVideoQualities.keys.toList()
                     .sortedWith { a, b ->
-                        listOf(Quality.SD, Quality.HD, Quality.FHD, Quality.QHD, Quality.UHD).let {
+                        listOf(
+                            VideoQuality.SD,
+                            VideoQuality.HD,
+                            VideoQuality.FHD,
+                            VideoQuality.QHD,
+                            VideoQuality.UHD,
+                        ).let {
                             it.indexOf(a) - it.indexOf(b)
                         }
                     }.next(cameraConfiguration.videoQuality) ?: error(

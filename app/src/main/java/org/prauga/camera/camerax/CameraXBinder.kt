@@ -146,7 +146,7 @@ class CameraXBinder(
 
                 // Set the quality
                 cameraController.videoCaptureQualitySelector =
-                    QualitySelector.from(cameraConfiguration.videoQuality)
+                    QualitySelector.from(cameraConfiguration.videoQuality.toCameraXQuality())
 
                 // Set the dynamic range
                 cameraController.videoCaptureDynamicRange =

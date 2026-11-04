@@ -9,7 +9,6 @@ import android.content.Context
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionMode
-import androidx.camera.video.Quality
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import kotlinx.coroutines.CoroutineScope
@@ -38,6 +37,7 @@ import org.prauga.camera.models.ShadingMode
 import org.prauga.camera.models.TimerMode
 import org.prauga.camera.models.VideoDynamicRange
 import org.prauga.camera.models.VideoMirrorMode
+import org.prauga.camera.models.VideoQuality
 
 /**
  * User preferences repository.
@@ -231,17 +231,17 @@ class PreferencesRepository(
     ).asPreferenceHolder()
 
     /**
-     * Desired [Quality] for videos.
+     * Desired [VideoQuality] for videos.
      */
-    val videoQuality = enumPreference<Quality, String>(
+    val videoQuality = enumPreference<VideoQuality, String>(
         key = "video_quality",
-        defaultValue = Quality.FHD,
+        defaultValue = VideoQuality.FHD,
         enumToPreferenceValue = mapOf(
-            Quality.SD to "sd",
-            Quality.HD to "hd",
-            Quality.FHD to "fhd",
-            Quality.QHD to "qhd",
-            Quality.UHD to "uhd",
+            VideoQuality.SD to "sd",
+            VideoQuality.HD to "hd",
+            VideoQuality.FHD to "fhd",
+            VideoQuality.QHD to "qhd",
+            VideoQuality.UHD to "uhd",
         ),
     ).asPreferenceHolder()
 
