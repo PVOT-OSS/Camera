@@ -10,7 +10,6 @@ import android.net.Uri
 import android.util.Log
 import android.view.OrientationEventListener
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlin.reflect.safeCast
 import kotlinx.coroutines.Dispatchers
@@ -49,7 +48,6 @@ import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.CameraMode
 import org.prauga.camera.models.CameraState
 import org.prauga.camera.models.Event
-import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.GridMode
 import org.prauga.camera.models.HardwareKey
 import org.prauga.camera.models.LaunchRequest
@@ -58,7 +56,6 @@ import org.prauga.camera.models.PhotoCaptureMode
 import org.prauga.camera.models.Rotation
 import org.prauga.camera.models.ThermalStatus
 import org.prauga.camera.models.TimerMode
-import org.prauga.camera.models.VideoQuality
 import org.prauga.camera.qr.QrImageAnalyzer
 import org.prauga.camera.utils.CameraSoundsUtils
 
@@ -1007,17 +1004,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         updateConfiguration<CameraConfiguration.Video> { cameraConfiguration ->
             val videoQuality =
                 cameraConfiguration.camera.supportedVideoQualities.keys.toList()
-                    .sortedWith { a, b ->
-                        listOf(
-                            VideoQuality.SD,
-                            VideoQuality.HD,
-                            VideoQuality.FHD,
-                            VideoQuality.QHD,
-                            VideoQuality.UHD,
-                        ).let {
-                            it.indexOf(a) - it.indexOf(b)
-                        }
-                    }.next(cameraConfiguration.videoQuality) ?: error(
+                    .sorted().next(cameraConfiguration.videoQuality) ?: error(
                     "No video quality supported by the camera"
                 )
 
