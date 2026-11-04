@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Překlopení stran</string>
     <string name="gallery_button_description">Galerie</string>
     <string name="image_view_description">Náhled obrázku</string>
-    <string name="pro_button_description">Profesionální možnosti</string>
     <string name="shutter_button_description">Závěrka</string>
     <string name="video_recording_state_button_description">Pozastavit/pokračovat v nahrávání videa</string>
-    <string name="timer_off">ČASOVAČ VYPNUT</string>
-    <string name="timer_3">Časovač - 3s</string>
-    <string name="timer_10">Časovač - 10s</string>
-    <string name="video_framerate_auto">AUTOMATICKÉ FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">ŽÁDNÉ</string>
     <string name="effect_night">NOC</string>
     <string name="effect_face_retouch">ÚPRAVA OBLIČEJE</string>
     <string name="effect_auto">AUTOMATICKY</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">MŘÍŽKA φ</string>
     <string name="mic_off">VYPNOUT MIKROFON</string>
     <string name="mic_on">ZAPNOUT MIKROFON</string>
-    <string name="settings">NASTAVENÍ</string>
     <string name="app_permissions_toast">Uživatel neudělil oprávnění.</string>
     <string name="camcorder_unsupported_toast">Žádná kamera nepodporuje nahrávání videa.</string>
     <string name="qr_copy_description">Zkopírovat do schránky</string>

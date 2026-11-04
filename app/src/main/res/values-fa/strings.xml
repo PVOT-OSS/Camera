@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">چرخاندن دوربین</string>
     <string name="gallery_button_description">گالری</string>
     <string name="image_view_description">پیش‌نمایش تصویر</string>
-    <string name="pro_button_description">تنظیمات پیشرفته</string>
     <string name="shutter_button_description">شاتر</string>
     <string name="video_recording_state_button_description">توقف/ادامه ضبط ویدیو</string>
-    <string name="timer_off">زمانبندی خاموش</string>
-    <string name="timer_3">زمانبندی ۳ ثانیه</string>
-    <string name="timer_10">زمانبندی ۱۰ ثانیه</string>
-    <string name="video_framerate_auto">فریم خودکار</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> فریم</string>
-    <string name="effect_none">هیچ</string>
     <string name="effect_night">شب</string>
     <string name="effect_face_retouch">روتوش صورت</string>
     <string name="effect_auto">خودکار</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">خطوط جدولی φ</string>
     <string name="mic_off">میکروفون خاموش</string>
     <string name="mic_on">با میکروفون</string>
-    <string name="settings">تنظیمات</string>
     <string name="app_permissions_toast">مجوز توسط کاربر داده نشد.</string>
     <string name="camcorder_unsupported_toast">هیچ دوربینی از فیلمبرداری پشتیبانی نمی کند.</string>
     <string name="qr_copy_description">رونوشت به بریده‌دان</string>

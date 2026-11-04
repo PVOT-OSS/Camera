@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Obrni fotoaparat</string>
     <string name="gallery_button_description">Galerija</string>
     <string name="image_view_description">Predogled slike</string>
-    <string name="pro_button_description">Pro nastavitve</string>
     <string name="shutter_button_description">Sprožilec</string>
     <string name="video_recording_state_button_description">Premor/nadaljevanje snemanja videoposnetka</string>
-    <string name="timer_off">ODŠTEVALNIK IZKLOPLJEN</string>
-    <string name="timer_3">ODŠTEVALNIK 3s</string>
-    <string name="timer_10">ODŠTEVALNIK 10s</string>
-    <string name="video_framerate_auto">SAMODEJNO SL./S</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> SL./S</string>
-    <string name="effect_none">BREZ</string>
     <string name="effect_night">PONOČI</string>
     <string name="effect_face_retouch">RETUŠIRANJE OBRAZA</string>
     <string name="effect_auto">SAMODEJNO</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">MREŽA φ</string>
     <string name="mic_off">MIKROFON IZKLOPLJEN</string>
     <string name="mic_on">MIKROFON VKLOPLJEN</string>
-    <string name="settings">NAST.</string>
     <string name="app_permissions_toast">Dovoljenje ni odobreno od uporabnika</string>
     <string name="camcorder_unsupported_toast">Noben fotoaparat ne podpira snemanja videoposnetkov.</string>
     <string name="qr_copy_description">Kopiraj v odložišče</string>

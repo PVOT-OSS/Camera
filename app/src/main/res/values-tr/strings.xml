@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Kamerayı çevir</string>
     <string name="gallery_button_description">Galeri</string>
     <string name="image_view_description">Resim ön izleme</string>
-    <string name="pro_button_description">Pro ayarları</string>
     <string name="shutter_button_description">Deklanşör</string>
     <string name="video_recording_state_button_description">Video kaydını duraklat/devam ettir</string>
-    <string name="timer_off">ZAMANLAYICI KAPALI</string>
-    <string name="timer_3">ZAMANLAYICI 3s</string>
-    <string name="timer_10">ZAMANLAYICI 10s</string>
-    <string name="video_framerate_auto">Otomatik FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">YOK</string>
     <string name="effect_night">GECE</string>
     <string name="effect_face_retouch">YÜZ RÖTUŞU</string>
     <string name="effect_auto">OTOMATİK</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">ÇRÇV φ</string>
     <string name="mic_off">MİK KPL</string>
     <string name="mic_on">MİK AÇK</string>
-    <string name="settings">AYARLAR</string>
     <string name="app_permissions_toast">Kullanıcı izinleri vermedi.</string>
     <string name="camcorder_unsupported_toast">Video kaydını destekleyen kamera yok.</string>
     <string name="qr_copy_description">Panoya kopyala</string>

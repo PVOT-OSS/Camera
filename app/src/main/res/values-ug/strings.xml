@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">كامېرا ئالماشتۇر</string>
     <string name="gallery_button_description">سۈرەتدان</string>
     <string name="image_view_description">سۈرەتنى ئالدىن كۆزەت</string>
-    <string name="pro_button_description">كەسپىي تەڭشەكلىرى</string>
     <string name="shutter_button_description">قاپقاق</string>
     <string name="video_recording_state_button_description">سىنغا ئېلىشنى ۋاقىتلىق توختات/داۋاملاشتۇر</string>
-    <string name="timer_off">ۋاقىت خاتىرىلىگۈچ تاقاق</string>
-    <string name="timer_3">ۋاقىت خاتىرىلىگۈچ 3 سېكۇنت</string>
-    <string name="timer_10">ۋاقىت خاتىرىلىگۈچ 10 سېكۇنت</string>
-    <string name="video_framerate_auto">ئاپتوماتىك FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">يوق</string>
     <string name="effect_night">كېچە</string>
     <string name="effect_face_retouch">چىراي گۈزەللەشتۈرۈش</string>
     <string name="effect_auto">ئاپتوماتىك</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">φ تور</string>
     <string name="mic_off">مىكروفون تاقاق</string>
     <string name="mic_on">مىكروفون ئوچۇق</string>
-    <string name="settings">تەڭشەك</string>
     <string name="app_permissions_toast">ئىشلەتكۈچى ئىجازەت بەرمىگەن.</string>
     <string name="camcorder_unsupported_toast">سىنغا ئېلىشنى قوللايدىغان كامېرا يوق.</string>
     <string name="qr_copy_description">چاپلاش تاختىسىغا كۆچۈر</string>

@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">翻轉鏡頭</string>
     <string name="gallery_button_description">相簿</string>
     <string name="image_view_description">圖像預覽</string>
-    <string name="pro_button_description">專業設定</string>
     <string name="shutter_button_description">快門</string>
     <string name="video_recording_state_button_description">暫停/繼續影片錄製</string>
-    <string name="timer_off">計時器已關閉</string>
-    <string name="timer_3">3 秒</string>
-    <string name="timer_10">10 秒</string>
-    <string name="video_framerate_auto">自動 FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">無</string>
     <string name="effect_night">夜景</string>
     <string name="effect_face_retouch">美顏</string>
     <string name="effect_auto">自動</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">φ</string>
     <string name="mic_off">麥克風關閉</string>
     <string name="mic_on">麥克風開啟</string>
-    <string name="settings">設定</string>
     <string name="app_permissions_toast">使用者未授予權限。</string>
     <string name="camcorder_unsupported_toast">沒有支援影片錄製的鏡頭。</string>
     <string name="qr_copy_description">複製到剪貼簿</string>

@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Kamerakép tükrözése</string>
     <string name="gallery_button_description">Galéria</string>
     <string name="image_view_description">Képelőnézet</string>
-    <string name="pro_button_description">Pro-beállítások</string>
     <string name="shutter_button_description">Exponálógomb</string>
     <string name="video_recording_state_button_description">Videófelvétel megállítása/folytatása</string>
-    <string name="timer_off">IDŐZÍTŐ KI</string>
-    <string name="timer_3">IDŐZÍTŐ 3mp</string>
-    <string name="timer_10">IDŐZÍTŐ 10mp</string>
-    <string name="video_framerate_auto">AUTO FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">NINCS</string>
     <string name="effect_night">ÉJSZAKA</string>
     <string name="effect_face_retouch">ARC RETUS</string>
     <string name="effect_auto">AUTO</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">RÁCS φ</string>
     <string name="mic_off">MIKROFON KI</string>
     <string name="mic_on">MIKROFON BE</string>
-    <string name="settings">BEÁLLÍTÁSOK</string>
     <string name="app_permissions_toast">A jogosultságot a felhasználó nem adta meg.</string>
     <string name="camcorder_unsupported_toast">Nincs videófelvételt támogató kamera.</string>
     <string name="qr_copy_description">Másolás a vágólapra</string>

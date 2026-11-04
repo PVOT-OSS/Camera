@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Smeach ceamara</string>
     <string name="gallery_button_description">Gailearaí</string>
     <string name="image_view_description">Réamhamhairc íomhá</string>
-    <string name="pro_button_description">Socruithe pro</string>
     <string name="shutter_button_description">Comhla</string>
     <string name="video_recording_state_button_description">Cuir sos/atosú ar fhístaifeadadh</string>
-    <string name="timer_off">AMADÓIR AS</string>
-    <string name="timer_3">AMADÓIR 3s</string>
-    <string name="timer_10">AMADÓIR 10s</string>
-    <string name="video_framerate_auto">Uathoibríoch FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">NIHIL</string>
     <string name="effect_night">OÍCHE</string>
     <string name="effect_face_retouch">ATHGHNÍOMHÚ AGHAIDH</string>
     <string name="effect_auto">UATH</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">GREILLE φ</string>
     <string name="mic_off">MIC AS</string>
     <string name="mic_on">MIC AR </string>
-    <string name="settings">SOCRUITHE</string>
     <string name="app_permissions_toast">Ceadanna nár bhronn an t-úsáideoir.</string>
     <string name="camcorder_unsupported_toast">Ní thacaíonn ceamara ar bith le fístaifeadadh.</string>
     <string name="qr_copy_description">Cóipeáil chuig an ngearrthaisce</string>

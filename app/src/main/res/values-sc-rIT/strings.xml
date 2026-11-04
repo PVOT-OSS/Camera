@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Fùrria sa càmera</string>
     <string name="gallery_button_description">Galleria</string>
     <string name="image_view_description">Previsualizatzione de s\'immàgine</string>
-    <string name="pro_button_description">Cunfiguratzione pro</string>
     <string name="shutter_button_description">Oturadore</string>
     <string name="video_recording_state_button_description">Pone in pàusa/torra a aviare sa registratzione</string>
-    <string name="timer_off">TEMPORIZADORE DISATIVADU</string>
-    <string name="timer_3">TEMPORIZADORE 3s</string>
-    <string name="timer_10">TEMPORIZADORE 10s</string>
-    <string name="video_framerate_auto">FPS AUTO</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">NISSUNU</string>
     <string name="effect_night">NOTE</string>
     <string name="effect_face_retouch">RITOCU DE SA CARA</string>
     <string name="effect_auto">AUTOMÀTICU</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">GRÌGLIA φ</string>
     <string name="mic_off">MICRÒFONU ISTUDADU</string>
     <string name="mic_on">MICRÒFONU ALLUTU</string>
-    <string name="settings">CUNFIGURATZIONES</string>
     <string name="app_permissions_toast">S\'utente no at donadu permissos.</string>
     <string name="camcorder_unsupported_toast">Nissuna videocàmera permitit sa registratzione de vìdeu.</string>
     <string name="qr_copy_description">Còpia in punta de billete</string>

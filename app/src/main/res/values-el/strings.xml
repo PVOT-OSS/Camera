@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Αναστροφή κάμερας</string>
     <string name="gallery_button_description">Συλλογή</string>
     <string name="image_view_description">Προεπισκόπηση εικόνας</string>
-    <string name="pro_button_description">Προηγμένες ρυθμίσεις</string>
     <string name="shutter_button_description">Κλείστρο</string>
     <string name="video_recording_state_button_description">Παύση/συνέχιση της εγγραφής βίντεο</string>
-    <string name="timer_off">ΧΡΟΝΟΜΕΤΡΟ OFF</string>
-    <string name="timer_3">ΧΡΟΝΟΜΕΤΡΟ 3δ</string>
-    <string name="timer_10">ΧΡΟΝΟΜΕΤΡΟ 10δ</string>
-    <string name="video_framerate_auto">AUTO FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">ΚΑΝΕΝΑ</string>
     <string name="effect_night">ΝΥΧΤΑ</string>
     <string name="effect_face_retouch">ΡΕΤΟΥΣ ΠΡΟΣΩΠΟΥ</string>
     <string name="effect_auto">ΑΥΤΟΜΑΤΟ</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">ΠΛΕΓΜΑ φ</string>
     <string name="mic_off">ΜΙΚΡΟΦΩΝΟ OFF</string>
     <string name="mic_on">ΜΙΚΡΟΦΩΝΟ ON</string>
-    <string name="settings">ΡΥΘΜΙΣΕΙΣ</string>
     <string name="app_permissions_toast">Οι άδειες δε χορηγήθηκαν από το χρήστη.</string>
     <string name="camcorder_unsupported_toast">Καμία κάμερα δεν υποστηρίζει εγγραφή βίντεο.</string>
     <string name="qr_copy_description">Αντιγραφή στο πρόχειρο</string>

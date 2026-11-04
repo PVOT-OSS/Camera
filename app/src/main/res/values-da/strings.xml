@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Vend kamera</string>
     <string name="gallery_button_description">Galleri</string>
     <string name="image_view_description">Billedeksempel</string>
-    <string name="pro_button_description">Pro indstillinger</string>
     <string name="shutter_button_description">Udløser</string>
     <string name="video_recording_state_button_description">Pause/genoptag videooptagelse</string>
-    <string name="timer_off">NEDTÆLLING FRA</string>
-    <string name="timer_3">TIMER 3s</string>
-    <string name="timer_10">TIMER 10s</string>
-    <string name="video_framerate_auto">AUTOMATISK FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">INGEN</string>
     <string name="effect_night">NAT</string>
     <string name="effect_face_retouch">ANSIGTS RETUCH</string>
     <string name="effect_auto">AUTOMATISK</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">GRID φ</string>
     <string name="mic_off">MIKROFON FRA</string>
     <string name="mic_on">MIKROFON TIL</string>
-    <string name="settings">INDSTILLINGER</string>
     <string name="app_permissions_toast">Tilladelser ikke tillads af brugeren.</string>
     <string name="camcorder_unsupported_toast">Intet kamera understøtter videooptagelse.</string>
     <string name="qr_copy_description">Kopiér til udklipsholder</string>

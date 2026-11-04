@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">კამერის შეტრიალება</string>
     <string name="gallery_button_description">გალერეა</string>
     <string name="image_view_description">სურათის შეთვალიერება</string>
-    <string name="pro_button_description">გამოცდილთათვის</string>
     <string name="shutter_button_description">ფოტოჩამკეტი</string>
     <string name="video_recording_state_button_description">ვიდეოს ჩაწერის შეჩერება/განგრძობა</string>
-    <string name="timer_off">ᲣᲙᲣᲗᲕᲚᲐ ᲒᲐᲛᲝᲠᲗ.</string>
-    <string name="timer_3">ᲣᲙᲣᲗᲕᲚᲐ 3ᲬᲛ</string>
-    <string name="timer_10">ᲣᲙᲣᲗᲕᲚᲐ 10ᲬᲛ</string>
-    <string name="video_framerate_auto">ᲙᲐᲓᲠ/ᲬᲛ ᲗᲕᲘᲗ.</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> კადრ/წმ</string>
-    <string name="effect_none">ᲐᲠᲪᲔᲠᲗᲘ</string>
     <string name="effect_night">ᲦᲐᲛᲘᲡ</string>
     <string name="effect_face_retouch">ᲡᲐᲮᲘᲡ ᲨᲔᲡᲬᲝᲠᲔᲑᲐ</string>
     <string name="effect_auto">ᲗᲕᲘᲗᲨᲔᲠᲩᲔᲕᲐ</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">ᲑᲐᲓᲔ φ</string>
     <string name="mic_off">ᲛᲘᲙᲠ. ᲒᲐᲛᲝᲠᲗ.</string>
     <string name="mic_on">ᲛᲘᲙᲠ. ᲩᲐᲠᲗ.</string>
-    <string name="settings">ᲞᲐᲠᲐᲛᲔᲢᲠ.</string>
     <string name="app_permissions_toast">ნებადართული არაა მომხმარებლისგან.</string>
     <string name="camcorder_unsupported_toast">ვიდეოჩამწერი კამერა არ მოიძებნა.</string>
     <string name="qr_copy_description">ასლის აღება</string>

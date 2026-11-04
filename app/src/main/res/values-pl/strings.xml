@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Obróć kamerę</string>
     <string name="gallery_button_description">Galeria</string>
     <string name="image_view_description">Podgląd obrazu</string>
-    <string name="pro_button_description">Zaawansowane</string>
     <string name="shutter_button_description">Migawka</string>
     <string name="video_recording_state_button_description">Wstrzymaj/wznawiaj nagrywanie wideo</string>
-    <string name="timer_off">TIMER WYŁ.</string>
-    <string name="timer_3">TIMER 3s</string>
-    <string name="timer_10">TIMER 10s</string>
-    <string name="video_framerate_auto">AUTOMATYCZNE Kl/s</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> Kl/s</string>
-    <string name="effect_none">BRAK</string>
     <string name="effect_night">NOC</string>
     <string name="effect_face_retouch">RETUSZ TWARZY</string>
     <string name="effect_auto">AUTOMATYCZNY</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">SIATKA φ</string>
     <string name="mic_off">MIK WYŁ.</string>
     <string name="mic_on">MIK WŁ.</string>
-    <string name="settings">USTAWIENIA</string>
     <string name="app_permissions_toast">Uprawnienia nie zostały przyznane przez użytkownika.</string>
     <string name="camcorder_unsupported_toast">Żaden aparat nie obsługuje nagrywania wideo.</string>
     <string name="qr_copy_description">Skopiuj do schowka</string>

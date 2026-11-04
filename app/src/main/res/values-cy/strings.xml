@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Fflipio\'r camera</string>
     <string name="gallery_button_description">Oriel</string>
     <string name="image_view_description">Rhagolwg llun</string>
-    <string name="pro_button_description">Gosodiadau pro</string>
     <string name="shutter_button_description">Caead</string>
     <string name="video_recording_state_button_description">Oedi/parhau i recordio fideo</string>
-    <string name="timer_off">AMSERYDD I FFWRDD</string>
-    <string name="timer_3">AMSERYDD 3e</string>
-    <string name="timer_10">AMSERYDD 10e</string>
-    <string name="video_framerate_auto">FF/E AWTO</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> Ff/e</string>
-    <string name="effect_none">DIM</string>
     <string name="effect_night">NOS</string>
     <string name="effect_face_retouch">ATGYFFWRDD WYNEB</string>
     <string name="effect_auto">AWTO</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">GRID φ</string>
     <string name="mic_off">MEIC I FFWRDD</string>
     <string name="mic_on">MEIC YMLAEN</string>
-    <string name="settings">GOSODIADAU</string>
     <string name="app_permissions_toast">Ni roddwyd caniatâd gan y defnyddiwr.</string>
     <string name="camcorder_unsupported_toast">Does dim camera yn gallu recordio fideo.</string>
     <string name="qr_copy_description">Copïo i\'r clipfwrdd</string>

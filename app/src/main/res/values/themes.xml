@@ -21,34 +21,6 @@
         <item name="enableEdgeToEdge">true</item>
     </style>
 
-    <!-- Secondary bar icons base theme -->
-    <style name="Theme.PvotCamera.Camera.SecondaryBarButton">
-        <item name="tint">@color/secondary_bar_button_icon</item>
-        <item name="backgroundTint">?attr/colorOnPrimary</item>
-        <item name="drawableTint">@color/secondary_bar_button_icon</item>
-        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
-        <item name="android:textColor">@color/secondary_bar_button_icon</item>
-        <item name="android:textSize">12sp</item>
-    </style>
-
-    <!-- Secondary top bar icons theme -->
-    <style name="Theme.PvotCamera.Camera.SecondaryTopBarButton" parent="Theme.PvotCamera.Camera.SecondaryBarButton">
-        <item name="android:layout_width">96dp</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:hyphenationFrequency">normal</item>
-        <item name="android:maxLines">3</item>
-        <item name="android:paddingHorizontal">0dp</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:typeface">monospace</item>
-    </style>
-
-    <!-- Secondary bottom bar icons theme -->
-    <style name="Theme.PvotCamera.Camera.SecondaryBottomBarButton" parent="Theme.PvotCamera.Camera.SecondaryBarButton">
-        <item name="android:layout_width">48dp</item>
-        <item name="android:layout_height">48dp</item>
-        <item name="android:padding">4dp</item>
-    </style>
-
     <!-- Info chip -->
     <style name="Theme.PvotCamera.Camera.Island.ImageView" parent="">
         <item name="android:layout_width">wrap_content</item>

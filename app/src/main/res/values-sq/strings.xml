@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Rrotulloje kamerën</string>
     <string name="gallery_button_description">Galeria</string>
     <string name="image_view_description">Trego imazhin</string>
-    <string name="pro_button_description">Cilësimet PRO</string>
     <string name="shutter_button_description">Shkrepësi</string>
     <string name="video_recording_state_button_description">Ndalo/rifillo regjistrimin e videos</string>
-    <string name="timer_off">KOHËMATESI FIKUR</string>
-    <string name="timer_3">KOHËMATESI 3s</string>
-    <string name="timer_10">KOHËMATESI 10s</string>
-    <string name="video_framerate_auto">AUTO FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">ASNJË</string>
     <string name="effect_night">NATË</string>
     <string name="effect_face_retouch">FYTYRE RETUSH</string>
     <string name="effect_auto">AUTO</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">RRJETË φ</string>
     <string name="mic_off">MIC FIKUR</string>
     <string name="mic_on">MIX NDEZUR</string>
-    <string name="settings">CILËSIMET</string>
     <string name="app_permissions_toast">Lejet nuk janë dhënë nga përdoruesi.</string>
     <string name="camcorder_unsupported_toast">Asnjë kamer nuk mundëson regjistrimin e videos.</string>
     <string name="qr_copy_description">Kopjo në \'clipboard\'</string>

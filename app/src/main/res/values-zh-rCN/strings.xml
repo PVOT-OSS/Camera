@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">翻转摄像头</string>
     <string name="gallery_button_description">相册</string>
     <string name="image_view_description">图像预览</string>
-    <string name="pro_button_description">专业设置</string>
     <string name="shutter_button_description">快门</string>
     <string name="video_recording_state_button_description">暂停/继续视频录制</string>
-    <string name="timer_off">计时器已关闭</string>
-    <string name="timer_3">3秒</string>
-    <string name="timer_10">10秒</string>
-    <string name="video_framerate_auto">自动帧率</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">无</string>
     <string name="effect_night">夜景</string>
     <string name="effect_face_retouch">美颜</string>
     <string name="effect_auto">自动</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">φ 网格</string>
     <string name="mic_off">关闭麦克风</string>
     <string name="mic_on">开启麦克风</string>
-    <string name="settings">设置</string>
     <string name="app_permissions_toast">用户没有授予权限。</string>
     <string name="camcorder_unsupported_toast">不支持视频录制。</string>
     <string name="qr_copy_description">复制到剪贴板</string>

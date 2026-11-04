@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Schakelen tussen camera\'s</string>
     <string name="gallery_button_description">Galerij</string>
     <string name="image_view_description">Voorbeeld afbeelding</string>
-    <string name="pro_button_description">Pro-instellingen</string>
     <string name="shutter_button_description">Sluiter</string>
     <string name="video_recording_state_button_description">Video-opname onderbreken/hervatten</string>
-    <string name="timer_off">TIMER UIT</string>
-    <string name="timer_3">TIMER 3s</string>
-    <string name="timer_10">TIMER 10s</string>
-    <string name="video_framerate_auto">AUTOMATISCH FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">GEEN</string>
     <string name="effect_night">NACHT</string>
     <string name="effect_face_retouch">GEZICHT RETOUCH</string>
     <string name="effect_auto">AUTOMATISCH</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">ROOSTER φ</string>
     <string name="mic_off">MIC UIT</string>
     <string name="mic_on">MIC AAN</string>
-    <string name="settings">INSTELLINGEN</string>
     <string name="app_permissions_toast">Machtigingen niet toegekend door de gebruiker.</string>
     <string name="camcorder_unsupported_toast">Geen camera ondersteunt video-opname.</string>
     <string name="qr_copy_description">Kopieer naar klembord</string>

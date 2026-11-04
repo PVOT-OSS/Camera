@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Дзеркальний режим</string>
     <string name="gallery_button_description">Галерея</string>
     <string name="image_view_description">Попередній перегляд зображення</string>
-    <string name="pro_button_description">Професійні налаштування</string>
     <string name="shutter_button_description">Затвор</string>
     <string name="video_recording_state_button_description">Призупинити/продовжити запис відео</string>
-    <string name="timer_off">ТАЙМЕР ВИМКНЕНО</string>
-    <string name="timer_3">Таймер 3 с</string>
-    <string name="timer_10">Таймер 10 с</string>
-    <string name="video_framerate_auto">АВТО FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">НЕМАЄ</string>
     <string name="effect_night">НІЧ</string>
     <string name="effect_face_retouch">РЕТУШ ОБЛИЧЧЯ</string>
     <string name="effect_auto">АВТО</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">СІТКА φ</string>
     <string name="mic_off">ЗВУК ВИМК.</string>
     <string name="mic_on">ЗВУК УВІМК.</string>
-    <string name="settings">НАЛАШТУВАННЯ</string>
     <string name="app_permissions_toast">Дозволи не надані користувачем.</string>
     <string name="camcorder_unsupported_toast">Жодна камера не підтримує запис відео.</string>
     <string name="qr_copy_description">Копіювати в буфер обміну</string>

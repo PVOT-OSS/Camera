@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Kameranı çevir</string>
     <string name="gallery_button_description">Qalereya</string>
     <string name="image_view_description">Təsviri önizlə</string>
-    <string name="pro_button_description">Pro ayarları</string>
     <string name="shutter_button_description">Sürgü</string>
     <string name="video_recording_state_button_description">Videoyazıya fasilə ver/davam etdir</string>
-    <string name="timer_off">TAYMER BAĞLIDIR</string>
-    <string name="timer_3">TAYMER 3 san</string>
-    <string name="timer_10">TAYMER 10 san</string>
-    <string name="video_framerate_auto">AVTO FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">YOXDUR</string>
     <string name="effect_night">GECƏ</string>
     <string name="effect_face_retouch">ÜZ RETUŞU</string>
     <string name="effect_auto">AVTO</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">TOR φ</string>
     <string name="mic_off">MİKRF BAĞLIDIR</string>
     <string name="mic_on">MİKRF AÇIQDIR</string>
-    <string name="settings">AYARLAR</string>
     <string name="app_permissions_toast">İstifadəçi izinləri vermədi.</string>
     <string name="camcorder_unsupported_toast">Heç bir kamera videoyazını dəstəkləmir.</string>
     <string name="qr_copy_description">Lövhəyə kopyala</string>

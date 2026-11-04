@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Inverser la caméra</string>
     <string name="gallery_button_description">Galerie</string>
     <string name="image_view_description">Aperçu de l\'image</string>
-    <string name="pro_button_description">Paramètres pro</string>
     <string name="shutter_button_description">Obturateur</string>
     <string name="video_recording_state_button_description">Mettre en pause/reprendre l\'enregistrement vidéo</string>
-    <string name="timer_off">RETARDATEUR DÉSACTIVÉ</string>
-    <string name="timer_3">RETARDATEUR 3s</string>
-    <string name="timer_10">RETARDATEUR 10s</string>
-    <string name="video_framerate_auto">IPS AUTO</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> IPS</string>
-    <string name="effect_none">AUCUN</string>
     <string name="effect_night">NUIT</string>
     <string name="effect_face_retouch">RETOUCHE DU VISAGE</string>
     <string name="effect_auto">AUTO</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">GRILLE φ</string>
     <string name="mic_off">MICRO DÉSACTIVÉ</string>
     <string name="mic_on">MICRO ACTIVÉ</string>
-    <string name="settings">PARAMÈTRES</string>
     <string name="app_permissions_toast">Autorisations non accordées par l\'utilisateur.</string>
     <string name="camcorder_unsupported_toast">Aucune caméra ne prend en charge l\'enregistrement vidéo.</string>
     <string name="qr_copy_description">Copier dans le presse-papiers</string>

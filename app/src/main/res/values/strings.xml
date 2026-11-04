@@ -15,28 +15,16 @@
     <string name="flip_camera_button_description">Flip camera</string>
     <string name="gallery_button_description">Gallery</string>
     <string name="image_view_description">Image preview</string>
-    <string name="pro_button_description">Pro settings</string>
     <string name="shutter_button_description">Shutter</string>
     <string name="video_recording_state_button_description">Pause/resume video recording</string>
 
     <!-- Secondary button text -->
-    <string name="timer_off">TIMER OFF</string>
-    <string name="timer_3">TIMER 3s</string>
-    <string name="timer_10">TIMER 10s</string>
 
     <string name="aspect_ratio_4_3" translatable="false">4:3</string>
     <string name="aspect_ratio_16_9" translatable="false">16:9</string>
 
-    <string name="video_quality_sd" translatable="false">480p</string>
-    <string name="video_quality_hd" translatable="false">720p</string>
-    <string name="video_quality_fhd" translatable="false">1080p</string>
-    <string name="video_quality_qhd" translatable="false">1440p</string>
-    <string name="video_quality_uhd" translatable="false">2160p</string>
 
-    <string name="video_framerate_auto">AUTO FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
 
-    <string name="effect_none">NONE</string>
     <string name="effect_bokeh" translatable="false">BOKEH</string>
     <string name="effect_hdr" translatable="false">HDR</string>
     <string name="effect_night">NIGHT</string>
@@ -51,7 +39,6 @@
     <string name="mic_off">MIC OFF</string>
     <string name="mic_on">MIC ON</string>
 
-    <string name="settings">SETTINGS</string>
 
     <!-- Toast messages -->
     <string name="app_permissions_toast">Permissions not granted by the user.</string>
@@ -240,12 +227,6 @@
     <string name="camera_mode_qr">Scan</string>
 
     <!-- Video dynamic ranges -->
-    <string name="video_dynamic_range_sdr" translatable="false">SDR</string>
-    <string name="video_dynamic_range_hlg_10_bit" translatable="false">HLG (10 bit)</string>
-    <string name="video_dynamic_range_hdr10_10_bit" translatable="false">HDR10 (10 bit)</string>
-    <string name="video_dynamic_range_hdr10_plus_10_bit" translatable="false">HDR10+ (10 bit)</string>
-    <string name="video_dynamic_range_dolby_vision_10_bit" translatable="false">Dolby Vision (10 bit)</string>
-    <string name="video_dynamic_range_dolby_vision_8_bit" translatable="false">Dolby Vision (8 bit)</string>
 
     <!-- Video mirror mode -->
     <string name="video_mirror_mode_off">Off</string>
@@ -259,6 +240,41 @@
     <string name="camera_engine_camera2">Camera2 (experimental)</string>
     <string name="record_bursts_title">Record RAW bursts</string>
     <string name="record_bursts_summary">With Camera2, each photo also saves 8 RAW frames, metadata and gyro samples to the app\'s private folder, for processing development</string>
-    <string name="new_camera_ui_title">New camera UI</string>
-    <string name="new_camera_ui_summary">Use the new camera screen (work in progress)</string>
+    <string name="camera_controls">Camera controls</string>
+    <string name="control_flash">Flash</string>
+    <string name="control_timer">Timer</string>
+    <string name="control_exposure">Exposure</string>
+    <string name="control_effects">Effects</string>
+    <string name="control_aspect">Aspect</string>
+    <string name="control_hdr">HDR</string>
+    <string name="control_settings">Settings</string>
+    <string name="option_off">Off</string>
+    <string name="close">Close</string>
+    <string name="ae_af_lock">AE/AF LOCK</string>
+    <string name="recording_paused">PAUSED</string>
+    <string name="quick_take_slide_to_lock">SLIDE RIGHT TO LOCK</string>
+    <string name="photo_format_title">Photo format</string>
+    <string name="photo_format_jpeg" translatable="false">JPEG</string>
+    <string name="photo_format_ultra_hdr">ULTRA HDR</string>
+    <string name="photo_format_raw" translatable="false">RAW</string>
+    <string name="photo_format_raw_jpeg" translatable="false">RAW+JPEG</string>
+    <string name="video_format_title">Video format</string>
+    <string name="video_format_sd" translatable="false">SD</string>
+    <string name="video_format_hd" translatable="false">HD</string>
+    <string name="video_format_fhd" translatable="false">FHD</string>
+    <string name="video_format_qhd" translatable="false">QHD</string>
+    <string name="video_format_uhd" translatable="false">4K</string>
+    <string name="review_today">Today</string>
+    <string name="review_done">Done</string>
+    <string name="review_open_gallery">Open gallery</string>
+    <string name="review_play">Play</string>
+    <string name="review_share">Share</string>
+    <string name="review_favorite">Favorite</string>
+    <string name="review_info">Info</string>
+    <string name="review_edit">Edit</string>
+    <string name="review_delete">Delete</string>
+    <string name="review_delete_photo">Delete photo</string>
+    <string name="review_delete_video">Delete video</string>
+    <string name="review_cancel">Cancel</string>
+    <string name="review_deleted">Deleted</string>
 </resources>

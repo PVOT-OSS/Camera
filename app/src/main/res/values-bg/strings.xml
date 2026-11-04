@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Обърни камера</string>
     <string name="gallery_button_description">Галерия</string>
     <string name="image_view_description">Преглед на изображението</string>
-    <string name="pro_button_description">Професионални настройки</string>
     <string name="shutter_button_description">Затвор</string>
     <string name="video_recording_state_button_description">Пауза/Продължаване на видео записа</string>
-    <string name="timer_off">ИЗКЛЮЧЍ</string>
-    <string name="timer_3">ТАЙМЕР 3 сек.</string>
-    <string name="timer_10">ТАЙМЕР 10 сек.</string>
-    <string name="video_framerate_auto">АВТОМАТИЧНА СКОРОСТ НА ЗАСНЕМАНЕ</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> Кадъра в секунда</string>
-    <string name="effect_none">БЕЗ</string>
     <string name="effect_night">ПРЕЗ НОЩТА</string>
     <string name="effect_face_retouch">РЕТУШ НА ЛИЦЕТО</string>
     <string name="effect_auto">АВТОМАТИЧНО</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">Решетка φ</string>
     <string name="mic_off">Микрофон изключен</string>
     <string name="mic_on">Микрофон включен</string>
-    <string name="settings">НАСТРОЙКИ</string>
     <string name="app_permissions_toast">Няма позволение от потребителя.</string>
     <string name="camcorder_unsupported_toast">Камерата не поддържа видеозапис</string>
     <string name="qr_copy_description">Копиране в клипборда</string>

@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Girar cámara</string>
     <string name="gallery_button_description">Galería</string>
     <string name="image_view_description">Vista previa de la imagen</string>
-    <string name="pro_button_description">Ajustes Pro</string>
     <string name="shutter_button_description">Obturador</string>
     <string name="video_recording_state_button_description">Pausar/reanudar grabación de vídeo</string>
-    <string name="timer_off">SIN TEMP.</string>
-    <string name="timer_3">TEMP. 3s</string>
-    <string name="timer_10">TEMP. 10s</string>
-    <string name="video_framerate_auto">FPS AUTO</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">NINGUNO</string>
     <string name="effect_night">NOCHE</string>
     <string name="effect_face_retouch">RETOQUE FACIAL</string>
     <string name="effect_auto">AUTOMÁTICO</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">CUADRÍCULA φ</string>
     <string name="mic_off">SIN MIC.</string>
     <string name="mic_on">CON MIC.</string>
-    <string name="settings">AJUSTES</string>
     <string name="app_permissions_toast">Permisos no otorgados por el usuario.</string>
     <string name="camcorder_unsupported_toast">Ninguna cámara soporta grabación de vídeo.</string>
     <string name="qr_copy_description">Copiar al portapapeles</string>

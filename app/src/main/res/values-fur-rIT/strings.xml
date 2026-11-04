@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Ribalte fotocjamare</string>
     <string name="gallery_button_description">Galarie</string>
     <string name="image_view_description">Anteprime de imagjin</string>
-    <string name="pro_button_description">Impostazions Pro</string>
     <string name="shutter_button_description">Oturadôr</string>
     <string name="video_recording_state_button_description">Pause/ripie regjistrazion video</string>
-    <string name="timer_off">TEMPORIZADÔR DISATIVÂT</string>
-    <string name="timer_3">TEMPORIZADÔR 3s</string>
-    <string name="timer_10">TEMPORIZADÔR 10s</string>
-    <string name="video_framerate_auto">FPS AUTO</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">NISSUN</string>
     <string name="effect_night">GNOT</string>
     <string name="effect_face_retouch">RITOCJADE DE MUSE</string>
     <string name="effect_auto">AUTO</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">GRIDELE φ</string>
     <string name="mic_off">MICROFON OFF</string>
     <string name="mic_on">MICROFON ON</string>
-    <string name="settings">IMPOSTAZIONS</string>
     <string name="app_permissions_toast">L\'utent nol concêt i permès.</string>
     <string name="camcorder_unsupported_toast">Nissune fotocjamare e supuarte la regjistrazion video.</string>
     <string name="qr_copy_description">Copie intes notis</string>

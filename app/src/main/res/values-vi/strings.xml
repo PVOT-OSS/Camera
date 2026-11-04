@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Xoay máy ảnh</string>
     <string name="gallery_button_description">Thư viện</string>
     <string name="image_view_description">Xem trước hình ảnh</string>
-    <string name="pro_button_description">Cài đặt chuyên nghiệp</string>
     <string name="shutter_button_description">Màn trập</string>
     <string name="video_recording_state_button_description">Tạm dừng/tiếp tục quay phim</string>
-    <string name="timer_off">TẮT BỘ TÍNH GIỜ</string>
-    <string name="timer_3">HẸN GIỜ 3s</string>
-    <string name="timer_10">HẸN GIỜ 10s</string>
-    <string name="video_framerate_auto">FPS TỰ ĐỘNG</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">KHÔNG CÓ</string>
     <string name="effect_night">ĐÊM</string>
     <string name="effect_face_retouch">CHỈNH SỬA KHUÔN MẶT</string>
     <string name="effect_auto">TỰ ĐỘNG</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">LƯỚI φ</string>
     <string name="mic_off">TẮT MIC</string>
     <string name="mic_on">BẬT MIC</string>
-    <string name="settings">CÀI ĐẶT</string>
     <string name="app_permissions_toast">Quyền không được cấp bởi người dùng.</string>
     <string name="camcorder_unsupported_toast">Không có máy ảnh nào hỗ trợ quay phim.</string>
     <string name="qr_copy_description">Sao chép vào bộ nhớ tạm</string>

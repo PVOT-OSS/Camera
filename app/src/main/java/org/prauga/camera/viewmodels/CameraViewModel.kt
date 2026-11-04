@@ -42,8 +42,12 @@ import org.prauga.camera.capture.models.CameraConfiguration
 import org.prauga.camera.capture.models.CameraFacing
 import org.prauga.camera.capture.models.CameraMode
 import org.prauga.camera.capture.models.CameraState
+import org.prauga.camera.capture.models.ExtensionMode
+import org.prauga.camera.capture.models.FrameRate
 import org.prauga.camera.capture.models.PhotoAspectRatio
 import org.prauga.camera.capture.models.PhotoCaptureMode
+import org.prauga.camera.capture.models.PhotoOutputFormat
+import org.prauga.camera.capture.models.VideoQuality
 import org.prauga.camera.ext.applicationContext
 import org.prauga.camera.ext.mapToRange
 import org.prauga.camera.ext.next
@@ -297,8 +301,6 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             )
 
     val previewStreaming = cameraSession.previewStreaming
-
-    val newCameraUi = preferencesRepository.newCameraUi
 
     val tapToFocusInfoState =
         cameraSession.tapToFocusInfoState
@@ -952,6 +954,64 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             cameraConfiguration.copy(videoFrameRate = videoFrameRate)
         }
 
+    fun setTimerMode(timerMode: TimerMode) {
+        preferencesRepository.timerMode.value = timerMode
+    }
+
+    fun setExtensionMode(extensionMode: ExtensionMode) =
+        updateConfiguration<CameraConfiguration.Photo> { cameraConfiguration ->
+            if (extensionMode !in cameraConfiguration.camera.supportedExtensionModes) {
+                return@updateConfiguration cameraConfiguration
+            }
+
+            preferencesRepository.photoEffect.value = extensionMode
+
+            cameraConfiguration.copy(extensionMode = extensionMode)
+        }
+
+    fun setPhotoAspectRatio(photoAspectRatio: PhotoAspectRatio) =
+        updateConfiguration<CameraConfiguration.Photo> { cameraConfiguration ->
+            preferencesRepository.photoAspectRatio.value = photoAspectRatio
+
+            cameraConfiguration.copy(photoAspectRatio = photoAspectRatio)
+        }
+
+    fun setPhotoOutputFormat(photoOutputFormat: PhotoOutputFormat) {
+        preferencesRepository.usePhotoJpegUltraHdr.value =
+            photoOutputFormat == PhotoOutputFormat.JPEG_ULTRA_HDR
+        preferencesRepository.enableRawImageCapture.value =
+            photoOutputFormat == PhotoOutputFormat.RAW ||
+                photoOutputFormat == PhotoOutputFormat.RAW_JPEG
+        preferencesRepository.disableJpegWithRaw.value = photoOutputFormat == PhotoOutputFormat.RAW
+    }
+
+    fun setVideoFormat(videoQuality: VideoQuality, videoFrameRate: FrameRate?) =
+        updateConfiguration<CameraConfiguration.Video> { cameraConfiguration ->
+            val videoQualityInfo =
+                cameraConfiguration.camera.supportedVideoQualities[videoQuality]
+                    ?: return@updateConfiguration cameraConfiguration
+
+            val frameRate =
+                videoFrameRate.takeIf { videoQualityInfo.supportedFrameRates.contains(it) }
+                    ?: videoQualityInfo.supportedFrameRates.firstOrNull()
+
+            val videoDynamicRange =
+                cameraConfiguration.videoDynamicRange.takeIf {
+                    videoQualityInfo.supportedDynamicRanges.contains(it)
+                }
+                    ?: videoQualityInfo.supportedDynamicRanges.firstOrNull()
+                    ?: return@updateConfiguration cameraConfiguration
+
+            preferencesRepository.videoQuality.value = videoQuality
+            preferencesRepository.videoFrameRate.value = frameRate
+
+            cameraConfiguration.copy(
+                videoQuality = videoQuality,
+                videoFrameRate = frameRate,
+                videoDynamicRange = videoDynamicRange,
+            )
+        }
+
     /** Cycle the video dynamic range. */
     fun cycleVideoDynamicRange() =
         updateConfiguration<CameraConfiguration.Video> { cameraConfiguration ->
@@ -1002,6 +1062,8 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     }
 
     fun focus(x: Float, y: Float) = cameraSession.focus(x, y)
+
+    fun lockFocus(x: Float, y: Float) = cameraSession.lockFocus(x, y)
 
     fun setLinearZoom(linearZoom: Float) = cameraSession.setLinearZoom(linearZoom)
 

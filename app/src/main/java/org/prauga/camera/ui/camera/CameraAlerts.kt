@@ -9,7 +9,6 @@ import android.app.Activity
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
@@ -26,16 +25,11 @@ class CameraAlerts(
     private val viewModel: CameraViewModel,
     private val activity: Activity,
 ) {
-    private val secondaryBottomBarLayout =
-        root.findViewById<ConstraintLayout>(R.id.secondaryBottomBarLayout)
+    private val alertAnchor = root.findViewById<View>(R.id.alertAnchor)
 
     private val forceTorchSnackbar by lazy {
-        Snackbar.make(
-                secondaryBottomBarLayout,
-                R.string.force_torch_help,
-                Snackbar.LENGTH_INDEFINITE,
-            )
-            .setAnchorView(secondaryBottomBarLayout)
+        Snackbar.make(alertAnchor, R.string.force_torch_help, Snackbar.LENGTH_INDEFINITE)
+            .setAnchorView(alertAnchor)
             .setAction(android.R.string.ok) { viewModel.setForceModeHelpShown(true) }
     }
 
@@ -122,12 +116,8 @@ class CameraAlerts(
                 .select { it.thermalStatus }
                 .collectLatest { thermalStatus ->
                     val showSnackBar = { stringId: Int ->
-                        Snackbar.make(
-                                secondaryBottomBarLayout,
-                                stringId,
-                                Snackbar.LENGTH_INDEFINITE,
-                            )
-                            .setAnchorView(secondaryBottomBarLayout)
+                        Snackbar.make(alertAnchor, stringId, Snackbar.LENGTH_INDEFINITE)
+                            .setAnchorView(alertAnchor)
                             .setAction(android.R.string.ok) {
                                 // Do nothing
                             }

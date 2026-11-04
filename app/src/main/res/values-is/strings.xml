@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Skipt milli myndavéla</string>
     <string name="gallery_button_description">Myndasafn</string>
     <string name="image_view_description">Forskoðun myndar</string>
-    <string name="pro_button_description">Atvinnustillingar</string>
     <string name="shutter_button_description">Lokari</string>
     <string name="video_recording_state_button_description">Halda áfram/Bíða með upptöku myndskeiðs</string>
-    <string name="timer_off">SLÖKKT Á NIÐURTELJARA</string>
-    <string name="timer_3">NIÐURTALN. 3s</string>
-    <string name="timer_10">NIÐURTALN. 10s</string>
-    <string name="video_framerate_auto">SJÁLFVIRK RPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> RPS</string>
-    <string name="effect_none">EKKERT</string>
     <string name="effect_night">NÓTT</string>
     <string name="effect_auto">SJÁLFVIRKT</string>
     <string name="grid_off">REITIR AF</string>
@@ -29,7 +22,6 @@
     <string name="grid_on_goldenratio">REITIR φ</string>
     <string name="mic_off">HLJÓÐN. AF</string>
     <string name="mic_on">HLJÓÐN. Á</string>
-    <string name="settings">STILLINGAR</string>
     <string name="app_permissions_toast">Heimildir ekki veittar af notandanum.</string>
     <string name="camcorder_unsupported_toast">Engin myndavél styður upptöku myndskeiða.</string>
     <string name="qr_copy_description">Afrita á klippispjald</string>

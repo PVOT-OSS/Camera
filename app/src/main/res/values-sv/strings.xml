@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Vänd kameran</string>
     <string name="gallery_button_description">Galleri</string>
     <string name="image_view_description">Förhandsvisning av bild</string>
-    <string name="pro_button_description">Expertinställningar</string>
     <string name="shutter_button_description">Slutare</string>
     <string name="video_recording_state_button_description">Pausa/återuppta videoinspelning</string>
-    <string name="timer_off">TIMER AV</string>
-    <string name="timer_3">TIMER 3s</string>
-    <string name="timer_10">TIMER 10s</string>
-    <string name="video_framerate_auto">AUTO FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g>FPS</string>
-    <string name="effect_none">INGEN</string>
     <string name="effect_night">NATT</string>
     <string name="effect_face_retouch">Ansiktsretuschering</string>
     <string name="effect_auto">AUTO</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">Gyllene snittet</string>
     <string name="mic_off">MIC AV</string>
     <string name="mic_on">MIC PÅ</string>
-    <string name="settings">INSTÄLLNINGAR</string>
     <string name="app_permissions_toast">Behörigheter som inte beviljas av användaren.</string>
     <string name="camcorder_unsupported_toast">Ingen kamera stöder videoinspelning.</string>
     <string name="qr_copy_description">Kopiera till urklipp</string>

@@ -5,12 +5,9 @@
 
 package org.prauga.camera
 
-import android.animation.ValueAnimator
 import android.app.KeyguardManager
 import android.content.Intent
 import android.content.pm.ActivityInfo
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -26,13 +23,13 @@ import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.view.PreviewView
 import androidx.camera.view.ScreenFlashView
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.ComposeView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.Lifecycle
@@ -41,9 +38,14 @@ import androidx.lifecycle.repeatOnLifecycle
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import org.prauga.camera.camera2.Camera2PreviewTarget
 import org.prauga.camera.camerax.CameraXPreviewTarget
 import org.prauga.camera.camerax.CameraXScreenFlash
@@ -53,10 +55,7 @@ import org.prauga.camera.capture.RoutingCameraSession
 import org.prauga.camera.capture.models.CameraConfiguration
 import org.prauga.camera.capture.models.CameraMode
 import org.prauga.camera.capture.models.CameraState
-import org.prauga.camera.ext.px
 import org.prauga.camera.ext.select
-import org.prauga.camera.ext.slide
-import org.prauga.camera.ext.slideDown
 import org.prauga.camera.ext.updateBarsVisibility
 import org.prauga.camera.models.Event
 import org.prauga.camera.models.LaunchRequest
@@ -66,17 +65,14 @@ import org.prauga.camera.models.PermissionState
 import org.prauga.camera.ui.GalleryLauncher
 import org.prauga.camera.ui.HardwareKeyHandler
 import org.prauga.camera.ui.camera.CameraAlerts
-import org.prauga.camera.ui.camera.ModeSelector
-import org.prauga.camera.ui.camera.PrimaryBar
-import org.prauga.camera.ui.camera.SecondaryBottomBar
-import org.prauga.camera.ui.camera.SecondaryTopBar
 import org.prauga.camera.ui.camera.ViewfinderGestures
 import org.prauga.camera.ui.camera.ViewfinderOverlays
 import org.prauga.camera.ui.compose.CameraScreen
+import org.prauga.camera.ui.compose.CameraScreenActions
+import org.prauga.camera.ui.compose.CameraScreenState
 import org.prauga.camera.ui.compose.CameraTheme
 import org.prauga.camera.ui.dialogs.LocationPermissionsDialog
 import org.prauga.camera.ui.dialogs.QrBottomSheetDialog
-import org.prauga.camera.ui.views.CameraModeSelectorLayout
 import org.prauga.camera.ui.views.CapturePreviewLayout
 import org.prauga.camera.utils.CaptureIntentResult
 import org.prauga.camera.utils.PermissionsManager
@@ -89,19 +85,12 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     private val viewModel by viewModels<CameraViewModel>()
 
     // Views
-    private val cameraModeSelectorLayout by lazy {
-        findViewById<CameraModeSelectorLayout>(R.id.cameraModeSelectorLayout)
-    }
     private val cameraScreen by lazy { findViewById<ComposeView>(R.id.cameraScreen) }
     private val capturePreviewLayout by lazy {
         findViewById<CapturePreviewLayout>(R.id.capturePreviewLayout)
     }
     private val mainLayout by lazy { findViewById<ConstraintLayout>(R.id.mainLayout) }
-    private val primaryBarLayout by lazy { findViewById<ConstraintLayout>(R.id.primaryBarLayout) }
     private val screenFlashView by lazy { findViewById<ScreenFlashView>(R.id.screenFlashView) }
-    private val secondaryBottomBarLayout by lazy {
-        findViewById<ConstraintLayout>(R.id.secondaryBottomBarLayout)
-    }
     private val viewFinder by lazy { findViewById<PreviewView>(R.id.viewFinder) }
 
     // System services
@@ -131,50 +120,54 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         }
     }
 
-    private val secondaryTopBar by lazy {
-        SecondaryTopBar(mainLayout, viewModel, onSettings = ::openSettings)
-    }
+    private val screenState = CameraScreenState()
 
-    private val secondaryBottomBar by lazy {
-        SecondaryBottomBar(mainLayout, viewModel, onPro = { secondaryTopBar.slide() })
-    }
-
-    private val primaryBar by lazy {
-        PrimaryBar(
-            mainLayout,
-            viewModel,
-            galleryLauncher,
-            onShutter = ::onShutter,
-            onGallery = { lifecycleScope.launch { galleryLauncher.openGallery() } },
-        )
-    }
-
-    private val modeSelector by lazy { ModeSelector(mainLayout, viewModel) }
+    private var countdownJob: Job? = null
+    private var burstJob: Job? = null
+    private var quickTakeJob: Job? = null
+    private var quickTakeActive = false
 
     private val viewfinderOverlays by lazy { ViewfinderOverlays(mainLayout, viewModel, viewFinder) }
 
     private val cameraAlerts by lazy { CameraAlerts(mainLayout, viewModel, this) }
 
     private val viewfinderGestures by lazy {
-        ViewfinderGestures(viewFinder, viewModel) {
+        ViewfinderGestures(
+            viewFinder,
+            viewModel,
+            onFocus = { x, y -> screenState.showFocus(Offset(x, y), locked = false) },
+            onLockFocus = { x, y ->
+                viewModel.lockFocus(x, y)
+                viewModel.setExposureCompensationLevel(0.5f)
+                screenState.showFocus(Offset(x, y), locked = true)
+            },
+            onExposureDrag = { delta ->
+                viewModel.uiState.value.exposureCompensationRangeToLevel?.let { (_, level) ->
+                    viewModel.setExposureCompensationLevel((level + delta).coerceIn(0f, 1f))
+                    screenState.exposureKey++
+                }
+            },
+            canAdjustExposure = {
+                screenState.focusPoint != null &&
+                    viewModel.uiState.value.exposureCompensationRangeToLevel != null
+            },
+        ) {
             // Reset exposure level to 0 EV
             viewModel.setExposureCompensationLevel(0.5f)
 
-            viewfinderOverlays.showExposureSlider()
-
-            secondaryTopBar.slideDown()
+            screenState.panel = CameraScreenState.Panel.NONE
         }
     }
 
     private val hardwareKeyHandler by lazy {
         HardwareKeyHandler(
             viewModel,
-            onShutter = { primaryBar.performShutterClick() },
+            onShutter = ::onShutter,
             onFocus = {
                 viewfinderGestures.viewFinderTouchEvent = null
                 viewFinder.performClick()
             },
-            isMicButtonEnabled = { secondaryTopBar.isMicButtonEnabled },
+            isMicButtonEnabled = { viewModel.uiState.value.isVideoMicButtonEnabled },
         )
     }
 
@@ -217,12 +210,6 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         ViewCompat.setOnApplyWindowInsetsListener(mainLayout) { _, windowInsets ->
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
 
-            cameraModeSelectorLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                bottomMargin = insets.bottom
-                leftMargin = insets.left
-                rightMargin = insets.right
-            }
-
             capturePreviewLayout.updateLayoutParams<ViewGroup.MarginLayoutParams> {
                 bottomMargin = insets.bottom
                 leftMargin = insets.left
@@ -235,16 +222,21 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         // Observe manual focus
         viewfinderGestures.attach()
 
-        cameraScreen.setContent {
-            CameraTheme {
-                CameraScreen(
-                    viewModel,
-                    onShutter = { primaryBar.performShutterClick() },
-                    onGallery = { lifecycleScope.launch { galleryLauncher.openGallery() } },
-                    onOpenControls = { secondaryTopBar.slide() },
-                )
-            }
-        }
+        val actions =
+            CameraScreenActions(
+                onShutter = ::onShutter,
+                onQuickTakeStart = ::startQuickTake,
+                onQuickTakeLock = { screenState.quickTake = CameraScreenState.QuickTake.LOCKED },
+                onQuickTakeStop = ::stopQuickTake,
+                onBurstStart = ::startBurst,
+                onBurstStop = ::stopBurst,
+                onOpenGallery = { lifecycleScope.launch { galleryLauncher.openGallery() } },
+                onOpenSettings = ::openSettings,
+                canReview = { !keyguardManager.isKeyguardLocked },
+                onViewfinderFrame = ::setViewfinderFrame,
+            )
+
+        cameraScreen.setContent { CameraTheme { CameraScreen(viewModel, screenState, actions) } }
 
         // Set capture preview callback
         capturePreviewLayout.onChoiceCallback = { input ->
@@ -320,7 +312,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?) =
-        when (capturePreviewLayout.isVisible) {
+        when (capturePreviewLayout.isVisible || screenState.reviewOpen) {
             true -> super.onKeyDown(keyCode, event)
             false ->
                 when (hardwareKeyHandler.onKeyDown(keyCode, event)) {
@@ -331,7 +323,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent?) =
-        when (capturePreviewLayout.isVisible) {
+        when (capturePreviewLayout.isVisible || screenState.reviewOpen) {
             true -> super.onKeyUp(keyCode, event)
             false ->
                 when (hardwareKeyHandler.onKeyUp(keyCode)) {
@@ -356,20 +348,24 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
                     // Issue capture if requested via assistant
                     if (launchRequest.captureOnStart) {
-                        primaryBar.performShutterClick()
+                        onShutter()
                     }
                 }
             }
         }
 
-        with(secondaryTopBar) { bind() }
-        with(secondaryBottomBar) { bind() }
-        with(primaryBar) { bind() }
-        with(modeSelector) { bind() }
         with(viewfinderOverlays) { bind() }
         with(cameraAlerts) { bind() }
 
-        launch { viewModel.newCameraUi.collectLatest(::setNewCameraUi) }
+        launch {
+            viewModel.uiState
+                .select { it.capturedMedia }
+                .collectLatest { capturedMedia ->
+                    if (!galleryLauncher.isKeyguardLocked) {
+                        galleryLauncher.galleryUri = capturedMedia.firstOrNull()
+                    }
+                }
+        }
 
         launch {
             viewModel.event.collect { event ->
@@ -378,20 +374,11 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
                     is Event.ShowForceTorchHelp -> cameraAlerts.showForceTorchHelp()
 
-                    is Event.FlipCameraAnimation -> primaryBar.startFlipAnimation()
+                    is Event.FlipCameraAnimation -> {}
 
                     is Event.PhotoCapture ->
                         when (val status = event.status) {
-                            is PhotoCaptureStatus.CaptureStarted -> {
-                                viewFinder.foreground = ColorDrawable(Color.BLACK)
-                                ValueAnimator.ofInt(0, 255, 0)
-                                    .apply {
-                                        addUpdateListener { anim ->
-                                            viewFinder.foreground.alpha = anim.animatedValue as Int
-                                        }
-                                    }
-                                    .start()
-                            }
+                            is PhotoCaptureStatus.CaptureStarted -> screenState.blackoutKey++
 
                             is PhotoCaptureStatus.ImageSaved -> {
                                 if (!viewModel.uiState.value.inSingleCaptureMode) {
@@ -446,6 +433,12 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
             viewModel.videoRecordEvent.collect { videoRecordEvent ->
                 when (videoRecordEvent) {
                     is RecordingEvent.Finalized -> {
+                        if (quickTakeActive) {
+                            quickTakeActive = false
+                            screenState.quickTake = CameraScreenState.QuickTake.NONE
+                            viewModel.setCameraMode(CameraMode.PHOTO)
+                        }
+
                         if (videoRecordEvent.hasValidData) {
                             if (!viewModel.uiState.value.inSingleCaptureMode) {
                                 onCapturedMedia(videoRecordEvent.outputUri)
@@ -467,18 +460,11 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         }
     }
 
-    private fun setNewCameraUi(enabled: Boolean) {
-        cameraScreen.isVisible = enabled
-
-        secondaryBottomBarLayout.isInvisible = enabled
-        primaryBarLayout.isInvisible = enabled
-        cameraModeSelectorLayout.isInvisible = enabled
-
+    private fun setViewfinderFrame(top: Int, height: Int) {
         viewFinder.updateLayoutParams<ConstraintLayout.LayoutParams> {
-            topMargin = if (enabled) 142.px else 0
-            bottomToTop =
-                if (enabled) ConstraintLayout.LayoutParams.UNSET else R.id.secondaryBottomBarLayout
-            dimensionRatio = if (enabled) "H,3:4" else null
+            topMargin = top
+            this.height = height
+            bottomToBottom = ConstraintLayout.LayoutParams.UNSET
         }
     }
 
@@ -525,6 +511,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         }
 
         viewfinderOverlays.onRebind()
+        screenState.clearFocus()
 
         viewModel.bindCamera(cameraConfiguration, this)
 
@@ -560,22 +547,13 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     }
 
     private fun onShutter() {
-        // Shutter animation
-        when (viewModel.uiState.value.cameraMode) {
-            CameraMode.PHOTO ->
-                primaryBar.startShutterAnimation(PrimaryBar.ShutterAnimation.PhotoCapture)
-            CameraMode.VIDEO -> {
-                if (viewfinderOverlays.cancelCountDown()) {
-                    viewModel.endCountdown()
-                    primaryBar.startShutterAnimation(PrimaryBar.ShutterAnimation.VideoEnd)
-                    return
-                }
-                if (viewModel.uiState.value.cameraState == CameraState.IDLE) {
-                    primaryBar.startShutterAnimation(PrimaryBar.ShutterAnimation.VideoStart)
-                }
-            }
+        if (cancelCountdown()) {
+            return
+        }
 
-            else -> {}
+        if (screenState.quickTake == CameraScreenState.QuickTake.LOCKED) {
+            stopQuickTake()
+            return
         }
 
         startTimerAndRun {
@@ -604,9 +582,101 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
         viewModel.startCountdown()
 
-        viewfinderOverlays.startCountDown(timerModeSeconds) {
-            viewModel.endCountdown()
-            runnable()
+        countdownJob =
+            lifecycleScope.launch {
+                for (second in timerModeSeconds downTo 1) {
+                    screenState.countdown = second
+                    delay(1000)
+                }
+                screenState.countdown = null
+                countdownJob = null
+
+                viewModel.endCountdown()
+                runnable()
+            }
+    }
+
+    private fun cancelCountdown(): Boolean {
+        val job = countdownJob ?: return false
+
+        job.cancel()
+        countdownJob = null
+        screenState.countdown = null
+        viewModel.endCountdown()
+
+        return true
+    }
+
+    private fun startBurst() {
+        if (viewModel.uiState.value.cameraMode != CameraMode.PHOTO) {
+            return
+        }
+
+        burstJob?.cancel()
+        burstJob =
+            lifecycleScope.launch {
+                var count = 0
+                screenState.burstCount = count
+                while (isActive) {
+                    viewModel.uiState.first { it.cameraState == CameraState.IDLE }
+                    viewModel.takePhoto()
+                    screenState.burstCount = ++count
+                    withTimeoutOrNull(1000) {
+                        viewModel.uiState.first { it.cameraState != CameraState.IDLE }
+                    }
+                }
+            }
+    }
+
+    private fun stopBurst() {
+        burstJob?.cancel()
+        burstJob = null
+        screenState.burstCount = null
+    }
+
+    private fun startQuickTake() {
+        if (
+            viewModel.uiState.value.cameraMode != CameraMode.PHOTO || !viewModel.canRestartCamera()
+        ) {
+            return
+        }
+
+        quickTakeActive = true
+        screenState.quickTake = CameraScreenState.QuickTake.HOLDING
+
+        quickTakeJob =
+            lifecycleScope.launch {
+                viewModel.setCameraMode(CameraMode.VIDEO).join()
+
+                val ready =
+                    withTimeoutOrNull(QUICK_TAKE_TIMEOUT_MS) {
+                        viewModel.uiState.first { it.cameraMode == CameraMode.VIDEO }
+                        withTimeoutOrNull(500) { viewModel.previewStreaming.first { !it } }
+                        viewModel.previewStreaming.first { it }
+                    } != null
+
+                quickTakeJob = null
+
+                if (!ready || screenState.quickTake == CameraScreenState.QuickTake.NONE) {
+                    quickTakeActive = false
+                    screenState.quickTake = CameraScreenState.QuickTake.NONE
+                    viewModel.setCameraMode(CameraMode.PHOTO)
+                    return@launch
+                }
+
+                viewModel.captureVideo()
+            }
+    }
+
+    private fun stopQuickTake() {
+        if (!quickTakeActive) {
+            return
+        }
+
+        screenState.quickTake = CameraScreenState.QuickTake.NONE
+
+        if (quickTakeJob == null && viewModel.uiState.value.cameraState.isRecordingVideo) {
+            viewModel.captureVideo()
         }
     }
 
@@ -618,7 +688,15 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
     /** Method called when a new media have been successfully captured and saved. */
     private fun onCapturedMedia(item: Uri?) {
-        primaryBar.updateGalleryButton(item, true)
+        item?.let {
+            screenState.latestMedia = it
+            screenState.latestMediaKey++
+            galleryLauncher.galleryUri = it
+        }
         galleryLauncher.onCapturedMedia(item)
+    }
+
+    companion object {
+        private const val QUICK_TAKE_TIMEOUT_MS = 3000L
     }
 }

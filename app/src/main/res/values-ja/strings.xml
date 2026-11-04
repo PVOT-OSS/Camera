@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">フリップカメラ</string>
     <string name="gallery_button_description">ギャラリー</string>
     <string name="image_view_description">画像プレビュー</string>
-    <string name="pro_button_description">プロ設定</string>
     <string name="shutter_button_description">シャッター</string>
     <string name="video_recording_state_button_description">録画を一時停止/再開</string>
-    <string name="timer_off">タイマー OFF</string>
-    <string name="timer_3">タイマー 3s</string>
-    <string name="timer_10">タイマー 10 s</string>
-    <string name="video_framerate_auto">自動 FPS</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">なし</string>
     <string name="effect_night">夜景</string>
     <string name="effect_face_retouch">美肌</string>
     <string name="effect_auto">オート</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">グリッドφ</string>
     <string name="mic_off">マイク OFF</string>
     <string name="mic_on">マイク ON</string>
-    <string name="settings">設定</string>
     <string name="app_permissions_toast">権限がユーザーによって許可されていません。</string>
     <string name="camcorder_unsupported_toast">ビデオ撮影に対応しているカメラはありません。</string>
     <string name="qr_copy_description">クリップボードにコピー</string>

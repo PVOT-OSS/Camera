@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">Canvia de càmera</string>
     <string name="gallery_button_description">Galeria</string>
     <string name="image_view_description">Vista prèvia de la imatge</string>
-    <string name="pro_button_description">Configuració pro</string>
     <string name="shutter_button_description">Obturador</string>
     <string name="video_recording_state_button_description">Pausa/reprèn la gravació de vídeo</string>
-    <string name="timer_off">TEMPORITZADOR DESACTIVAT</string>
-    <string name="timer_3">TEMPORITZADOR 3s</string>
-    <string name="timer_10">TEMPORITZADOR 10s</string>
-    <string name="video_framerate_auto">FPS AUTO</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">CAP</string>
     <string name="effect_night">NIT</string>
     <string name="effect_face_retouch">RETOC FACIAL</string>
     <string name="effect_auto">AUTO</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">GRAELLA φ</string>
     <string name="mic_off">MICRÒFON DESACTIVAT</string>
     <string name="mic_on">MICRÒFON ACTIVAT</string>
-    <string name="settings">CONFIGURACIÓ</string>
     <string name="app_permissions_toast">Permisos no concedits per l\'usuari.</string>
     <string name="camcorder_unsupported_toast">Cap càmera admet la gravació de vídeo.</string>
     <string name="qr_copy_description">Copia al porta-retalls</string>

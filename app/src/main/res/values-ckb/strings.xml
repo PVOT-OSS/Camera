@@ -12,15 +12,8 @@
     <string name="flip_camera_button_description">گۆڕینی لای کامێرا</string>
     <string name="gallery_button_description">پێشانگا</string>
     <string name="image_view_description">پێشبینینی وێنە</string>
-    <string name="pro_button_description">ڕێکخستنی پێشکەوتوو (Pro)</string>
     <string name="shutter_button_description">وێنەگرتن (Shutter)</string>
     <string name="video_recording_state_button_description">وەستانی کاتی/دەستپێکردنەوەی تۆمارکردنی ڤیدیۆ</string>
-    <string name="timer_off">کاتژمێر ناچالاکە</string>
-    <string name="timer_3">کاتپێو 3 چرکە</string>
-    <string name="timer_10">کاتپێو 10 چرکە</string>
-    <string name="video_framerate_auto">فڕەیمی خۆکار (AUTO FPS)</string>
-    <string name="video_framerate_value"><xliff:g example="60" id="fps">%d</xliff:g> FPS</string>
-    <string name="effect_none">بێ کاریگەری</string>
     <string name="effect_night">دۆخی شەو</string>
     <string name="effect_face_retouch">جوانکاریی دەموچاو</string>
     <string name="effect_auto">خۆکار</string>
@@ -30,7 +23,6 @@
     <string name="grid_on_goldenratio">ڕێژەی زێڕین (φ)</string>
     <string name="mic_off">مایکرۆفۆن ناچالاکە</string>
     <string name="mic_on">مایکرۆفۆن چالاکە</string>
-    <string name="settings">ڕێکخستنەکان</string>
     <string name="app_permissions_toast">ڕێپێدانەکان لەلایەن بەکارهێنەرەوە نەدراون.</string>
     <string name="camcorder_unsupported_toast">هیچ کامێرایەک پاڵپشتیی تۆمارکردنی ڤیدیۆ ناکات.</string>
     <string name="qr_copy_description">کۆپیکردن بۆ حافیزە</string>

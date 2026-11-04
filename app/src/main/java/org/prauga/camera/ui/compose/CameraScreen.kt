@@ -6,24 +6,21 @@
 package org.prauga.camera.ui.compose
 
 import android.net.Uri
-import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,11 +28,14 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
@@ -45,120 +45,553 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import java.text.DecimalFormat
-import java.text.DecimalFormatSymbols
-import java.util.Locale
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.video.VideoFrameDecoder
 import org.prauga.camera.R
-import org.prauga.camera.capture.models.Camera
 import org.prauga.camera.capture.models.CameraConfiguration
 import org.prauga.camera.capture.models.CameraMode
 import org.prauga.camera.capture.models.CameraState
+import org.prauga.camera.capture.models.ExtensionMode
 import org.prauga.camera.capture.models.FlashMode
+import org.prauga.camera.capture.models.PhotoAspectRatio
 import org.prauga.camera.capture.models.PhotoOutputFormat
 import org.prauga.camera.capture.models.VideoQuality
+import org.prauga.camera.viewmodels.CameraUiState
 import org.prauga.camera.viewmodels.CameraViewModel
 
-private val Yellow = Color(0xFFFFD60A)
-private val Recording = Color(0xFFFF3B30)
-private val Glass = Color(0xFF444444)
-private val Lens = Color(0xFF222222)
+class CameraScreenActions(
+    val onShutter: () -> Unit,
+    val onQuickTakeStart: () -> Unit,
+    val onQuickTakeLock: () -> Unit,
+    val onQuickTakeStop: () -> Unit,
+    val onBurstStart: () -> Unit,
+    val onBurstStop: () -> Unit,
+    val onOpenGallery: () -> Unit,
+    val onOpenSettings: () -> Unit,
+    val canReview: () -> Boolean,
+    val onViewfinderFrame: (top: Int, height: Int) -> Unit,
+)
 
 private val TopBarHeight = 142.dp
+private val BottomBarHeight = 196.dp
 
 private val ModeOrder = listOf(CameraMode.VIDEO, CameraMode.PHOTO, CameraMode.QR)
 
 @Composable
 fun CameraScreen(
     viewModel: CameraViewModel,
-    onShutter: () -> Unit,
-    onGallery: () -> Unit,
-    onOpenControls: () -> Unit,
+    state: CameraScreenState,
+    actions: CameraScreenActions,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cameraConfiguration by viewModel.cameraConfiguration.collectAsStateWithLifecycle(null)
 
-    val isIdle = uiState.cameraState == CameraState.IDLE
+    val iconRotation by
+        animateFloatAsState(uiState.screenRotation.compensationValue.toFloat(), tween(280))
 
-    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        val viewFinderBottom = TopBarHeight + maxWidth * 4 / 3
+    LaunchedEffect(uiState.capturedMedia) {
+        if (actions.canReview()) {
+            state.latestMedia = uiState.capturedMedia.firstOrNull()
+        }
+    }
 
-        Row(
+    LaunchedEffect(uiState.cameraState) {
+        if (uiState.cameraState != CameraState.IDLE) {
+            state.panel = CameraScreenState.Panel.NONE
+        }
+    }
+
+    CompositionLocalProvider(LocalIconRotation provides iconRotation) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val aspectRatio =
+                when {
+                    uiState.cameraMode == CameraMode.VIDEO -> 16f / 9f
+                    uiState.cameraMode == CameraMode.PHOTO &&
+                        uiState.photoAspectRatio == PhotoAspectRatio.RATIO_16_9 -> 16f / 9f
+                    else -> 4f / 3f
+                }
+            val isVideoFrame = aspectRatio != 4f / 3f
+
+            val referenceHeight = maxWidth * 4 / 3
+            val referenceTop =
+                min(TopBarHeight, max(0.dp, maxHeight - referenceHeight - BottomBarHeight))
+            val referenceBottom = referenceTop + referenceHeight
+
+            val frameHeight = min(maxHeight, maxWidth * aspectRatio)
+            val frameTop =
+                when (isVideoFrame) {
+                    true -> max(0.dp, (maxHeight - frameHeight) / 2)
+                    false -> referenceTop
+                }
+
+            val density = LocalDensity.current
+            LaunchedEffect(frameTop, frameHeight) {
+                with(density) {
+                    actions.onViewfinderFrame(frameTop.roundToPx(), frameHeight.roundToPx())
+                }
+            }
+
+            Shades(
+                isVideoFrame = isVideoFrame,
+                topHeight = referenceTop,
+                bottomHeight = maxHeight - referenceBottom,
+            )
+
+            ViewfinderOverlay(
+                state = state,
+                uiState = uiState,
+                modifier = Modifier.fillMaxWidth().height(frameHeight).offset(y = frameTop),
+                lockTop = referenceTop - frameTop + 9.dp,
+            )
+
+            TopBar(
+                uiState = uiState,
+                cameraConfiguration = cameraConfiguration,
+                state = state,
+                viewModel = viewModel,
+                modifier = Modifier.fillMaxWidth().height(max(referenceTop, 64.dp)),
+            )
+
+            BottomControls(
+                uiState = uiState,
+                state = state,
+                viewModel = viewModel,
+                actions = actions,
+                referenceBottom = referenceBottom,
+            )
+
+            Panels(
+                uiState = uiState,
+                cameraConfiguration = cameraConfiguration,
+                state = state,
+                viewModel = viewModel,
+                actions = actions,
+            )
+
+            ReviewScreen(
+                visible = state.reviewOpen,
+                media = uiState.capturedMedia,
+                initialUri = state.latestMedia,
+                onDismiss = { state.reviewOpen = false },
+                onOpenGallery = actions.onOpenGallery,
+            )
+        }
+    }
+}
+
+@Composable
+private fun Shades(isVideoFrame: Boolean, topHeight: Dp, bottomHeight: Dp) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Box(
             modifier =
                 Modifier.fillMaxWidth()
-                    .height(TopBarHeight)
-                    .padding(start = 21.dp, end = 22.dp, bottom = 22.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            FormatChip(cameraConfiguration)
+                    .height(topHeight)
+                    .background(Color.Black.copy(alpha = if (isVideoFrame) 0.28f else 0.52f))
+        )
+        Box(
+            modifier =
+                Modifier.fillMaxWidth()
+                    .height(bottomHeight)
+                    .align(Alignment.BottomCenter)
+                    .background(Color.Black.copy(alpha = if (isVideoFrame) 0.3f else 0.58f))
+        )
+    }
+}
 
-            QuickControls(
-                flashMode = uiState.flashMode,
-                isFlashEnabled = uiState.isFlashButtonEnabled,
-                onFlash = { viewModel.cycleFlashMode(false) },
-                onFlashLongPress = { viewModel.cycleFlashMode(true) },
-                onOpenControls = onOpenControls,
+@Composable
+private fun TopBar(
+    uiState: CameraUiState,
+    cameraConfiguration: CameraConfiguration?,
+    state: CameraScreenState,
+    viewModel: CameraViewModel,
+    modifier: Modifier = Modifier,
+) {
+    val recording = uiState.cameraState.isRecordingVideo
+
+    Box(modifier = modifier.padding(start = 21.dp, end = 22.dp, bottom = 22.dp)) {
+        Row(
+            modifier = Modifier.align(Alignment.BottomStart),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            AnimatedVisibility(visible = !recording, enter = fadeIn(), exit = fadeOut()) {
+                FormatChip(
+                    cameraConfiguration = cameraConfiguration,
+                    enabled = uiState.cameraState == CameraState.IDLE,
+                    onClick = {
+                        state.panel =
+                            when (cameraConfiguration) {
+                                is CameraConfiguration.Photo -> CameraScreenState.Panel.PHOTO_FORMAT
+                                is CameraConfiguration.Video -> CameraScreenState.Panel.VIDEO_FORMAT
+                                else -> CameraScreenState.Panel.NONE
+                            }
+                    },
+                )
+            }
+
+            val nightSupported =
+                uiState.isPhotoEffectButtonVisible &&
+                    cameraConfiguration
+                        ?.camera
+                        ?.supportedExtensionModes
+                        ?.contains(ExtensionMode.NIGHT) == true
+            if (!recording && nightSupported) {
+                NightChip(
+                    active = uiState.photoEffect == ExtensionMode.NIGHT,
+                    onClick = {
+                        viewModel.setExtensionMode(
+                            when (uiState.photoEffect) {
+                                ExtensionMode.NIGHT -> ExtensionMode.NONE
+                                else -> ExtensionMode.NIGHT
+                            }
+                        )
+                    },
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = recording,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = fadeIn(),
+            exit = fadeOut(),
+        ) {
+            RecordingTimer(
+                durationMs = uiState.videoRecordingDuration,
+                paused = uiState.cameraState == CameraState.RECORDING_VIDEO_PAUSED,
             )
         }
 
+        QuickControls(
+            modifier = Modifier.align(Alignment.BottomEnd),
+            flashMode = uiState.flashMode,
+            isFlashEnabled = uiState.isFlashButtonEnabled,
+            onFlash = { viewModel.cycleFlashMode(false) },
+            onFlashLongPress = { viewModel.cycleFlashMode(true) },
+            onOpenControls = {
+                state.panel =
+                    when (state.panel) {
+                        CameraScreenState.Panel.CONTROLS -> CameraScreenState.Panel.NONE
+                        else -> CameraScreenState.Panel.CONTROLS
+                    }
+            },
+        )
+    }
+}
+
+@Composable
+private fun FormatChip(
+    cameraConfiguration: CameraConfiguration?,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    GlassSurface(
+        modifier =
+            Modifier.height(32.dp)
+                .widthIn(min = 74.dp)
+                .clip(RoundedCornerShape(17.dp))
+                .clickable(
+                    enabled = enabled && cameraConfiguration !is CameraConfiguration.Qr,
+                    onClick = onClick,
+                ),
+        shape = RoundedCornerShape(17.dp),
+    ) {
+        Text(
+            text = formatLabel(cameraConfiguration),
+            color = Color.White,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            modifier = Modifier.padding(horizontal = 12.dp),
+        )
+    }
+}
+
+@Composable
+private fun formatLabel(cameraConfiguration: CameraConfiguration?) =
+    when (cameraConfiguration) {
+        is CameraConfiguration.Photo ->
+            photoOutputFormatTitle(cameraConfiguration.photoOutputFormat)
+        is CameraConfiguration.Video ->
+            videoFormatTitle(
+                cameraConfiguration.videoQuality,
+                cameraConfiguration.videoFrameRate?.value,
+            )
+        else -> stringResource(R.string.camera_mode_qr).uppercase()
+    }
+
+@Composable
+fun photoOutputFormatTitle(photoOutputFormat: PhotoOutputFormat) =
+    stringResource(
+        when (photoOutputFormat) {
+            PhotoOutputFormat.JPEG -> R.string.photo_format_jpeg
+            PhotoOutputFormat.JPEG_ULTRA_HDR -> R.string.photo_format_ultra_hdr
+            PhotoOutputFormat.RAW -> R.string.photo_format_raw
+            PhotoOutputFormat.RAW_JPEG -> R.string.photo_format_raw_jpeg
+        }
+    )
+
+@Composable
+fun videoQualityTitle(videoQuality: VideoQuality) =
+    stringResource(
+        when (videoQuality) {
+            VideoQuality.SD -> R.string.video_format_sd
+            VideoQuality.HD -> R.string.video_format_hd
+            VideoQuality.FHD -> R.string.video_format_fhd
+            VideoQuality.QHD -> R.string.video_format_qhd
+            VideoQuality.UHD -> R.string.video_format_uhd
+        }
+    )
+
+@Composable
+fun videoFormatTitle(videoQuality: VideoQuality, frameRate: Int?) =
+    when (frameRate) {
+        null -> videoQualityTitle(videoQuality)
+        else -> "${videoQualityTitle(videoQuality)} · $frameRate"
+    }
+
+@Composable
+private fun NightChip(active: Boolean, onClick: () -> Unit) {
+    GlassSurface(
+        modifier = Modifier.size(32.dp).clip(CircleShape).clickable(onClick = onClick),
+        shape = CircleShape,
+    ) {
+        CameraIcon(
+            icon = R.drawable.ic_cam_moon,
+            size = 18.dp,
+            tint = if (active) CameraYellow else Color.White,
+            contentDescription = stringResource(R.string.effect_night),
+        )
+    }
+}
+
+@Composable
+private fun RecordingTimer(durationMs: Long, paused: Boolean) {
+    Box(contentAlignment = Alignment.TopCenter) {
+        GlassSurface(
+            modifier = Modifier.height(32.dp).width(108.dp),
+            shape = RoundedCornerShape(16.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Box(
+                    modifier =
+                        Modifier.size(7.dp)
+                            .clip(CircleShape)
+                            .background(if (paused) Color.White else CameraRecording)
+                )
+                Text(
+                    text = formatDuration(durationMs),
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+
+        if (paused) {
+            GlassSurface(
+                modifier = Modifier.offset(y = 40.dp).height(24.dp).width(64.dp),
+                shape = RoundedCornerShape(6.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.recording_paused),
+                    color = Color.White,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+    }
+}
+
+private fun formatDuration(durationMs: Long): String {
+    val seconds = durationMs / 1000
+    return "%02d:%02d:%02d".format(seconds / 3600, seconds / 60 % 60, seconds % 60)
+}
+
+@Composable
+private fun QuickControls(
+    flashMode: FlashMode,
+    isFlashEnabled: Boolean,
+    onFlash: () -> Unit,
+    onFlashLongPress: () -> Unit,
+    onOpenControls: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    GlassSurface(
+        modifier = modifier.height(32.dp).width(76.dp),
+        shape = RoundedCornerShape(17.dp),
+        alpha = 0.6f,
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier =
+                    Modifier.size(38.dp, 32.dp)
+                        .combinedClickable(
+                            enabled = isFlashEnabled,
+                            onLongClick = onFlashLongPress,
+                            onClick = onFlash,
+                        ),
+                contentAlignment = Alignment.Center,
+            ) {
+                CameraIcon(
+                    icon = flashIcon(flashMode),
+                    size = 18.dp,
+                    contentDescription = stringResource(R.string.flash_button_description),
+                    tint =
+                        when (flashMode) {
+                            FlashMode.OFF -> Color.White
+                            else -> CameraYellow
+                        }.copy(alpha = if (isFlashEnabled) 1f else 0.4f),
+                )
+            }
+
+            Box(
+                modifier = Modifier.size(38.dp, 32.dp).clickable(onClick = onOpenControls),
+                contentAlignment = Alignment.Center,
+            ) {
+                CameraIcon(
+                    icon = R.drawable.ic_quick_controls,
+                    size = 16.dp,
+                    contentDescription = stringResource(R.string.camera_controls),
+                )
+            }
+        }
+    }
+}
+
+fun flashIcon(flashMode: FlashMode) =
+    when (flashMode) {
+        FlashMode.OFF -> R.drawable.ic_quick_flash_off
+        FlashMode.AUTO -> R.drawable.ic_flash_auto
+        FlashMode.ON -> R.drawable.ic_cam_flash
+        FlashMode.TORCH -> R.drawable.ic_flashlight_on
+        FlashMode.SCREEN -> R.drawable.ic_flash_screen
+    }
+
+@Composable
+private fun BottomControls(
+    uiState: CameraUiState,
+    state: CameraScreenState,
+    viewModel: CameraViewModel,
+    actions: CameraScreenActions,
+    referenceBottom: Dp,
+) {
+    val recording = uiState.cameraState.isRecordingVideo
+    val isIdle = uiState.cameraState == CameraState.IDLE
+
+    Box(modifier = Modifier.fillMaxSize()) {
         uiState.lenses.first?.let { activeCamera ->
             LensRow(
                 activeCamera = activeCamera,
                 availableCameras = uiState.lenses.second,
-                zoomRatio = uiState.zoomState?.zoomRatio ?: 1f,
-                modifier = Modifier.align(Alignment.TopCenter).offset(y = viewFinderBottom - 48.dp),
+                zoomState = uiState.zoomState,
+                enabled = uiState.cameraMode != CameraMode.QR,
+                referenceBottom = referenceBottom,
                 onSelectCamera = viewModel::selectCamera,
                 onZoom = viewModel::smoothZoom,
+                onPinchZoom = viewModel::pinchToZoom,
                 onResetZoom = viewModel::resetZoom,
             )
         }
 
-        Column(
-            modifier =
-                Modifier.fillMaxWidth()
-                    .align(Alignment.BottomCenter)
-                    .height(maxHeight - viewFinderBottom)
-                    .navigationBarsPadding(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Spacer(modifier = Modifier.height(12.dp))
+        CaptureHint(
+            state = state,
+            modifier = Modifier.align(Alignment.TopCenter).offset(y = referenceBottom - 84.dp),
+        )
 
+        if (uiState.cameraMode != CameraMode.QR) {
             ShutterButton(
                 cameraMode = uiState.cameraMode,
                 cameraState = uiState.cameraState,
+                quickTake = state.quickTake,
                 enabled = uiState.isShutterButtonEnabled,
-                onClick = onShutter,
+                gesturesEnabled = !uiState.inSingleCaptureMode && state.countdown == null,
+                modifier = Modifier.align(Alignment.TopCenter).offset(y = referenceBottom + 12.dp),
+                onTap = actions.onShutter,
+                onQuickTakeStart = actions.onQuickTakeStart,
+                onQuickTakeLock = actions.onQuickTakeLock,
+                onQuickTakeStop = actions.onQuickTakeStop,
+                onBurstStart = actions.onBurstStart,
+                onBurstStop = actions.onBurstStop,
             )
+        }
 
-            Spacer(modifier = Modifier.weight(1f))
-
+        if (recording) {
             Box(
                 modifier =
-                    Modifier.fillMaxWidth().padding(start = 31.dp, end = 30.dp, bottom = 12.dp),
+                    Modifier.align(Alignment.TopCenter)
+                        .offset(x = (-103).dp, y = referenceBottom + 22.dp)
+                        .size(58.dp)
+                        .clip(CircleShape)
+                        .clickable(onClick = viewModel::onVideoRecordingStateButtonPress),
                 contentAlignment = Alignment.Center,
             ) {
-                LatestCapture(
-                    uri = uiState.capturedMedia.firstOrNull(),
-                    modifier = Modifier.align(Alignment.CenterStart),
-                    onClick = onGallery,
+                CameraIcon(
+                    icon =
+                        when (uiState.cameraState) {
+                            CameraState.RECORDING_VIDEO_PAUSED -> R.drawable.ic_cam_play
+                            else -> R.drawable.ic_cam_pause
+                        },
+                    size = 24.dp,
+                    contentDescription =
+                        stringResource(R.string.video_recording_state_button_description),
                 )
+            }
+        }
 
+        AnimatedVisibility(
+            visible = !recording,
+            modifier = Modifier.align(Alignment.BottomCenter),
+            enter = fadeIn(tween(240)),
+            exit = fadeOut(tween(240)),
+        ) {
+            Box(
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(start = 31.dp, end = 30.dp, bottom = 12.dp),
+                contentAlignment = Alignment.Center,
+            ) {
                 if (!uiState.inSingleCaptureMode) {
+                    LatestCapture(
+                        uri = state.latestMedia,
+                        key = state.latestMediaKey,
+                        enabled = isIdle,
+                        modifier = Modifier.align(Alignment.CenterStart),
+                        onClick = {
+                            when (actions.canReview() && state.latestMedia != null) {
+                                true -> state.reviewOpen = true
+                                false -> actions.onOpenGallery()
+                            }
+                        },
+                    )
+
                     ModeSelector(
                         cameraMode = uiState.cameraMode,
                         enabled = isIdle,
-                        onModeSelected = viewModel::setCameraMode,
+                        onModeSelected = {
+                            when (it == uiState.cameraMode && it != CameraMode.QR) {
+                                true -> state.panel = CameraScreenState.Panel.CONTROLS
+                                false -> viewModel.setCameraMode(it)
+                            }
+                        },
                     )
                 }
 
@@ -175,276 +608,87 @@ fun CameraScreen(
 }
 
 @Composable
-private fun GlassSurface(
-    modifier: Modifier = Modifier,
-    shape: Shape,
-    alpha: Float = 0.65f,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        modifier =
-            modifier
-                .shadow(16.dp, shape, ambientColor = Color.Black.copy(alpha = 0.18f))
-                .clip(shape)
-                .background(Glass.copy(alpha = alpha))
-                .border(BorderStroke(0.6.dp, Color.White.copy(alpha = 0.24f)), shape),
-        contentAlignment = Alignment.Center,
-    ) {
-        content()
-    }
-}
-
-@Composable
-private fun FormatChip(cameraConfiguration: CameraConfiguration?) {
-    val photoOutputFormat = (cameraConfiguration as? CameraConfiguration.Photo)?.photoOutputFormat
-
-    GlassSurface(modifier = Modifier.size(74.dp, 32.dp), shape = RoundedCornerShape(17.dp)) {
-        Text(
-            text =
-                when (photoOutputFormat) {
-                    PhotoOutputFormat.JPEG -> "JPEG"
-                    PhotoOutputFormat.JPEG_ULTRA_HDR -> "UHDR"
-                    PhotoOutputFormat.RAW -> "RAW"
-                    null ->
-                        when (cameraConfiguration) {
-                            is CameraConfiguration.Video ->
-                                stringResource(videoQualityTitle(cameraConfiguration.videoQuality))
-                            else -> "QR"
-                        }
-                    else -> "RAW+J"
-                },
-            color = Color.White,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-        )
-    }
-}
-
-private fun videoQualityTitle(videoQuality: VideoQuality) =
-    when (videoQuality) {
-        VideoQuality.SD -> R.string.video_quality_sd
-        VideoQuality.HD -> R.string.video_quality_hd
-        VideoQuality.FHD -> R.string.video_quality_fhd
-        VideoQuality.QHD -> R.string.video_quality_qhd
-        VideoQuality.UHD -> R.string.video_quality_uhd
-    }
-
-@Composable
-private fun QuickControls(
-    flashMode: FlashMode,
-    isFlashEnabled: Boolean,
-    onFlash: () -> Unit,
-    onFlashLongPress: () -> Unit,
-    onOpenControls: () -> Unit,
-) {
-    GlassSurface(modifier = Modifier.size(76.dp, 32.dp), shape = RoundedCornerShape(17.dp)) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier =
-                    Modifier.size(32.dp)
-                        .clip(CircleShape)
-                        .combinedClickable(
-                            enabled = isFlashEnabled,
-                            onLongClick = onFlashLongPress,
-                            onClick = onFlash,
-                        ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(flashIcon(flashMode)),
-                    contentDescription = stringResource(R.string.flash_button_description),
-                    modifier = Modifier.size(18.dp),
-                    tint =
-                        when (flashMode) {
-                            FlashMode.OFF -> Color.White
-                            else -> Yellow
-                        }.copy(alpha = if (isFlashEnabled) 1f else 0.4f),
-                )
-            }
-
-            Box(
-                modifier =
-                    Modifier.size(32.dp).clip(CircleShape).clickable(onClick = onOpenControls),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_quick_controls),
-                    contentDescription = null,
-                    modifier = Modifier.size(16.dp),
-                    tint = Color.White,
-                )
-            }
-        }
-    }
-}
-
-@DrawableRes
-private fun flashIcon(flashMode: FlashMode) =
-    when (flashMode) {
-        FlashMode.OFF -> R.drawable.ic_quick_flash_off
-        FlashMode.AUTO -> R.drawable.ic_flash_auto
-        FlashMode.ON -> R.drawable.ic_flash_on
-        FlashMode.TORCH -> R.drawable.ic_flashlight_on
-        FlashMode.SCREEN -> R.drawable.ic_flash_screen
-    }
-
-@Composable
-private fun LensRow(
-    activeCamera: Camera,
-    availableCameras: List<Camera>,
-    zoomRatio: Float,
-    modifier: Modifier = Modifier,
-    onSelectCamera: (Camera) -> Unit,
-    onZoom: (Float) -> Unit,
-    onResetZoom: () -> Unit,
-) {
-    val usesLogicalZoomRatio = activeCamera.logicalZoomRatios.size > 1
-
-    val lenses =
-        when (usesLogicalZoomRatio) {
-            true ->
-                activeCamera.logicalZoomRatios.map { (approximate, exact) ->
-                    Triple(approximate, exact, null as Camera?)
-                }
-
-            false ->
-                availableCameras
-                    .sortedBy { it.intrinsicZoomRatio }
-                    .map { Triple(it.intrinsicZoomRatio, it.intrinsicZoomRatio, it) }
+private fun CaptureHint(state: CameraScreenState, modifier: Modifier = Modifier) {
+    val burstCount = state.burstCount
+    val text =
+        when {
+            burstCount != null -> burstCount.toString()
+            state.quickTake == CameraScreenState.QuickTake.HOLDING ->
+                stringResource(R.string.quick_take_slide_to_lock)
+            else -> null
         }
 
-    if (lenses.size < 2) {
-        return
-    }
-
-    val selectedIndex =
-        when (usesLogicalZoomRatio) {
-            true -> lenses.indexOfLast { zoomRatio >= it.second }.coerceAtLeast(0)
-            false -> lenses.indexOfFirst { it.third == activeCamera }.coerceAtLeast(0)
-        }
-
-    Row(
-        modifier = modifier.height(34.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    AnimatedVisibility(
+        visible = text != null,
+        modifier = modifier,
+        enter = fadeIn(tween(160)),
+        exit = fadeOut(tween(160)),
     ) {
-        lenses.forEachIndexed { index, (approximate, exact, camera) ->
-            val selected = index == selectedIndex
-            val size by animateDpAsState(if (selected) 34.dp else 30.dp, tween(240))
-
-            Box(
-                modifier =
-                    Modifier.size(size)
-                        .clip(CircleShape)
-                        .background(Lens.copy(alpha = if (selected) 0.65f else 0.22f))
-                        .clickable {
-                            when {
-                                selected -> onResetZoom()
-                                camera != null -> onSelectCamera(camera)
-                                else -> onZoom(exact)
-                            }
-                        },
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text =
-                        when (selected) {
-                            true ->
-                                "${formatZoomRatio(if (usesLogicalZoomRatio) zoomRatio else approximate)}x"
-                            false -> formatZoomRatio(approximate)
-                        },
-                    color = if (selected) Yellow else Color.White,
-                    fontSize = if (selected) 14.sp else 12.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
-    }
-}
-
-private val DECIMAL_FORMAT_SYMBOLS = DecimalFormatSymbols(Locale.US)
-private val ZOOM_RATIO_FORMATTER = DecimalFormat("0.#", DECIMAL_FORMAT_SYMBOLS)
-private val ZOOM_RATIO_FORMATTER_SUB_ONE = DecimalFormat(".#", DECIMAL_FORMAT_SYMBOLS)
-
-private fun formatZoomRatio(zoomRatio: Float): String =
-    when (zoomRatio < 1f) {
-        true -> ZOOM_RATIO_FORMATTER_SUB_ONE.format(zoomRatio)
-        false -> ZOOM_RATIO_FORMATTER.format(zoomRatio)
-    }
-
-@Composable
-private fun ShutterButton(
-    cameraMode: CameraMode,
-    cameraState: CameraState,
-    enabled: Boolean,
-    onClick: () -> Unit,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val pressed by interactionSource.collectIsPressedAsState()
-    val scale by animateFloatAsState(if (pressed) 0.92f else 1f, tween(85))
-
-    val recording =
-        cameraState == CameraState.RECORDING_VIDEO ||
-            cameraState == CameraState.RECORDING_VIDEO_PAUSED
-    val coreColor by
-        animateColorAsState(
-            when (cameraMode) {
-                CameraMode.VIDEO -> Recording
-                else -> Color.White
-            },
-            tween(240),
-        )
-    val coreSize by animateDpAsState(if (recording) 30.dp else 64.dp, tween(240))
-    val coreRadius by animateDpAsState(if (recording) 8.dp else 32.dp, tween(240))
-
-    Box(
-        modifier =
-            Modifier.size(78.dp)
-                .scale(scale)
-                .clip(CircleShape)
-                .background(Color(0xFF999999).copy(alpha = 0.25f))
-                .border(BorderStroke(1.2.dp, Color.White.copy(alpha = 0.48f)), CircleShape)
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                    enabled = enabled,
-                    onClick = onClick,
-                ),
-        contentAlignment = Alignment.Center,
-    ) {
-        Box(
-            modifier =
-                Modifier.size(coreSize)
-                    .clip(RoundedCornerShape(coreRadius))
-                    .background(coreColor.copy(alpha = if (enabled) 1f else 0.5f))
-        )
-    }
-}
-
-@Composable
-private fun LatestCapture(uri: Uri?, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Box(
-        modifier =
-            modifier
-                .size(43.dp)
-                .clip(CircleShape)
-                .background(Glass.copy(alpha = 0.55f))
-                .border(BorderStroke(0.6.dp, Color.White.copy(alpha = 0.24f)), CircleShape)
-                .clickable(onClick = onClick)
-    ) {
-        uri?.let {
-            AsyncImage(
-                model = it,
-                contentDescription = stringResource(R.string.gallery_button_description),
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
+        GlassSurface(modifier = Modifier.height(28.dp), shape = RoundedCornerShape(8.dp)) {
+            Text(
+                text = text.orEmpty(),
+                color = Color.White,
+                fontSize = if (burstCount != null) 16.sp else 10.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 10.dp),
             )
         }
     }
 }
+
+@Composable
+private fun LatestCapture(
+    uri: Uri?,
+    key: Int,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val scale = remember { Animatable(1f) }
+    LaunchedEffect(key) {
+        if (key > 0) {
+            scale.snapTo(0.6f)
+            scale.animateTo(1f, tween(500))
+        }
+    }
+
+    Box(
+        modifier =
+            modifier
+                .size(43.dp)
+                .scale(scale.value)
+                .rotate(LocalIconRotation.current)
+                .clip(CircleShape)
+                .background(CameraGlass.copy(alpha = 0.55f))
+                .clickable(enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        when (uri) {
+            null ->
+                CameraIcon(
+                    icon = R.drawable.ic_image,
+                    size = 20.dp,
+                    contentDescription = stringResource(R.string.gallery_button_description),
+                )
+
+            else ->
+                AsyncImage(
+                    model = mediaRequest(uri),
+                    contentDescription = stringResource(R.string.gallery_button_description),
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+        }
+    }
+}
+
+@Composable
+fun mediaRequest(uri: Uri) =
+    ImageRequest.Builder(LocalContext.current)
+        .data(uri)
+        .decoderFactory(VideoFrameDecoder.Factory())
+        .crossfade(true)
+        .build()
 
 @Composable
 private fun ModeSelector(
@@ -456,15 +700,19 @@ private fun ModeSelector(
         ModeOrder.forEach { mode ->
             val selected = mode == cameraMode
             val background by
-                animateColorAsState(Glass.copy(alpha = if (selected) 0.62f else 0f), tween(260))
-            val textColor by animateColorAsState(if (selected) Yellow else Color.White, tween(260))
+                animateColorAsState(
+                    CameraGlass.copy(alpha = if (selected) 0.62f else 0f),
+                    tween(260),
+                )
+            val textColor by
+                animateColorAsState(if (selected) CameraYellow else Color.White, tween(260))
 
             Box(
                 modifier =
                     Modifier.height(38.dp)
                         .clip(RoundedCornerShape(21.dp))
                         .background(background)
-                        .clickable(enabled = enabled && !selected) { onModeSelected(mode) }
+                        .clickable(enabled = enabled) { onModeSelected(mode) }
                         .padding(horizontal = 16.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -493,18 +741,22 @@ private fun FlipButton(modifier: Modifier = Modifier, enabled: Boolean, onClick:
 
     GlassSurface(
         modifier =
-            modifier.size(44.dp).clickable(enabled = enabled) {
+            modifier.size(44.dp).clip(CircleShape).clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                enabled = enabled,
+            ) {
                 turns += 1f
                 onClick()
             },
         shape = CircleShape,
         alpha = 0.55f,
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_quick_flip),
+        CameraIcon(
+            icon = R.drawable.ic_quick_flip,
+            size = 20.dp,
+            modifier = Modifier.rotate(rotation),
             contentDescription = stringResource(R.string.flip_camera_button_description),
-            modifier = Modifier.size(20.dp).rotate(rotation),
-            tint = Color.White,
         )
     }
 }
