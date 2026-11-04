@@ -28,10 +28,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.prauga.camera.capture.CaptureSounds
 import org.prauga.camera.capture.CaptureStateMachine
+import org.prauga.camera.capture.PhotoCaptureStatus
 import org.prauga.camera.capture.RecordingEvent
 import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.CameraState
-import org.prauga.camera.models.Event
 import org.prauga.camera.utils.StorageUtils
 
 class CameraXCapture(
@@ -45,7 +45,7 @@ class CameraXCapture(
     private val location: () -> Location?,
     private val cameraFacing: () -> CameraFacing,
     private val photoFfcMirror: () -> Boolean,
-    private val emitEvent: (Event) -> Unit,
+    private val onPhotoCaptureStatus: (PhotoCaptureStatus) -> Unit,
     private val onNewPicture: (Uri) -> Unit,
     private val onNewVideo: (Uri) -> Unit,
 ) {
@@ -121,7 +121,7 @@ class CameraXCapture(
         // been taken
         val onImageSavedCallback = object : ImageCapture.OnImageSavedCallback {
             override fun onCaptureStarted() {
-                emitEvent(Event.PhotoCaptureStatus.CaptureStarted)
+                onPhotoCaptureStatus(PhotoCaptureStatus.CaptureStarted)
 
                 captureSounds.playShutterClick()
             }
@@ -149,8 +149,8 @@ class CameraXCapture(
                     return
                 }
 
-                emitEvent(
-                    Event.PhotoCaptureStatus.ImageSaved(
+                onPhotoCaptureStatus(
+                    PhotoCaptureStatus.ImageSaved(
                         output.savedUri,
                         photoOutputStream,
                     )
@@ -158,7 +158,7 @@ class CameraXCapture(
             }
 
             override fun onError(exc: ImageCaptureException) {
-                emitEvent(Event.PhotoCaptureStatus.Error(exc))
+                onPhotoCaptureStatus(PhotoCaptureStatus.Error(exc))
 
                 Log.e(LOG_TAG, "Photo capture failed", exc)
                 captureStateMachine.endPhoto()

@@ -5,8 +5,7 @@
 
 package org.prauga.camera.models
 
-import android.net.Uri
-import java.io.ByteArrayOutputStream
+import org.prauga.camera.capture.PhotoCaptureStatus
 
 /**
  * A generic event, emitted by the VM, handled by the activity.
@@ -28,19 +27,5 @@ sealed interface Event {
      */
     data object FlipCameraAnimation : Event
 
-    /**
-     * Photo capture event.
-     */
-    sealed interface PhotoCaptureStatus : Event {
-        data object CaptureStarted : PhotoCaptureStatus
-
-        data class ImageSaved(
-            val savedUri: Uri?,
-            val photoOutputStream: ByteArrayOutputStream?,
-        ) : PhotoCaptureStatus
-
-        data class Error(
-            val exception: Exception,
-        ) : PhotoCaptureStatus
-    }
+    data class PhotoCapture(val status: PhotoCaptureStatus) : Event
 }

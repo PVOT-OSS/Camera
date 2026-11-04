@@ -98,7 +98,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             location = { location.value },
             cameraFacing = { cameraFacing.value },
             photoFfcMirror = { preferencesRepository.photoFfcMirror.value },
-            emitEvent = ::emitEvent,
+            onPhotoCaptureStatus = { emitEvent(Event.PhotoCapture(it)) },
             onNewPicture = mediaRepository::broadcastNewPicture,
             onNewVideo = mediaRepository::broadcastNewVideo,
         )

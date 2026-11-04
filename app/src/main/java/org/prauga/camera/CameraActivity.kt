@@ -43,6 +43,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.prauga.camera.camerax.CameraXPreviewTarget
+import org.prauga.camera.capture.PhotoCaptureStatus
 import org.prauga.camera.capture.RecordingEvent
 import org.prauga.camera.ext.select
 import org.prauga.camera.ext.slide
@@ -355,8 +356,8 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                     is Event.FlipCameraAnimation ->
                         primaryBar.startFlipAnimation()
 
-                    is Event.PhotoCaptureStatus -> when (event) {
-                        is Event.PhotoCaptureStatus.CaptureStarted -> {
+                    is Event.PhotoCapture -> when (val status = event.status) {
+                        is PhotoCaptureStatus.CaptureStarted -> {
                             viewFinder.foreground = ColorDrawable(Color.BLACK)
                             ValueAnimator.ofInt(0, 255, 0).apply {
                                 addUpdateListener { anim ->
@@ -365,24 +366,24 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                             }.start()
                         }
 
-                        is Event.PhotoCaptureStatus.ImageSaved -> {
+                        is PhotoCaptureStatus.ImageSaved -> {
                             if (!viewModel.uiState.value.inSingleCaptureMode) {
-                                onCapturedMedia(event.savedUri)
+                                onCapturedMedia(status.savedUri)
                             } else {
-                                event.savedUri?.let {
+                                status.savedUri?.let {
                                     openCapturePreview(it, MediaType.PHOTO)
                                 }
-                                event.photoOutputStream?.use {
+                                status.photoOutputStream?.use {
                                     openCapturePreview(
                                         ByteArrayInputStream(
-                                            event.photoOutputStream.toByteArray()
+                                            status.photoOutputStream.toByteArray()
                                         )
                                     )
                                 }
                             }
                         }
 
-                        is Event.PhotoCaptureStatus.Error -> {
+                        is PhotoCaptureStatus.Error -> {
                             // Do nothing
                         }
                     }

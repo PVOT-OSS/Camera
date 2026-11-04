@@ -21,11 +21,11 @@ import kotlinx.coroutines.flow.map
 import org.prauga.camera.capture.CameraSession
 import org.prauga.camera.capture.CaptureSounds
 import org.prauga.camera.capture.CaptureStateMachine
+import org.prauga.camera.capture.PhotoCaptureStatus
 import org.prauga.camera.capture.PreviewTarget
 import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraConfiguration
 import org.prauga.camera.models.CameraFacing
-import org.prauga.camera.models.Event
 import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.FlashMode
 
@@ -40,7 +40,7 @@ class CameraXSession(
     location: () -> Location?,
     cameraFacing: () -> CameraFacing,
     photoFfcMirror: () -> Boolean,
-    emitEvent: (Event) -> Unit,
+    onPhotoCaptureStatus: (PhotoCaptureStatus) -> Unit,
     onNewPicture: (Uri) -> Unit,
     onNewVideo: (Uri) -> Unit,
 ) : CameraSession {
@@ -66,7 +66,7 @@ class CameraXSession(
         location,
         cameraFacing,
         photoFfcMirror,
-        emitEvent,
+        onPhotoCaptureStatus,
         onNewPicture,
         onNewVideo,
     )
