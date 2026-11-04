@@ -3,17 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
 }
 
 android {
     namespace = "org.prauga.camera"
-    compileSdk = 36
+    compileSdk { version = release(37) { minorApiLevel = 1 } }
 
     defaultConfig {
         applicationId = "org.prauga.camera"
@@ -47,11 +44,9 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
-
-    kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
 
     buildFeatures { compose = true }
 
