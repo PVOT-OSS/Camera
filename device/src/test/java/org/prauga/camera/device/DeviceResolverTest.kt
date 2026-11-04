@@ -10,6 +10,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.prauga.camera.capture.models.HardwareLevel
+import org.prauga.camera.capture.models.ProcessingTier
 
 class DeviceResolverTest {
     private val device = DeviceInfo(
@@ -45,6 +47,8 @@ class DeviceResolverTest {
 
     private val base = CameraCapabilities(
         cameraId = "0",
+        hardwareLevel = HardwareLevel.FULL,
+        processingTier = ProcessingTier.A,
         logicalZoomRatios = sortedMapOf(1f to 1f),
         additionalVideoFrameRates = mapOf(),
     )
@@ -64,8 +68,10 @@ class DeviceResolverTest {
     }
 
     @Test
-    fun genericModuleKeepsTheDefaults() {
-        val resolved = DeviceResolver(listOf(GenericModule())).resolve(device)
+    fun modulesWithoutOverridesKeepTheDefaults() {
+        val resolved = DeviceResolver(
+            listOf(TestModule("generic", DeviceModule.Layer.GENERIC))
+        ).resolve(device)
 
         assertTrue(resolved.includesCamera("0", default = true))
         assertFalse(resolved.includesCamera("2", default = false))
@@ -76,7 +82,7 @@ class DeviceResolverTest {
     fun laterLayersBuildOnEarlierOnes() {
         val resolved = DeviceResolver(
             listOf(
-                GenericModule(),
+                TestModule("generic", DeviceModule.Layer.GENERIC),
                 TestModule("soc", DeviceModule.Layer.SOC, includedCameraId = "2", zoomRatio = 0.5f),
                 TestModule("device", DeviceModule.Layer.DEVICE, zoomRatio = 2f),
             )

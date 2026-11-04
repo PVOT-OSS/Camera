@@ -32,6 +32,8 @@ import org.prauga.camera.capture.CameraDevices
 import org.prauga.camera.capture.models.Camera
 import org.prauga.camera.capture.models.CameraFacing
 import org.prauga.camera.capture.models.ExtensionMode
+import org.prauga.camera.capture.models.HardwareLevel
+import org.prauga.camera.capture.models.ProcessingTier
 import org.prauga.camera.device.CameraCapabilities
 import org.prauga.camera.device.DeviceResolver
 
@@ -141,6 +143,8 @@ class CameraXDevices(
         val capabilities = device.capabilities(
             CameraCapabilities(
                 cameraId = Camera2CameraInfo.from(this).cameraId,
+                hardwareLevel = HardwareLevel.LEGACY,
+                processingTier = ProcessingTier.C,
                 logicalZoomRatios = sortedMapOf(1f to 1f),
                 additionalVideoFrameRates = mapOf(),
             ),
@@ -150,6 +154,8 @@ class CameraXDevices(
         return cameraFromCameraX(
             this,
             extensionsManager,
+            capabilities.hardwareLevel,
+            capabilities.processingTier,
             capabilities.logicalZoomRatios,
             capabilities.additionalVideoFrameRates,
         )

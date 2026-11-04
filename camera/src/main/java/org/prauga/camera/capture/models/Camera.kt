@@ -20,6 +20,8 @@ class Camera(
      * The [CameraFacing] of this camera.
      */
     val cameraFacing: CameraFacing,
+    val hardwareLevel: HardwareLevel,
+    val processingTier: ProcessingTier,
     val exposureCompensationRange: ClosedRange<Int>,
     val intrinsicZoomRatio: Float,
     val logicalZoomRatios: SortedMap<Float, Float>,

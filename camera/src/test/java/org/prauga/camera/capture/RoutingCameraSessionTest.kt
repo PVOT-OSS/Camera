@@ -19,9 +19,11 @@ import org.prauga.camera.capture.models.CameraConfiguration
 import org.prauga.camera.capture.models.CameraFacing
 import org.prauga.camera.capture.models.ExtensionMode
 import org.prauga.camera.capture.models.FlashMode
+import org.prauga.camera.capture.models.HardwareLevel
 import org.prauga.camera.capture.models.PhotoAspectRatio
 import org.prauga.camera.capture.models.PhotoCaptureMode
 import org.prauga.camera.capture.models.PhotoOutputFormat
+import org.prauga.camera.capture.models.ProcessingTier
 
 class RoutingCameraSessionTest {
     private val primary = FakeCameraSession()
@@ -40,6 +42,8 @@ class RoutingCameraSessionTest {
     private val camera = Camera(
         cameraId = "0",
         cameraFacing = CameraFacing.BACK,
+        hardwareLevel = HardwareLevel.FULL,
+        processingTier = ProcessingTier.A,
         exposureCompensationRange = -12..12,
         intrinsicZoomRatio = 1f,
         logicalZoomRatios = sortedMapOf(1f to 1f),

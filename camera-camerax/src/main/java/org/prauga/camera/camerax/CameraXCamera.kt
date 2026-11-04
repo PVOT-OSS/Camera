@@ -27,9 +27,11 @@ import org.prauga.camera.capture.models.DistortionCorrectionMode
 import org.prauga.camera.capture.models.EdgeMode
 import org.prauga.camera.capture.models.FlashMode
 import org.prauga.camera.capture.models.FrameRate
+import org.prauga.camera.capture.models.HardwareLevel
 import org.prauga.camera.capture.models.HotPixelMode
 import org.prauga.camera.capture.models.NoiseReductionMode
 import org.prauga.camera.capture.models.PhotoOutputFormat
+import org.prauga.camera.capture.models.ProcessingTier
 import org.prauga.camera.capture.models.ShadingMode
 import org.prauga.camera.capture.models.VideoQuality
 import org.prauga.camera.capture.models.VideoQualityInfo
@@ -43,6 +45,8 @@ import org.prauga.camera.capture.models.VideoStabilizationMode
 fun cameraFromCameraX(
     cameraInfo: CameraInfo,
     extensionsManager: ExtensionsManager,
+    hardwareLevel: HardwareLevel,
+    processingTier: ProcessingTier,
     logicalZoomRatios: SortedMap<Float, Float>,
     additionalVideoFrameRates: Map<VideoQuality, Map<FrameRate, Boolean>>,
 ): Camera {
@@ -247,6 +251,8 @@ fun cameraFromCameraX(
     return Camera(
         cameraId = cameraId,
         cameraFacing = cameraFacing,
+        hardwareLevel = hardwareLevel,
+        processingTier = processingTier,
         exposureCompensationRange = exposureCompensationRange,
         intrinsicZoomRatio = intrinsicZoomRatio,
         logicalZoomRatios = logicalZoomRatios,

@@ -18,11 +18,24 @@ class GenericModule : DeviceModule {
         base: CameraCapabilities,
         characteristics: (String) -> CameraCharacteristics,
     ): CameraCapabilities {
+        val logicalCharacteristics = characteristics(base.cameraId)
+        val tiered = base.copy(
+            hardwareLevel = ProcessingTiers.hardwareLevel(logicalCharacteristics),
+            processingTier = ProcessingTiers.tier(ProcessingTiers.inputs(logicalCharacteristics)),
+        )
+
+        return lensZoomRatios(tiered, logicalCharacteristics, characteristics)
+    }
+
+    private fun lensZoomRatios(
+        base: CameraCapabilities,
+        logicalCharacteristics: CameraCharacteristics,
+        characteristics: (String) -> CameraCharacteristics,
+    ): CameraCapabilities {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
             return base
         }
 
-        val logicalCharacteristics = characteristics(base.cameraId)
         val physicalCameraIds = logicalCharacteristics.physicalCameraIds
         if (physicalCameraIds.size < 2) {
             return base
