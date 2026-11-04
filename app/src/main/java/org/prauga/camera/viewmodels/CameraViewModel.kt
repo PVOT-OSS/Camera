@@ -1081,7 +1081,6 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      *
      * @param videoMicrophoneEnabled Whether the video microphone should be enabled
      */
-    @Suppress("MissingPermission")
     fun setVideoMicrophoneEnabled(videoMicrophoneEnabled: Boolean) {
         cameraSession.setAudioEnabled(videoMicrophoneEnabled)
 

@@ -280,6 +280,7 @@ class CameraXCapture(
         }
     }
 
+    @Suppress("MissingPermission")
     fun setAudioEnabled(enabled: Boolean) {
         videoAudioConfig = when (enabled) {
             true -> AudioConfig.create(true)
