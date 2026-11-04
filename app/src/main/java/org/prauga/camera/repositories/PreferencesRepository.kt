@@ -384,7 +384,7 @@ class PreferencesRepository(context: Context, private val coroutineScope: Corout
     val cameraEngine =
         enumPreference(
                 key = "camera_engine",
-                defaultValue = CameraEngine.CAMERAX,
+                defaultValue = CameraEngine.AUTO,
                 enumMapper = {
                     when (it) {
                         CameraEngine.AUTO -> "auto"
