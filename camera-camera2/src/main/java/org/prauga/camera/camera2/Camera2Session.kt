@@ -296,7 +296,7 @@ class Camera2Session(
                     .createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
                     .apply {
                         addTarget(previewSurface)
-                        applyControls()
+                        applyControls(capture = true)
                         set(
                             CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
                             CameraMetadata.CONTROL_AE_PRECAPTURE_TRIGGER_START,
@@ -389,7 +389,7 @@ class Camera2Session(
                             if (index == 0) {
                                 addTarget(imageReader.surface)
                             }
-                            applyControls()
+                            applyControls(capture = true)
                             set(CaptureRequest.JPEG_ORIENTATION, jpegOrientation())
                             if (!inSingleCaptureMode.value) {
                                 location()?.let { set(CaptureRequest.JPEG_GPS_LOCATION, it) }
@@ -817,7 +817,7 @@ class Camera2Session(
             }
         }
 
-    private fun CaptureRequest.Builder.applyControls() {
+    private fun CaptureRequest.Builder.applyControls(capture: Boolean = false) {
         val meteringRegions = meteringRegions
         if (meteringRegions != null) {
             set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_AUTO)
@@ -836,7 +836,9 @@ class Camera2Session(
         set(
             CaptureRequest.CONTROL_AE_MODE,
             when (flashMode) {
-                FlashMode.AUTO -> CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH
+                FlashMode.AUTO ->
+                    if (capture) CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH
+                    else CameraMetadata.CONTROL_AE_MODE_ON
                 FlashMode.ON -> CameraMetadata.CONTROL_AE_MODE_ON_ALWAYS_FLASH
                 else -> CameraMetadata.CONTROL_AE_MODE_ON
             },
