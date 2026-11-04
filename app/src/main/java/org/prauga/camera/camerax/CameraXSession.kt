@@ -7,6 +7,7 @@ package org.prauga.camera.camerax
 
 import android.content.Context
 import android.location.Location
+import android.net.Uri
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.view.LifecycleCameraController
@@ -27,12 +28,10 @@ import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.Event
 import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.FlashMode
-import org.prauga.camera.repositories.MediaRepository
 
 class CameraXSession(
     context: Context,
     scope: CoroutineScope,
-    mediaRepository: MediaRepository,
     captureSounds: CaptureSounds,
     captureStateMachine: CaptureStateMachine,
     inSingleCaptureMode: StateFlow<Boolean>,
@@ -42,6 +41,8 @@ class CameraXSession(
     cameraFacing: () -> CameraFacing,
     photoFfcMirror: () -> Boolean,
     emitEvent: (Event) -> Unit,
+    onNewPicture: (Uri) -> Unit,
+    onNewVideo: (Uri) -> Unit,
 ) : CameraSession {
     private val cameraExecutor: ExecutorService = Executors.newSingleThreadExecutor()
 
@@ -59,7 +60,6 @@ class CameraXSession(
         cameraController,
         cameraExecutor,
         scope,
-        mediaRepository,
         captureSounds,
         captureStateMachine,
         inSingleCaptureMode,
@@ -67,6 +67,8 @@ class CameraXSession(
         cameraFacing,
         photoFfcMirror,
         emitEvent,
+        onNewPicture,
+        onNewVideo,
     )
 
     private val zoom = CameraXZoom(cameraController) { cameraController.zoomState.value }

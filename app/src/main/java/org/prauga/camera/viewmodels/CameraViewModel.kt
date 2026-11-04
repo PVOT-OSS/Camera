@@ -90,7 +90,6 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         CameraXSession(
             applicationContext,
             viewModelScope,
-            mediaRepository,
             cameraSoundsUtils,
             captureStateMachine,
             inSingleCaptureMode,
@@ -100,6 +99,8 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             cameraFacing = { cameraFacing.value },
             photoFfcMirror = { preferencesRepository.photoFfcMirror.value },
             emitEvent = ::emitEvent,
+            onNewPicture = mediaRepository::broadcastNewPicture,
+            onNewVideo = mediaRepository::broadcastNewVideo,
         )
     }
 

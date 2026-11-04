@@ -8,6 +8,7 @@ package org.prauga.camera.camerax
 import android.content.Context
 import android.graphics.ImageFormat
 import android.location.Location
+import android.net.Uri
 import android.util.Log
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -31,7 +32,6 @@ import org.prauga.camera.capture.RecordingEvent
 import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.CameraState
 import org.prauga.camera.models.Event
-import org.prauga.camera.repositories.MediaRepository
 import org.prauga.camera.utils.StorageUtils
 
 class CameraXCapture(
@@ -39,7 +39,6 @@ class CameraXCapture(
     private val cameraController: LifecycleCameraController,
     private val cameraExecutor: ExecutorService,
     private val scope: CoroutineScope,
-    private val mediaRepository: MediaRepository,
     private val captureSounds: CaptureSounds,
     private val captureStateMachine: CaptureStateMachine,
     private val inSingleCaptureMode: StateFlow<Boolean>,
@@ -47,6 +46,8 @@ class CameraXCapture(
     private val cameraFacing: () -> CameraFacing,
     private val photoFfcMirror: () -> Boolean,
     private val emitEvent: (Event) -> Unit,
+    private val onNewPicture: (Uri) -> Unit,
+    private val onNewVideo: (Uri) -> Unit,
 ) {
     /**
      * Video [AudioConfig].
@@ -133,7 +134,7 @@ class CameraXCapture(
 
                 if (!inSingleCaptureMode.value) {
                     output.savedUri?.let {
-                        mediaRepository.broadcastNewPicture(it)
+                        onNewPicture(it)
                     }
                 }
 
@@ -259,7 +260,7 @@ class CameraXCapture(
                             )
 
                             if (!inSingleCaptureMode.value) {
-                                mediaRepository.broadcastNewVideo(it.outputResults.outputUri)
+                                onNewVideo(it.outputResults.outputUri)
                             }
                         }
                         captureStateMachine.endRecording()
