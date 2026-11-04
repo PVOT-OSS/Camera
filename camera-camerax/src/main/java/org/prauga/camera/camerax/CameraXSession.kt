@@ -11,12 +11,15 @@ import android.net.Uri
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.view.LifecycleCameraController
+import androidx.camera.view.PreviewView
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.asFlow
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import org.prauga.camera.capture.CameraSession
 import org.prauga.camera.capture.CaptureSounds
@@ -73,6 +76,9 @@ class CameraXSession(
 
     private val zoom = CameraXZoom(cameraController) { cameraController.zoomState.value }
 
+    private val _previewStreaming = MutableStateFlow(false)
+    override val previewStreaming = _previewStreaming.asStateFlow()
+
     override val zoomState = cameraController.zoomState.asFlow().map { it.toZoomInfo() }
 
     override val tapToFocusInfoState = cameraController.tapToFocusInfoState.asFlow().map {
@@ -92,6 +98,9 @@ class CameraXSession(
 
         target.previewView.controller = cameraController
         target.screenFlashView.setController(cameraController)
+        target.previewView.previewStreamState.observeForever {
+            _previewStreaming.value = it == PreviewView.StreamState.STREAMING
+        }
     }
 
     override fun configure(

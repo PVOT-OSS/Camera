@@ -347,6 +347,8 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             initialValue = null
         )
 
+    val previewStreaming = cameraSession.previewStreaming
+
     val tapToFocusInfoState = cameraSession.tapToFocusInfoState
         .flowOn(Dispatchers.IO)
         .shareIn(

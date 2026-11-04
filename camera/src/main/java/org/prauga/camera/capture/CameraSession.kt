@@ -13,6 +13,7 @@ import org.prauga.camera.capture.models.CameraConfiguration
 import org.prauga.camera.capture.models.FlashMode
 
 interface CameraSession {
+    val previewStreaming: StateFlow<Boolean>
     val zoomState: Flow<ZoomInfo>
     val tapToFocusInfoState: Flow<FocusEvent>
     val isRecordingAudioSourceConfigured: Flow<Boolean>

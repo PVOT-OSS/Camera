@@ -219,22 +219,6 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         // Observe manual focus
         viewfinderGestures.attach()
 
-        // Observe preview stream state
-        viewFinder.previewStreamState.observe(this) {
-            when (it) {
-                PreviewView.StreamState.STREAMING -> {
-                    viewfinderOverlays.onPreviewStreaming()
-
-                    // Issue capture if requested via assistant
-                    if (launchRequest.captureOnStart) {
-                        primaryBar.performShutterClick()
-                    }
-                }
-
-                else -> {}
-            }
-        }
-
         // Set capture preview callback
         capturePreviewLayout.onChoiceCallback = { input ->
             when (input) {
@@ -339,6 +323,20 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     protected open fun overrideInitialCameraMode(): CameraMode? = null
 
     private fun CoroutineScope.loadData() {
+        // Observe preview stream state
+        launch {
+            viewModel.previewStreaming.collect {
+                if (it) {
+                    viewfinderOverlays.onPreviewStreaming()
+
+                    // Issue capture if requested via assistant
+                    if (launchRequest.captureOnStart) {
+                        primaryBar.performShutterClick()
+                    }
+                }
+            }
+        }
+
         with(secondaryTopBar) { bind() }
         with(secondaryBottomBar) { bind() }
         with(primaryBar) { bind() }
