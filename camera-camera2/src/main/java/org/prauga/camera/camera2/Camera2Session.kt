@@ -7,19 +7,25 @@ package org.prauga.camera.camera2
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.ImageFormat
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
+import android.hardware.camera2.CaptureFailure
 import android.hardware.camera2.CaptureRequest
 import android.hardware.camera2.TotalCaptureResult
+import android.location.Location
+import android.media.ImageReader
+import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
 import android.util.Size
+import android.view.OrientationEventListener
 import android.view.Surface
 import android.view.TextureView
 import android.view.View
@@ -29,13 +35,21 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
+import java.io.ByteArrayOutputStream
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import org.prauga.camera.capture.CameraSession
+import org.prauga.camera.capture.CaptureSounds
+import org.prauga.camera.capture.CaptureStateMachine
 import org.prauga.camera.capture.FocusEvent
+import org.prauga.camera.capture.PhotoCaptureStatus
 import org.prauga.camera.capture.PreviewTarget
 import org.prauga.camera.capture.RecordingEvent
 import org.prauga.camera.capture.ZoomInfo
@@ -46,8 +60,16 @@ import org.prauga.camera.capture.models.PhotoOutputFormat
 
 class Camera2Session(
     context: Context,
+    private val scope: CoroutineScope,
+    private val captureSounds: CaptureSounds,
+    private val captureStateMachine: CaptureStateMachine,
+    private val inSingleCaptureMode: StateFlow<Boolean>,
+    private val location: () -> Location?,
+    private val onPhotoCaptureStatus: (PhotoCaptureStatus) -> Unit,
+    private val onNewPicture: (Uri) -> Unit,
 ) : CameraSession {
     private val cameraManager = context.getSystemService(CameraManager::class.java)
+    private val contentResolver = context.contentResolver
 
     private val cameraThread = HandlerThread(LOG_TAG).apply { start() }
     private val cameraHandler = Handler(cameraThread.looper)
@@ -63,7 +85,19 @@ class Camera2Session(
     private var captureSession: CameraCaptureSession? = null
     private var previewSurface: Surface? = null
     private var previewSize: Size? = null
+    private var imageReader: ImageReader? = null
     private var sensorOrientation = 0
+    private var lensFacing = CameraMetadata.LENS_FACING_BACK
+    private var deviceOrientation = 0
+    private var photoTimestamp = 0L
+
+    private val orientationListener = object : OrientationEventListener(context) {
+        override fun onOrientationChanged(orientation: Int) {
+            if (orientation != ORIENTATION_UNKNOWN) {
+                deviceOrientation = (orientation + 45) / 90 * 90 % 360
+            }
+        }
+    }
 
     private val _previewStreaming = MutableStateFlow(false)
     override val previewStreaming = _previewStreaming.asStateFlow()
@@ -154,7 +188,98 @@ class Camera2Session(
         cameraThread.quitSafely()
     }
 
-    override fun takePhoto() {}
+    override fun takePhoto() {
+        if (!captureStateMachine.startPhoto()) {
+            return
+        }
+
+        val camera = cameraDevice
+        val session = captureSession
+        val imageReader = imageReader
+        if (camera == null || session == null || imageReader == null) {
+            captureStateMachine.endPhoto()
+            return
+        }
+
+        val request = camera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE).apply {
+            addTarget(imageReader.surface)
+            set(
+                CaptureRequest.CONTROL_AF_MODE,
+                CameraMetadata.CONTROL_AF_MODE_CONTINUOUS_PICTURE,
+            )
+            set(CaptureRequest.JPEG_ORIENTATION, jpegOrientation())
+            if (!inSingleCaptureMode.value) {
+                location()?.let { set(CaptureRequest.JPEG_GPS_LOCATION, it) }
+            }
+        }.build()
+
+        photoTimestamp = System.currentTimeMillis()
+
+        session.capture(request, object : CameraCaptureSession.CaptureCallback() {
+            override fun onCaptureStarted(
+                session: CameraCaptureSession,
+                request: CaptureRequest,
+                timestamp: Long,
+                frameNumber: Long,
+            ) {
+                onPhotoCaptureStatus(PhotoCaptureStatus.CaptureStarted)
+
+                captureSounds.playShutterClick()
+            }
+
+            override fun onCaptureFailed(
+                session: CameraCaptureSession,
+                request: CaptureRequest,
+                failure: CaptureFailure,
+            ) {
+                Log.e(LOG_TAG, "Photo capture failed: ${failure.reason}")
+                onPhotoCaptureStatus(
+                    PhotoCaptureStatus.Error(Exception("Capture failed: ${failure.reason}"))
+                )
+                captureStateMachine.endPhoto()
+            }
+        }, cameraHandler)
+    }
+
+    private fun onImageAvailable(imageReader: ImageReader) {
+        val bytes = imageReader.acquireNextImage()?.use { image ->
+            val buffer = image.planes[0].buffer
+            ByteArray(buffer.remaining()).also { buffer.get(it) }
+        } ?: return
+        val timestamp = photoTimestamp
+        val singleCapture = inSingleCaptureMode.value
+
+        scope.launch(Dispatchers.IO) {
+            try {
+                if (singleCapture) {
+                    val photoOutputStream = ByteArrayOutputStream(bytes.size).apply { write(bytes) }
+                    captureStateMachine.endPhoto()
+                    onPhotoCaptureStatus(PhotoCaptureStatus.ImageSaved(null, photoOutputStream))
+                } else {
+                    val uri = Camera2MediaStore.savePhoto(
+                        contentResolver, bytes, "image/jpeg", timestamp
+                    )
+                    Log.d(LOG_TAG, "Photo capture succeeded: $uri")
+                    onNewPicture(uri)
+                    captureStateMachine.endPhoto()
+                    onPhotoCaptureStatus(PhotoCaptureStatus.ImageSaved(uri, null))
+                }
+            } catch (e: Exception) {
+                Log.e(LOG_TAG, "Photo save failed", e)
+                onPhotoCaptureStatus(PhotoCaptureStatus.Error(e))
+                captureStateMachine.endPhoto()
+            }
+        }
+    }
+
+    private fun jpegOrientation(): Int {
+        val orientation = when (lensFacing) {
+            CameraMetadata.LENS_FACING_FRONT -> -deviceOrientation
+            else -> deviceOrientation
+        }
+
+        return (sensorOrientation + orientation + 360) % 360
+    }
 
     override fun captureVideo() = error("Camera2 doesn't record video")
 
@@ -192,6 +317,23 @@ class Camera2Session(
         val cameraId = cameraConfiguration.camera.cameraId
         val characteristics = cameraManager.getCameraCharacteristics(cameraId)
         sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) ?: 0
+        lensFacing = characteristics.get(CameraCharacteristics.LENS_FACING)
+            ?: CameraMetadata.LENS_FACING_BACK
+
+        val photoFormat = when (cameraConfiguration.photoOutputFormat) {
+            PhotoOutputFormat.JPEG_ULTRA_HDR -> ImageFormat.JPEG_R
+            else -> ImageFormat.JPEG
+        }
+        val photoSize = Camera2Sizes.jpegSize(
+            characteristics, cameraConfiguration.photoAspectRatio, photoFormat
+        )
+        val imageReader = ImageReader.newInstance(
+            photoSize.width, photoSize.height, photoFormat, 2
+        ).apply {
+            setOnImageAvailableListener(::onImageAvailable, cameraHandler)
+        }
+        this.imageReader = imageReader
+        orientationListener.enable()
 
         val previewSize = Camera2Sizes.previewSize(
             characteristics, cameraConfiguration.photoAspectRatio
@@ -208,7 +350,7 @@ class Camera2Session(
         cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
             override fun onOpened(camera: CameraDevice) {
                 cameraDevice = camera
-                createCaptureSession(camera, previewSurface)
+                createCaptureSession(camera, previewSurface, imageReader.surface)
             }
 
             override fun onDisconnected(camera: CameraDevice) {
@@ -229,9 +371,13 @@ class Camera2Session(
     }
 
     @Suppress("DEPRECATION")
-    private fun createCaptureSession(camera: CameraDevice, previewSurface: Surface) {
+    private fun createCaptureSession(
+        camera: CameraDevice,
+        previewSurface: Surface,
+        photoSurface: Surface,
+    ) {
         camera.createCaptureSession(
-            listOf(previewSurface),
+            listOf(previewSurface, photoSurface),
             object : CameraCaptureSession.StateCallback() {
                 override fun onConfigured(session: CameraCaptureSession) {
                     if (cameraDevice != camera) {
@@ -285,6 +431,11 @@ class Camera2Session(
 
         previewSurface?.release()
         previewSurface = null
+
+        imageReader?.close()
+        imageReader = null
+
+        orientationListener.disable()
     }
 
     private fun updatePreviewScale() {
@@ -310,6 +461,11 @@ class Camera2Session(
         fun supports(cameraConfiguration: CameraConfiguration) = isSupported
                 && cameraConfiguration is CameraConfiguration.Photo
                 && cameraConfiguration.extensionMode == ExtensionMode.NONE
-                && cameraConfiguration.photoOutputFormat == PhotoOutputFormat.JPEG
+                && when (cameraConfiguration.photoOutputFormat) {
+                    PhotoOutputFormat.JPEG -> true
+                    PhotoOutputFormat.JPEG_ULTRA_HDR ->
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+                    else -> false
+                }
     }
 }

@@ -70,7 +70,16 @@ class AppContainer(
             onNewPicture = mediaRepository::broadcastNewPicture,
             onNewVideo = mediaRepository::broadcastNewVideo,
         ),
-        Camera2Session(context),
+        Camera2Session(
+            context,
+            scope,
+            captureSounds,
+            captureStateMachine,
+            inSingleCaptureMode,
+            location = location,
+            onPhotoCaptureStatus = onPhotoCaptureStatus,
+            onNewPicture = mediaRepository::broadcastNewPicture,
+        ),
     ) {
         preferencesRepository.cameraEngine.value == CameraEngine.CAMERA2
                 && Camera2Session.supports(it)
