@@ -21,6 +21,8 @@ import androidx.camera.extensions.ExtensionsManager
 import androidx.camera.video.Recorder
 import androidx.core.util.toClosedRange
 import androidx.lifecycle.asFlow
+import org.prauga.camera.camerax.toCameraXDynamicRange
+import org.prauga.camera.camerax.toVideoDynamicRange
 import org.prauga.camera.camerax.toVideoQuality
 import org.prauga.camera.ext.getSupportedModes
 import java.util.SortedMap
@@ -90,11 +92,11 @@ class Camera private constructor(
     private val videoCapabilities = Recorder.getVideoCapabilities(cameraInfo)
 
     private val supportedVideoDynamicRanges = videoCapabilities.supportedDynamicRanges.map {
-        VideoDynamicRange.fromDynamicRange(it)
+        it.toVideoDynamicRange()
     }
 
     private val videoQualityForDynamicRanges = supportedVideoDynamicRanges.associateWith {
-        videoCapabilities.getSupportedQualities(it.dynamicRange).mapNotNull { quality ->
+        videoCapabilities.getSupportedQualities(it.toCameraXDynamicRange()).mapNotNull { quality ->
             quality.toVideoQuality()
         }
     }

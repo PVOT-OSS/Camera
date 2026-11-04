@@ -6,10 +6,12 @@
 package org.prauga.camera.camerax
 
 import androidx.camera.core.AspectRatio
+import androidx.camera.core.DynamicRange
 import androidx.camera.extensions.ExtensionMode as CameraXExtensionMode
 import androidx.camera.video.Quality
 import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.PhotoAspectRatio
+import org.prauga.camera.models.VideoDynamicRange
 import org.prauga.camera.models.VideoQuality
 
 fun ExtensionMode.toCameraXExtensionMode() = when (this) {
@@ -24,6 +26,19 @@ fun ExtensionMode.toCameraXExtensionMode() = when (this) {
 fun PhotoAspectRatio.toCameraXAspectRatio() = when (this) {
     PhotoAspectRatio.RATIO_4_3 -> AspectRatio.RATIO_4_3
     PhotoAspectRatio.RATIO_16_9 -> AspectRatio.RATIO_16_9
+}
+
+fun VideoDynamicRange.toCameraXDynamicRange(): DynamicRange = when (this) {
+    VideoDynamicRange.SDR -> DynamicRange.SDR
+    VideoDynamicRange.HLG_10_BIT -> DynamicRange.HLG_10_BIT
+    VideoDynamicRange.HDR10_10_BIT -> DynamicRange.HDR10_10_BIT
+    VideoDynamicRange.HDR10_PLUS_10_BIT -> DynamicRange.HDR10_PLUS_10_BIT
+    VideoDynamicRange.DOLBY_VISION_10_BIT -> DynamicRange.DOLBY_VISION_10_BIT
+    VideoDynamicRange.DOLBY_VISION_8_BIT -> DynamicRange.DOLBY_VISION_8_BIT
+}
+
+fun DynamicRange.toVideoDynamicRange() = VideoDynamicRange.entries.first {
+    it.toCameraXDynamicRange() == this
 }
 
 fun VideoQuality.toCameraXQuality(): Quality = when (this) {

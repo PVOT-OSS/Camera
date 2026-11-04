@@ -151,7 +151,7 @@ class CameraXBinder(
 
                 // Set the dynamic range
                 cameraController.videoCaptureDynamicRange =
-                    cameraConfiguration.videoDynamicRange.dynamicRange
+                    cameraConfiguration.videoDynamicRange.toCameraXDynamicRange()
 
                 // Set video mirror mode
                 cameraController.videoCaptureMirrorMode =
