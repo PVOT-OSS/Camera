@@ -9,7 +9,6 @@ import android.animation.ValueAnimator
 import android.view.View
 import android.widget.Button
 import android.widget.HorizontalScrollView
-import androidx.camera.core.AspectRatio
 import androidx.camera.extensions.ExtensionMode
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.children
@@ -27,6 +26,7 @@ import org.prauga.camera.ext.smoothRotate
 import org.prauga.camera.models.CameraMode
 import org.prauga.camera.models.CameraState
 import org.prauga.camera.models.GridMode
+import org.prauga.camera.models.PhotoAspectRatio
 import org.prauga.camera.models.Rotation
 import org.prauga.camera.models.TimerMode
 import org.prauga.camera.models.VideoDynamicRange
@@ -178,9 +178,8 @@ class SecondaryTopBar(
                 // Update secondary bar buttons
                 aspectRatioButton.setText(
                     when (photoAspectRatio) {
-                        AspectRatio.RATIO_4_3 -> R.string.aspect_ratio_4_3
-                        AspectRatio.RATIO_16_9 -> R.string.aspect_ratio_16_9
-                        else -> throw Exception("Unknown aspect ratio $photoAspectRatio")
+                        PhotoAspectRatio.RATIO_4_3 -> R.string.aspect_ratio_4_3
+                        PhotoAspectRatio.RATIO_16_9 -> R.string.aspect_ratio_16_9
                     }
                 )
             }

@@ -106,7 +106,7 @@ class CameraXBinder(
                     ResolutionSelector.Builder()
                         .setAspectRatioStrategy(
                             AspectRatioStrategy(
-                                cameraConfiguration.photoAspectRatio,
+                                cameraConfiguration.photoAspectRatio.toCameraXAspectRatio(),
                                 AspectRatioStrategy.FALLBACK_RULE_AUTO,
                             )
                         )

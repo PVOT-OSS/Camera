@@ -5,8 +5,15 @@
 
 package org.prauga.camera.camerax
 
+import androidx.camera.core.AspectRatio
 import androidx.camera.video.Quality
+import org.prauga.camera.models.PhotoAspectRatio
 import org.prauga.camera.models.VideoQuality
+
+fun PhotoAspectRatio.toCameraXAspectRatio() = when (this) {
+    PhotoAspectRatio.RATIO_4_3 -> AspectRatio.RATIO_4_3
+    PhotoAspectRatio.RATIO_16_9 -> AspectRatio.RATIO_16_9
+}
 
 fun VideoQuality.toCameraXQuality(): Quality = when (this) {
     VideoQuality.SD -> Quality.SD

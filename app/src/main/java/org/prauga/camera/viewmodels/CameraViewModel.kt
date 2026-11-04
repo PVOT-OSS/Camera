@@ -10,7 +10,6 @@ import android.net.Uri
 import android.util.Log
 import android.view.OrientationEventListener
 import androidx.annotation.OptIn as AndroidXOptIn
-import androidx.camera.core.AspectRatio
 import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionMode
@@ -58,6 +57,7 @@ import org.prauga.camera.models.Event
 import org.prauga.camera.models.GridMode
 import org.prauga.camera.models.HardwareKey
 import org.prauga.camera.models.LaunchRequest
+import org.prauga.camera.models.PhotoAspectRatio
 import org.prauga.camera.models.Rotation
 import org.prauga.camera.models.ThermalStatus
 import org.prauga.camera.models.TimerMode
@@ -481,7 +481,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
 
     /**
      * Photo aspect ratio.
-     * @see AspectRatio.Ratio
+     * @see PhotoAspectRatio
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     private val photoAspectRatio = cameraConfiguration
@@ -994,9 +994,8 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     fun cyclePhotoAspectRatio() =
         updateConfiguration<CameraConfiguration.Photo> { cameraConfiguration ->
             val newAspectRatio = when (cameraConfiguration.photoAspectRatio) {
-                AspectRatio.RATIO_4_3 -> AspectRatio.RATIO_16_9
-                AspectRatio.RATIO_16_9 -> AspectRatio.RATIO_4_3
-                else -> AspectRatio.RATIO_4_3
+                PhotoAspectRatio.RATIO_4_3 -> PhotoAspectRatio.RATIO_16_9
+                PhotoAspectRatio.RATIO_16_9 -> PhotoAspectRatio.RATIO_4_3
             }
 
             preferencesRepository.photoAspectRatio.value = newAspectRatio

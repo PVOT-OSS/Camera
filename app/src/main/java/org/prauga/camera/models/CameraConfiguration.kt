@@ -5,7 +5,6 @@
 
 package org.prauga.camera.models
 
-import androidx.camera.core.AspectRatio
 import androidx.camera.extensions.ExtensionMode
 
 /**
@@ -70,7 +69,7 @@ sealed interface CameraConfiguration {
     /**
      * Photo mode configuration.
      *
-     * @param photoAspectRatio The [AspectRatio.Ratio] to use
+     * @param photoAspectRatio The [PhotoAspectRatio] to use
      * @param enableHighResolution Whether to enable high resolution or not
      * @param photoCaptureMode The `ImageCapture.CAPTURE_MODE_*` to use
      * @param photoOutputFormat The [PhotoOutputFormat] to use
@@ -80,7 +79,7 @@ sealed interface CameraConfiguration {
         override val extensionMode: Int,
         override val camera2Options: Camera2Options,
         val photoCaptureMode: Int,
-        val photoAspectRatio: Int,
+        val photoAspectRatio: PhotoAspectRatio,
         val enableHighResolution: Boolean,
         val photoOutputFormat: PhotoOutputFormat,
     ) : CameraConfiguration {

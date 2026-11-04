@@ -6,7 +6,6 @@
 package org.prauga.camera.repositories
 
 import android.content.Context
-import androidx.camera.core.AspectRatio
 import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionMode
 import androidx.core.content.edit
@@ -30,6 +29,7 @@ import org.prauga.camera.models.GridMode
 import org.prauga.camera.models.HardwareKey
 import org.prauga.camera.models.HotPixelMode
 import org.prauga.camera.models.NoiseReductionMode
+import org.prauga.camera.models.PhotoAspectRatio
 import org.prauga.camera.models.Preference
 import org.prauga.camera.models.Preference.Companion.enumPreference
 import org.prauga.camera.models.Preference.Companion.primitivePreference
@@ -255,14 +255,14 @@ class PreferencesRepository(
     ).asPreferenceHolder()
 
     /**
-     * Desired [AspectRatio] for photos.
+     * Desired [PhotoAspectRatio] for photos.
      */
-    val photoAspectRatio = enumPreference<Int, String>(
+    val photoAspectRatio = enumPreference<PhotoAspectRatio, String>(
         key = "aspect_ratio",
-        defaultValue = AspectRatio.RATIO_4_3,
+        defaultValue = PhotoAspectRatio.RATIO_4_3,
         enumToPreferenceValue = mapOf(
-            AspectRatio.RATIO_4_3 to "4_3",
-            AspectRatio.RATIO_16_9 to "16_9",
+            PhotoAspectRatio.RATIO_4_3 to "4_3",
+            PhotoAspectRatio.RATIO_16_9 to "16_9",
         ),
     ).asPreferenceHolder()
 

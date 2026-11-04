@@ -14,6 +14,7 @@ import org.prauga.camera.models.FlashMode
 import org.prauga.camera.models.FrameRate
 import org.prauga.camera.models.GridMode
 import org.prauga.camera.models.IslandItem
+import org.prauga.camera.models.PhotoAspectRatio
 import org.prauga.camera.models.Rotation
 import org.prauga.camera.models.ThermalStatus
 import org.prauga.camera.models.TimerMode
@@ -38,7 +39,7 @@ data class CameraUiState(
     val zoomState: ZoomState?,
     val exposureCompensationRangeToLevel: Pair<ClosedRange<Int>, Float>?,
     val isShutterButtonEnabled: Boolean,
-    val photoAspectRatio: Int,
+    val photoAspectRatio: PhotoAspectRatio,
     val photoEffect: Int,
     val isPhotoEffectButtonVisible: Boolean,
     val videoQuality: VideoQuality,
