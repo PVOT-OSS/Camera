@@ -407,6 +407,7 @@ class Camera2Session(
                                     CaptureRequest.STATISTICS_LENS_SHADING_MAP_MODE,
                                     CameraMetadata.STATISTICS_LENS_SHADING_MAP_MODE_ON,
                                 )
+                                set(CaptureRequest.STATISTICS_FACE_DETECT_MODE, it.faceDetectMode)
                             }
                         }
                         .build()

@@ -7,6 +7,7 @@ package org.prauga.camera.camera2
 
 import android.content.Context
 import android.graphics.ImageFormat
+import android.graphics.Rect
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -47,6 +48,11 @@ private constructor(
         ImageReader.newInstance(width, height, ImageFormat.RAW_SENSOR, FRAMES + 1).apply {
             setOnImageAvailableListener(::onImageAvailable, handler)
         }
+
+    val faceDetectMode =
+        characteristics
+            .get(CameraCharacteristics.STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES)
+            ?.maxOrNull() ?: CameraMetadata.STATISTICS_FACE_DETECT_MODE_OFF
 
     private var burst: Burst? = null
 
@@ -173,6 +179,7 @@ private constructor(
                         .put("frames", burst.frames)
                         .put("device", "${Build.MANUFACTURER} ${Build.MODEL}")
                         .put("fingerprint", Build.FINGERPRINT)
+                        .put("activeArray", activeArray())
                         .toString(2)
                 )
             File(burst.directory, "gyro.csv").writeText(burst.gyro.toString())
@@ -213,6 +220,18 @@ private constructor(
                     ),
                 )
             }
+            result.get(CaptureResult.STATISTICS_FACES)?.let { faces ->
+                put(
+                    "faces",
+                    JSONArray(
+                        faces.map { face ->
+                            JSONObject()
+                                .put("bounds", rectangle(face.bounds))
+                                .put("score", face.score)
+                        }
+                    ),
+                )
+            }
             result.get(CaptureResult.STATISTICS_LENS_SHADING_CORRECTION_MAP)?.let { map ->
                 put(
                     "lensShadingMap",
@@ -231,6 +250,12 @@ private constructor(
                 )
             }
         }
+
+    private fun activeArray() =
+        characteristics.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)?.let(::rectangle)
+
+    private fun rectangle(rect: Rect) =
+        JSONArray(listOf(rect.left, rect.top, rect.right, rect.bottom))
 
     companion object {
         private const val LOG_TAG = "Camera2BurstRecorder"
