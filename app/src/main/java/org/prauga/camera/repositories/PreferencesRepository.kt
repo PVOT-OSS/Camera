@@ -440,6 +440,7 @@ class PreferencesRepository(
         defaultValue = CameraEngine.CAMERAX,
         enumMapper = {
             when (it) {
+                CameraEngine.AUTO -> "auto"
                 CameraEngine.CAMERAX -> "camerax"
                 CameraEngine.CAMERA2 -> "camera2"
             }

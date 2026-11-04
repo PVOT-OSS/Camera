@@ -23,6 +23,7 @@ import org.prauga.camera.capture.CaptureStateMachine
 import org.prauga.camera.capture.PhotoCaptureStatus
 import org.prauga.camera.capture.RoutingCameraSession
 import org.prauga.camera.capture.models.CameraFacing
+import org.prauga.camera.capture.models.HardwareLevel
 import org.prauga.camera.device.DeviceInfo
 import org.prauga.camera.device.DeviceResolver
 import org.prauga.camera.device.GenericModule
@@ -94,7 +95,11 @@ class AppContainer(
                 },
             ),
         ) {
-            preferencesRepository.cameraEngine.value == CameraEngine.CAMERA2
+            when (preferencesRepository.cameraEngine.value) {
+                CameraEngine.AUTO -> it.camera.hardwareLevel >= HardwareLevel.FULL
+                CameraEngine.CAMERAX -> false
+                CameraEngine.CAMERA2 -> true
+            }
                     && Camera2Session.supports(it)
                     && camera2Health.isHealthy(it.camera.cameraId)
         }

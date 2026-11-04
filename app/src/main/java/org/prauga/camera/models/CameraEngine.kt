@@ -6,6 +6,7 @@
 package org.prauga.camera.models
 
 enum class CameraEngine {
+    AUTO,
     CAMERAX,
     CAMERA2,
 }
