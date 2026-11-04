@@ -46,3 +46,5 @@ include(":camera-camera2")
 include(":camera-camerax")
 
 include(":device")
+
+include(":processing")

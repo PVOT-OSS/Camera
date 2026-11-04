@@ -9,6 +9,7 @@
 /camera-camera2/build
 /camera-camerax/build
 /device/build
+/processing/build
 /captures
 .externalNativeBuild
 .cxx
