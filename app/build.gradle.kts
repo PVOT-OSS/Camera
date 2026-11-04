@@ -59,6 +59,7 @@ dependencies {
     implementation(project(":camera-camerax"))
     implementation(project(":device"))
 
+    implementation(libs.pvot.design.system)
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)

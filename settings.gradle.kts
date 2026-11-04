@@ -31,6 +31,12 @@ dependencyResolutionManagement {
 
 rootProject.name = "Camera"
 
+includeBuild("PvotLib") {
+    dependencySubstitution {
+        substitute(module("com.prauga.pvot:design-system")).using(project(":design-system"))
+    }
+}
+
 include(":app")
 
 include(":camera")
