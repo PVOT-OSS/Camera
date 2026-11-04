@@ -6,6 +6,7 @@
 /build
 /build-logic/convention/build
 /camera/build
+/camera-camerax/build
 /captures
 .externalNativeBuild
 .cxx
