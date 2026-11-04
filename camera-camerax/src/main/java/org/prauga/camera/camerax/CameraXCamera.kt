@@ -264,6 +264,7 @@ fun cameraFromCameraX(
     )
 }
 
+@OptIn(ExperimentalCamera2Interop::class)
 private inline fun <T : Enum<T>> Camera2CameraInfo.getAndMapCameraCharacteristics(
     key: CameraCharacteristics.Key<IntArray>,
     mapper: (Int) -> T?,
