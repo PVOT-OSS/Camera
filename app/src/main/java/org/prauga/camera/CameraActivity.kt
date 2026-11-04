@@ -376,7 +376,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                                 status.photoOutputStream?.use {
                                     openCapturePreview(
                                         ByteArrayInputStream(
-                                            status.photoOutputStream.toByteArray()
+                                            it.toByteArray()
                                         )
                                     )
                                 }
