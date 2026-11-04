@@ -98,7 +98,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
             captureStateMachine,
             inSingleCaptureMode,
             qrImageAnalyzer,
-            cameraRepository::getExtensionEnabledCameraSelector,
+            cameraXDevices::getExtensionEnabledCameraSelector,
             location = { location.value },
             cameraFacing = { cameraFacing.value },
             photoFfcMirror = { preferencesRepository.photoFfcMirror.value },
@@ -180,7 +180,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     private val camerasForCycling = combine(
-        cameraRepository.cameras,
+        cameraDevices.cameras,
         cameraMode,
     ) { cameras, cameraMode ->
         cameras.filter { it.supportsCameraMode(cameraMode) }.groupBy(Camera::cameraFacing)
@@ -209,7 +209,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
      * Pair of active camera to the available cameras.
      */
     private val lenses = combine(
-        cameraRepository.cameras,
+        cameraDevices.cameras,
         camera,
         cameraMode,
     ) { cameras, camera, cameraMode ->
@@ -230,7 +230,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     @OptIn(ExperimentalCoroutinesApi::class)
     val cameraError = camera
         .flatMapLatest { camera ->
-            cameraRepository.cameraErrors(camera)
+            cameraDevices.cameraErrors(camera)
         }
         .flowOn(Dispatchers.IO)
         .shareIn(
@@ -889,8 +889,8 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
 
         val camera = when (cameraFacing) {
             CameraFacing.UNKNOWN -> null
-            CameraFacing.FRONT -> cameraRepository.mainFrontCamera
-            CameraFacing.BACK -> cameraRepository.mainBackCamera
+            CameraFacing.FRONT -> cameraDevices.mainFrontCamera
+            CameraFacing.BACK -> cameraDevices.mainBackCamera
             CameraFacing.EXTERNAL -> null
         } ?: cameraForCycling[cameraFacing]?.firstOrNull() ?: error(
             "Camera with facing $cameraFacing not available"
@@ -1157,7 +1157,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Get whether or not any camera currently supports video mode.
      */
-    private suspend fun isVideoRecordingAvailable() = cameraRepository.cameras.first().any {
+    private suspend fun isVideoRecordingAvailable() = cameraDevices.cameras.first().any {
         it.supportsCameraMode(CameraMode.VIDEO)
     }
 
@@ -1213,7 +1213,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         cameraMode: CameraMode,
         cameraFacing: CameraFacing,
     ): Camera? {
-        val compatibleCameras = cameraRepository.cameras.first()
+        val compatibleCameras = cameraDevices.cameras.first()
             .filter { camera ->
                 camera.supportsCameraMode(cameraMode)
             }

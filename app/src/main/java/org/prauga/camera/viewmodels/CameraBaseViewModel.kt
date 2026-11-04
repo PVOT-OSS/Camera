@@ -15,7 +15,8 @@ import org.prauga.camera.CameraApplication
 abstract class CameraBaseViewModel(application: Application) : AndroidViewModel(application) {
     private val cameraApplication = getApplication<CameraApplication>()
 
-    protected val cameraRepository = cameraApplication.cameraRepository
+    protected val cameraDevices = cameraApplication.cameraDevices
+    protected val cameraXDevices = cameraApplication.cameraXDevices
     protected val deviceStateRepository = cameraApplication.deviceStateRepository
     protected val mediaRepository = cameraApplication.mediaRepository
     protected val preferencesRepository = cameraApplication.preferencesRepository

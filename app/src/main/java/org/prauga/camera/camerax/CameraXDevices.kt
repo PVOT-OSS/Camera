@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.prauga.camera.repositories
+package org.prauga.camera.camerax
 
 import android.Manifest
 import android.content.Context
@@ -25,9 +25,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
-import org.prauga.camera.camerax.cameraFromCameraX
-import org.prauga.camera.camerax.toCameraError
-import org.prauga.camera.camerax.toCameraXExtensionMode
+import org.prauga.camera.capture.CameraDevices
 import org.prauga.camera.ext.permissionGranted
 import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraFacing
@@ -37,10 +35,10 @@ import org.prauga.camera.models.ExtensionMode
  * Repository that provides camera devices.
  */
 @AndroidXOptIn(ExperimentalCamera2Interop::class, ExperimentalLensFacing::class)
-class CameraRepository(
+class CameraXDevices(
     private val context: Context,
     coroutineScope: CoroutineScope,
-) {
+) : CameraDevices {
     /**
      * CameraX's [ProcessCameraProvider].
      */
@@ -68,13 +66,13 @@ class CameraRepository(
             .mapToCamera()
     }
 
-    val mainBackCamera by lazy {
+    override val mainBackCamera by lazy {
         internalCameras.firstOrNull { camera ->
             camera.cameraFacing == CameraFacing.BACK
         }
     }
 
-    val mainFrontCamera by lazy {
+    override val mainFrontCamera by lazy {
         internalCameras.firstOrNull { camera ->
             camera.cameraFacing == CameraFacing.FRONT
         }
@@ -98,7 +96,7 @@ class CameraRepository(
         )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val cameras = externalCameras.mapLatest { externalCameras ->
+    override val cameras = externalCameras.mapLatest { externalCameras ->
         internalCameras + externalCameras
     }
         .flowOn(Dispatchers.IO)
@@ -118,7 +116,7 @@ class CameraRepository(
         cameraInfo(camera).cameraSelector, mode.toCameraXExtensionMode()
     )
 
-    fun cameraErrors(camera: Camera) = cameraInfo(camera).cameraState.asFlow().map {
+    override fun cameraErrors(camera: Camera) = cameraInfo(camera).cameraState.asFlow().map {
         it.error?.toCameraError()
     }
 
