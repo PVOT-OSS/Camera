@@ -9,9 +9,6 @@ import android.app.Application
 import android.net.Uri
 import android.util.Log
 import android.view.OrientationEventListener
-import androidx.annotation.OptIn as AndroidXOptIn
-import androidx.camera.core.ExperimentalZeroShutterLag
-import androidx.camera.core.ImageCapture
 import androidx.camera.view.PreviewView
 import androidx.camera.view.ScreenFlashView
 import androidx.lifecycle.LifecycleOwner
@@ -58,6 +55,7 @@ import org.prauga.camera.models.GridMode
 import org.prauga.camera.models.HardwareKey
 import org.prauga.camera.models.LaunchRequest
 import org.prauga.camera.models.PhotoAspectRatio
+import org.prauga.camera.models.PhotoCaptureMode
 import org.prauga.camera.models.Rotation
 import org.prauga.camera.models.ThermalStatus
 import org.prauga.camera.models.TimerMode
@@ -462,7 +460,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
 
     /**
      * Photo capture mode.
-     * @see ImageCapture.CaptureMode
+     * @see PhotoCaptureMode
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     val photoCaptureMode = cameraConfiguration
@@ -517,14 +515,13 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Whether the user should be able to select a photo effect.
      */
-    @AndroidXOptIn(ExperimentalZeroShutterLag::class)
     private val isPhotoEffectButtonVisible = combine(
         cameraConfiguration,
         cameraMode,
         photoCaptureMode,
     ) { cameraConfiguration, cameraMode, photoCaptureMode ->
         cameraMode == CameraMode.PHOTO &&
-                photoCaptureMode != ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG &&
+                photoCaptureMode != PhotoCaptureMode.ZERO_SHUTTER_LAG &&
                 cameraConfiguration.camera.supportedExtensionModes.size > 1
     }
         .flowOn(Dispatchers.IO)

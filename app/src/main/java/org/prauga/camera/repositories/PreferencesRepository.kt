@@ -6,7 +6,6 @@
 package org.prauga.camera.repositories
 
 import android.content.Context
-import androidx.camera.core.ImageCapture
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import kotlinx.coroutines.CoroutineScope
@@ -30,6 +29,7 @@ import org.prauga.camera.models.HardwareKey
 import org.prauga.camera.models.HotPixelMode
 import org.prauga.camera.models.NoiseReductionMode
 import org.prauga.camera.models.PhotoAspectRatio
+import org.prauga.camera.models.PhotoCaptureMode
 import org.prauga.camera.models.Preference
 import org.prauga.camera.models.Preference.Companion.enumPreference
 import org.prauga.camera.models.Preference.Companion.primitivePreference
@@ -120,14 +120,14 @@ class PreferencesRepository(
     ).asPreferenceHolder()
 
     /**
-     * Desired [ImageCapture.CaptureMode] for photos.
+     * Desired [PhotoCaptureMode] for photos.
      */
     val photoCaptureMode = enumPreference(
         key = "photo_capture_mode",
-        defaultValue = ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY,
+        defaultValue = PhotoCaptureMode.MINIMIZE_LATENCY,
         enumToPreferenceValue = mapOf(
-            ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY to "maximize_quality",
-            ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY to "minimize_latency",
+            PhotoCaptureMode.MAXIMIZE_QUALITY to "maximize_quality",
+            PhotoCaptureMode.MINIMIZE_LATENCY to "minimize_latency",
         ),
     ).asPreferenceHolder()
 

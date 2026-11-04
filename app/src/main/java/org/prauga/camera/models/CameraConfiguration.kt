@@ -68,14 +68,14 @@ sealed interface CameraConfiguration {
      *
      * @param photoAspectRatio The [PhotoAspectRatio] to use
      * @param enableHighResolution Whether to enable high resolution or not
-     * @param photoCaptureMode The `ImageCapture.CAPTURE_MODE_*` to use
+     * @param photoCaptureMode The [PhotoCaptureMode] to use
      * @param photoOutputFormat The [PhotoOutputFormat] to use
      */
     data class Photo(
         override val camera: Camera,
         override val extensionMode: ExtensionMode,
         override val camera2Options: Camera2Options,
-        val photoCaptureMode: Int,
+        val photoCaptureMode: PhotoCaptureMode,
         val photoAspectRatio: PhotoAspectRatio,
         val enableHighResolution: Boolean,
         val photoOutputFormat: PhotoOutputFormat,

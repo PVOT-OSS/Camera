@@ -5,9 +5,6 @@
 
 package org.prauga.camera.viewmodels
 
-import androidx.annotation.OptIn
-import androidx.camera.core.ExperimentalZeroShutterLag
-import androidx.camera.core.ImageCapture
 import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraConfiguration
 import org.prauga.camera.models.CameraMode
@@ -16,6 +13,7 @@ import org.prauga.camera.models.DistortionCorrectionMode
 import org.prauga.camera.models.EdgeMode
 import org.prauga.camera.models.HotPixelMode
 import org.prauga.camera.models.NoiseReductionMode
+import org.prauga.camera.models.PhotoCaptureMode
 import org.prauga.camera.models.PhotoOutputFormat
 import org.prauga.camera.models.ShadingMode
 import org.prauga.camera.repositories.PreferencesRepository
@@ -24,7 +22,6 @@ class CameraConfigurationFactory(
     private val preferencesRepository: PreferencesRepository,
     private val inSingleCaptureMode: () -> Boolean,
 ) {
-    @OptIn(ExperimentalZeroShutterLag::class)
     fun create(
         camera: Camera,
         cameraMode: CameraMode,
@@ -34,11 +31,11 @@ class CameraConfigurationFactory(
             val photoCaptureMode = when (
                 val photoCaptureMode = preferencesRepository.photoCaptureMode.value
             ) {
-                ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY -> when (
+                PhotoCaptureMode.MINIMIZE_LATENCY -> when (
                     preferencesRepository.enableZsl.value && camera.supportsZsl
                 ) {
-                    true -> ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG
-                    false -> ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY
+                    true -> PhotoCaptureMode.ZERO_SHUTTER_LAG
+                    false -> PhotoCaptureMode.MINIMIZE_LATENCY
                 }
 
                 else -> photoCaptureMode
@@ -115,16 +112,15 @@ class CameraConfigurationFactory(
         )
     }
 
-    @OptIn(ExperimentalZeroShutterLag::class)
     private fun buildPhotoCamera2Options(
         camera: Camera,
-        photoCaptureMode: Int,
+        photoCaptureMode: PhotoCaptureMode,
     ) = CameraConfiguration.Camera2Options(
         edgeMode = preferencesRepository.edgeMode.value?.takeIf {
             camera.supportedEdgeModes.contains(it) && when (
                 photoCaptureMode
             ) {
-                ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG ->
+                PhotoCaptureMode.ZERO_SHUTTER_LAG ->
                     EdgeMode.ALLOWED_MODES_ON_ZSL.contains(it)
 
                 else -> true
@@ -134,7 +130,7 @@ class CameraConfigurationFactory(
             camera.supportedNoiseReductionModes.contains(it) && when (
                 photoCaptureMode
             ) {
-                ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG ->
+                PhotoCaptureMode.ZERO_SHUTTER_LAG ->
                     NoiseReductionMode.ALLOWED_MODES_ON_ZSL.contains(it)
 
                 else -> true
@@ -144,7 +140,7 @@ class CameraConfigurationFactory(
             camera.supportedShadingModes.contains(it) && when (
                 photoCaptureMode
             ) {
-                ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG ->
+                PhotoCaptureMode.ZERO_SHUTTER_LAG ->
                     ShadingMode.ALLOWED_MODES_ON_ZSL.contains(it)
 
                 else -> true
@@ -154,7 +150,7 @@ class CameraConfigurationFactory(
             camera.supportedColorCorrectionAberrationModes.contains(it) && when (
                 photoCaptureMode
             ) {
-                ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG ->
+                PhotoCaptureMode.ZERO_SHUTTER_LAG ->
                     ColorCorrectionAberrationMode.ALLOWED_MODES_ON_ZSL.contains(it)
 
                 else -> true
@@ -164,7 +160,7 @@ class CameraConfigurationFactory(
             camera.supportedDistortionCorrectionModes.contains(it) && when (
                 photoCaptureMode
             ) {
-                ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG ->
+                PhotoCaptureMode.ZERO_SHUTTER_LAG ->
                     DistortionCorrectionMode.ALLOWED_MODES_ON_ZSL.contains(it)
 
                 else -> true
@@ -174,7 +170,7 @@ class CameraConfigurationFactory(
             camera.supportedHotPixelModes.contains(it) && when (
                 photoCaptureMode
             ) {
-                ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG ->
+                PhotoCaptureMode.ZERO_SHUTTER_LAG ->
                     HotPixelMode.ALLOWED_MODES_ON_ZSL.contains(it)
 
                 else -> true
@@ -182,7 +178,6 @@ class CameraConfigurationFactory(
         },
     )
 
-    @OptIn(ExperimentalZeroShutterLag::class)
     private fun buildVideoCamera2Options(
         camera: Camera,
     ) = CameraConfiguration.Camera2Options(

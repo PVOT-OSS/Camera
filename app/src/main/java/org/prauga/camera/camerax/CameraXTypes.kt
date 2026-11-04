@@ -5,12 +5,16 @@
 
 package org.prauga.camera.camerax
 
+import androidx.annotation.OptIn
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.DynamicRange
+import androidx.camera.core.ExperimentalZeroShutterLag
+import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionMode as CameraXExtensionMode
 import androidx.camera.video.Quality
 import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.PhotoAspectRatio
+import org.prauga.camera.models.PhotoCaptureMode
 import org.prauga.camera.models.VideoDynamicRange
 import org.prauga.camera.models.VideoQuality
 
@@ -26,6 +30,13 @@ fun ExtensionMode.toCameraXExtensionMode() = when (this) {
 fun PhotoAspectRatio.toCameraXAspectRatio() = when (this) {
     PhotoAspectRatio.RATIO_4_3 -> AspectRatio.RATIO_4_3
     PhotoAspectRatio.RATIO_16_9 -> AspectRatio.RATIO_16_9
+}
+
+@OptIn(ExperimentalZeroShutterLag::class)
+fun PhotoCaptureMode.toCameraXCaptureMode() = when (this) {
+    PhotoCaptureMode.MAXIMIZE_QUALITY -> ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY
+    PhotoCaptureMode.MINIMIZE_LATENCY -> ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY
+    PhotoCaptureMode.ZERO_SHUTTER_LAG -> ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG
 }
 
 fun VideoDynamicRange.toCameraXDynamicRange(): DynamicRange = when (this) {

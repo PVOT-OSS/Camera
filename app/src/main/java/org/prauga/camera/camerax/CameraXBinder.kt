@@ -38,6 +38,7 @@ import org.prauga.camera.models.CameraConfiguration
 import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.FlashMode
+import org.prauga.camera.models.PhotoCaptureMode
 import org.prauga.camera.models.PhotoOutputFormat
 import org.prauga.camera.models.VideoMirrorMode
 import org.prauga.camera.models.VideoStabilizationMode
@@ -76,7 +77,7 @@ class CameraXBinder(
         val cameraUseCases = when (cameraConfiguration) {
             is CameraConfiguration.Photo -> {
                 require(
-                    cameraConfiguration.photoCaptureMode != ImageCapture.CAPTURE_MODE_ZERO_SHUTTER_LAG
+                    cameraConfiguration.photoCaptureMode != PhotoCaptureMode.ZERO_SHUTTER_LAG
                             || cameraConfiguration.camera.supportsZsl
                 ) {
                     "Requested ZSL capture mode when the camera doesn't support it"
@@ -92,7 +93,7 @@ class CameraXBinder(
                     } not supported by camera ${cameraConfiguration.camera.cameraId})"
                 }
 
-                cameraController.imageCaptureMode = cameraConfiguration.photoCaptureMode
+                cameraController.imageCaptureMode = cameraConfiguration.photoCaptureMode.toCameraXCaptureMode()
 
                 cameraController.imageOutputFormat = when (
                     cameraConfiguration.photoOutputFormat
