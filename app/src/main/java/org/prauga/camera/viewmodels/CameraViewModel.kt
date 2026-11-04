@@ -9,8 +9,6 @@ import android.app.Application
 import android.net.Uri
 import android.util.Log
 import android.view.OrientationEventListener
-import androidx.camera.view.PreviewView
-import androidx.camera.view.ScreenFlashView
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -40,6 +38,7 @@ import kotlinx.coroutines.sync.Mutex
 import org.prauga.camera.camerax.CameraXSession
 import org.prauga.camera.capture.CameraSession
 import org.prauga.camera.capture.CaptureStateMachine
+import org.prauga.camera.capture.PreviewTarget
 import org.prauga.camera.ext.applicationContext
 import org.prauga.camera.ext.mapToRange
 import org.prauga.camera.ext.next
@@ -867,8 +866,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         )
     }
 
-    fun attachPreview(previewView: PreviewView, screenFlashView: ScreenFlashView) =
-        cameraSession.attachPreview(previewView, screenFlashView)
+    fun attachPreview(target: PreviewTarget) = cameraSession.attachPreview(target)
 
     fun bindCamera(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner) =
         cameraSession.configure(cameraConfiguration, lifecycleOwner)

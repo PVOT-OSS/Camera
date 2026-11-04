@@ -5,8 +5,6 @@
 
 package org.prauga.camera.capture
 
-import androidx.camera.view.PreviewView
-import androidx.camera.view.ScreenFlashView
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
@@ -21,7 +19,7 @@ interface CameraSession {
     val videoRecordingDuration: StateFlow<Long>
     val videoRecordEvent: SharedFlow<RecordingEvent>
 
-    fun attachPreview(previewView: PreviewView, screenFlashView: ScreenFlashView)
+    fun attachPreview(target: PreviewTarget)
     fun configure(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner)
     fun close()
 

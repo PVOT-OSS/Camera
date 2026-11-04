@@ -10,8 +10,6 @@ import android.location.Location
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.view.LifecycleCameraController
-import androidx.camera.view.PreviewView
-import androidx.camera.view.ScreenFlashView
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.asFlow
 import java.util.concurrent.ExecutorService
@@ -21,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import org.prauga.camera.capture.CameraSession
 import org.prauga.camera.capture.CaptureStateMachine
+import org.prauga.camera.capture.PreviewTarget
 import org.prauga.camera.ext.flashMode
 import org.prauga.camera.models.Camera
 import org.prauga.camera.models.CameraConfiguration
@@ -87,9 +86,11 @@ class CameraXSession(
 
     override val videoRecordEvent = capture.videoRecordEvent
 
-    override fun attachPreview(previewView: PreviewView, screenFlashView: ScreenFlashView) {
-        previewView.controller = cameraController
-        screenFlashView.setController(cameraController)
+    override fun attachPreview(target: PreviewTarget) {
+        require(target is CameraXPreviewTarget) { "Unsupported preview target $target" }
+
+        target.previewView.controller = cameraController
+        target.screenFlashView.setController(cameraController)
     }
 
     override fun configure(
