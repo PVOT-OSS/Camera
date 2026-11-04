@@ -13,7 +13,6 @@ import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraInfo
 import androidx.camera.core.CameraSelector
-import androidx.camera.core.CameraState
 import androidx.camera.core.ExperimentalLensFacing
 import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.core.ImageCapture
@@ -21,6 +20,8 @@ import androidx.camera.extensions.ExtensionsManager
 import androidx.camera.video.Recorder
 import androidx.core.util.toClosedRange
 import androidx.lifecycle.asFlow
+import kotlinx.coroutines.flow.map
+import org.prauga.camera.camerax.toCameraError
 import org.prauga.camera.camerax.toCameraXDynamicRange
 import org.prauga.camera.camerax.toVideoDynamicRange
 import org.prauga.camera.camerax.toVideoQuality
@@ -146,7 +147,7 @@ class Camera private constructor(
 
     val supportsZsl = cameraInfo.isZslSupported
 
-    val cameraXCameraState = cameraInfo.cameraState.asFlow<CameraState>()
+    val cameraErrors = cameraInfo.cameraState.asFlow().map { it.error?.toCameraError() }
 
     val supportedEdgeModes = camera2CameraInfo.getAndMapCameraCharacteristics(
         CameraCharacteristics.EDGE_AVAILABLE_EDGE_MODES,

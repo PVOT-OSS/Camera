@@ -9,15 +9,14 @@ import android.app.Activity
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import androidx.camera.core.CameraState as CameraXCameraState
 import androidx.constraintlayout.widget.ConstraintLayout
-import coil3.request.error
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.prauga.camera.R
+import org.prauga.camera.capture.CameraError
 import org.prauga.camera.ext.select
 import org.prauga.camera.models.ThermalStatus
 import org.prauga.camera.viewmodels.CameraViewModel
@@ -47,8 +46,8 @@ class CameraAlerts(
 
     fun CoroutineScope.bind() {
         launch {
-            viewModel.cameraXCameraState.collect { cameraXCameraState ->
-                cameraXCameraState.error?.let {
+            viewModel.cameraError.collect { cameraError ->
+                cameraError?.let {
                     // Log the error
                     Log.e(
                         LOG_TAG,
@@ -65,42 +64,42 @@ class CameraAlerts(
                     }
 
                     when (it.code) {
-                        CameraXCameraState.ERROR_MAX_CAMERAS_IN_USE -> {
+                        CameraError.Code.MAX_CAMERAS_IN_USE -> {
                             // No way to fix it without user action, bail out
                             showToast(R.string.error_max_cameras_in_use)
                             activity.finish()
                         }
 
-                        CameraXCameraState.ERROR_CAMERA_IN_USE -> {
+                        CameraError.Code.CAMERA_IN_USE -> {
                             // No way to fix it without user action, bail out
                             showToast(R.string.error_camera_in_use)
                             activity.finish()
                         }
 
-                        CameraXCameraState.ERROR_OTHER_RECOVERABLE_ERROR -> {
+                        CameraError.Code.OTHER_RECOVERABLE_ERROR -> {
                             // Warn the user and don't do anything
                             showToast(R.string.error_other_recoverable_error)
                         }
 
-                        CameraXCameraState.ERROR_STREAM_CONFIG -> {
+                        CameraError.Code.STREAM_CONFIG -> {
                             // CameraX use case misconfiguration, no way to recover
                             showToast(R.string.error_stream_config)
                             activity.finish()
                         }
 
-                        CameraXCameraState.ERROR_CAMERA_DISABLED -> {
+                        CameraError.Code.CAMERA_DISABLED -> {
                             // No way to fix it without user action, bail out
                             showToast(R.string.error_camera_disabled)
                             activity.finish()
                         }
 
-                        CameraXCameraState.ERROR_CAMERA_FATAL_ERROR -> {
+                        CameraError.Code.CAMERA_FATAL_ERROR -> {
                             // No way to fix it without user action, bail out
                             showToast(R.string.error_camera_fatal_error)
                             activity.finish()
                         }
 
-                        CameraXCameraState.ERROR_DO_NOT_DISTURB_MODE_ENABLED -> {
+                        CameraError.Code.DO_NOT_DISTURB_MODE_ENABLED -> {
                             // No way to fix it without user action, bail out
                             showToast(R.string.error_do_not_disturb_mode_enabled)
                             activity.finish()
@@ -110,17 +109,13 @@ class CameraAlerts(
                             // We know anything about it, just check if it's recoverable or
                             // critical
                             when (it.type) {
-                                CameraXCameraState.ErrorType.RECOVERABLE -> {
+                                CameraError.Type.RECOVERABLE -> {
                                     showToast(R.string.error_unknown_recoverable)
                                 }
 
-                                CameraXCameraState.ErrorType.CRITICAL -> {
+                                CameraError.Type.CRITICAL -> {
                                     showToast(R.string.error_unknown_critical)
                                     activity.finish()
-                                }
-
-                                null -> {
-                                    // Do nothing
                                 }
                             }
                         }

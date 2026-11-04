@@ -225,12 +225,12 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
         )
 
     /**
-     * CameraX's state of the current camera.
+     * Errors of the current camera.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
-    val cameraXCameraState = camera
+    val cameraError = camera
         .flatMapLatest { camera ->
-            camera.cameraXCameraState
+            camera.cameraErrors
         }
         .flowOn(Dispatchers.IO)
         .shareIn(

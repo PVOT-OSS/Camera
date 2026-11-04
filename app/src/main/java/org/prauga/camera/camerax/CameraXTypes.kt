@@ -7,6 +7,7 @@ package org.prauga.camera.camerax
 
 import androidx.annotation.OptIn
 import androidx.camera.core.AspectRatio
+import androidx.camera.core.CameraState
 import androidx.camera.core.DynamicRange
 import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.core.ImageCapture
@@ -16,6 +17,7 @@ import androidx.camera.video.Quality
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.CameraController
 import androidx.camera.view.TapToFocusInfo
+import org.prauga.camera.capture.CameraError
 import org.prauga.camera.capture.FocusEvent
 import org.prauga.camera.capture.RecordingEvent
 import org.prauga.camera.capture.ZoomInfo
@@ -58,6 +60,24 @@ fun VideoDynamicRange.toCameraXDynamicRange(): DynamicRange = when (this) {
 fun DynamicRange.toVideoDynamicRange() = VideoDynamicRange.entries.first {
     it.toCameraXDynamicRange() == this
 }
+
+fun CameraState.StateError.toCameraError() = CameraError(
+    code = when (code) {
+        CameraState.ERROR_MAX_CAMERAS_IN_USE -> CameraError.Code.MAX_CAMERAS_IN_USE
+        CameraState.ERROR_CAMERA_IN_USE -> CameraError.Code.CAMERA_IN_USE
+        CameraState.ERROR_OTHER_RECOVERABLE_ERROR -> CameraError.Code.OTHER_RECOVERABLE_ERROR
+        CameraState.ERROR_STREAM_CONFIG -> CameraError.Code.STREAM_CONFIG
+        CameraState.ERROR_CAMERA_DISABLED -> CameraError.Code.CAMERA_DISABLED
+        CameraState.ERROR_CAMERA_FATAL_ERROR -> CameraError.Code.CAMERA_FATAL_ERROR
+        CameraState.ERROR_DO_NOT_DISTURB_MODE_ENABLED -> CameraError.Code.DO_NOT_DISTURB_MODE_ENABLED
+        else -> CameraError.Code.UNKNOWN
+    },
+    type = when (type) {
+        CameraState.ErrorType.RECOVERABLE -> CameraError.Type.RECOVERABLE
+        CameraState.ErrorType.CRITICAL -> CameraError.Type.CRITICAL
+    },
+    cause = cause,
+)
 
 fun VideoRecordEvent.toRecordingEvent(): RecordingEvent? = when (this) {
     is VideoRecordEvent.Start -> RecordingEvent.Started
