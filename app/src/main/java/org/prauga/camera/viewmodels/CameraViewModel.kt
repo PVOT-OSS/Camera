@@ -772,6 +772,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
                 // Track all user preferences that requires a rebind
                 combine<Any?, _>(
                     preferencesRepository.cameraEngine,
+                    preferencesRepository.recordBursts,
                     preferencesRepository.photoCaptureMode,
                     preferencesRepository.enableZsl,
                     preferencesRepository.usePhotoJpegUltraHdr,

@@ -448,6 +448,14 @@ class PreferencesRepository(
     ).asPreferenceHolder()
 
     /**
+     * Whether photos also record a RAW burst for processing development.
+     */
+    val recordBursts = primitivePreference(
+        key = "record_bursts",
+        defaultValue = false,
+    ).asPreferenceHolder()
+
+    /**
      * Video mirror mode.
      */
     val videoMirrorMode = enumPreference(

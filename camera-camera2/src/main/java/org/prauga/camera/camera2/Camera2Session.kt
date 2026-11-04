@@ -70,13 +70,14 @@ import org.prauga.camera.capture.nextPowerOfTwo
 import org.prauga.camera.capture.previousPowerOfTwo
 
 class Camera2Session(
-    context: Context,
+    private val context: Context,
     private val scope: CoroutineScope,
     private val captureSounds: CaptureSounds,
     private val captureStateMachine: CaptureStateMachine,
     private val inSingleCaptureMode: StateFlow<Boolean>,
     private val location: () -> Location?,
     private val photoFfcMirror: () -> Boolean,
+    private val recordBursts: () -> Boolean,
     private val onPhotoCaptureStatus: (PhotoCaptureStatus) -> Unit,
     private val onNewPicture: (Uri) -> Unit,
     private val onFailure: (cameraId: String) -> Unit,
@@ -102,6 +103,7 @@ class Camera2Session(
     private var previewSurface: Surface? = null
     private var previewSize: Size? = null
     private var imageReader: ImageReader? = null
+    private var burstRecorder: Camera2BurstRecorder? = null
     private var sensorOrientation = 0
     private var lensFacing = CameraMetadata.LENS_FACING_BACK
     private var deviceOrientation = 0
@@ -349,24 +351,44 @@ class Camera2Session(
             return
         }
 
-        val request = camera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE).apply {
-            addTarget(imageReader.surface)
-            applyControls()
-            set(CaptureRequest.JPEG_ORIENTATION, jpegOrientation())
-            if (!inSingleCaptureMode.value) {
-                location()?.let { set(CaptureRequest.JPEG_GPS_LOCATION, it) }
-            }
-        }.build()
+        val burstRecorder = burstRecorder
+        val frames = if (burstRecorder != null) Camera2BurstRecorder.FRAMES else 1
+        val requests = List(frames) { index ->
+            camera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE).apply {
+                setTag(index)
+                if (index == 0) {
+                    addTarget(imageReader.surface)
+                }
+                applyControls()
+                set(CaptureRequest.JPEG_ORIENTATION, jpegOrientation())
+                if (!inSingleCaptureMode.value) {
+                    location()?.let { set(CaptureRequest.JPEG_GPS_LOCATION, it) }
+                }
+                burstRecorder?.let {
+                    addTarget(it.imageReader.surface)
+                    set(CaptureRequest.CONTROL_AE_LOCK, true)
+                    set(
+                        CaptureRequest.STATISTICS_LENS_SHADING_MAP_MODE,
+                        CameraMetadata.STATISTICS_LENS_SHADING_MAP_MODE_ON,
+                    )
+                }
+            }.build()
+        }
 
         photoTimestamp = System.currentTimeMillis()
+        burstRecorder?.start(jpegOrientation())
 
-        session.capture(request, object : CameraCaptureSession.CaptureCallback() {
+        val callback = object : CameraCaptureSession.CaptureCallback() {
             override fun onCaptureStarted(
                 session: CameraCaptureSession,
                 request: CaptureRequest,
                 timestamp: Long,
                 frameNumber: Long,
             ) {
+                if (request.tag != 0) {
+                    return
+                }
+
                 onPhotoCaptureStatus(PhotoCaptureStatus.CaptureStarted)
 
                 captureSounds.playShutterClick()
@@ -377,7 +399,11 @@ class Camera2Session(
                 request: CaptureRequest,
                 result: TotalCaptureResult,
             ) {
-                clearScreenFlash()
+                burstRecorder?.onCaptureCompleted(result)
+
+                if (request.tag == 0) {
+                    clearScreenFlash()
+                }
             }
 
             override fun onCaptureFailed(
@@ -385,6 +411,11 @@ class Camera2Session(
                 request: CaptureRequest,
                 failure: CaptureFailure,
             ) {
+                if (request.tag != 0) {
+                    Log.w(LOG_TAG, "Burst frame ${request.tag} failed: ${failure.reason}")
+                    return
+                }
+
                 clearScreenFlash()
                 Log.e(LOG_TAG, "Photo capture failed: ${failure.reason}")
                 onPhotoCaptureStatus(
@@ -392,7 +423,12 @@ class Camera2Session(
                 )
                 captureStateMachine.endPhoto()
             }
-        }, cameraHandler)
+        }
+
+        when (requests.size) {
+            1 -> session.capture(requests.first(), callback, cameraHandler)
+            else -> session.captureBurst(requests, callback, cameraHandler)
+        }
     }
 
     private fun onImageAvailable(imageReader: ImageReader) {
@@ -598,6 +634,11 @@ class Camera2Session(
             setOnImageAvailableListener(::onImageAvailable, cameraHandler)
         }
         this.imageReader = imageReader
+        val burstRecorder = when (recordBursts()) {
+            true -> Camera2BurstRecorder.create(context, scope, cameraHandler, characteristics)
+            false -> null
+        }
+        this.burstRecorder = burstRecorder
         orientationListener.enable()
 
         val previewSize = Camera2Sizes.previewSize(
@@ -617,7 +658,14 @@ class Camera2Session(
         cameraManager.openCamera(cameraId, object : CameraDevice.StateCallback() {
             override fun onOpened(camera: CameraDevice) {
                 cameraDevice = camera
-                createCaptureSession(camera, previewSurface, imageReader.surface)
+                createCaptureSession(
+                    camera,
+                    listOfNotNull(
+                        previewSurface,
+                        imageReader.surface,
+                        burstRecorder?.imageReader?.surface,
+                    ),
+                )
             }
 
             override fun onDisconnected(camera: CameraDevice) {
@@ -643,11 +691,10 @@ class Camera2Session(
     @Suppress("DEPRECATION")
     private fun createCaptureSession(
         camera: CameraDevice,
-        previewSurface: Surface,
-        photoSurface: Surface,
+        outputs: List<Surface>,
     ) {
         camera.createCaptureSession(
-            listOf(previewSurface, photoSurface),
+            outputs,
             object : CameraCaptureSession.StateCallback() {
                 override fun onConfigured(session: CameraCaptureSession) {
                     if (cameraDevice != camera) {
@@ -756,6 +803,9 @@ class Camera2Session(
 
         imageReader?.close()
         imageReader = null
+
+        burstRecorder?.close()
+        burstRecorder = null
 
         orientationListener.disable()
     }

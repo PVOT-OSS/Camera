@@ -257,4 +257,6 @@
     <string name="camera_engine_auto">Automatic</string>
     <string name="camera_engine_camerax">CameraX</string>
     <string name="camera_engine_camera2">Camera2 (experimental)</string>
+    <string name="record_bursts_title">Record RAW bursts</string>
+    <string name="record_bursts_summary">With Camera2, each photo also saves 8 RAW frames, metadata and gyro samples to the app\'s private folder, for processing development</string>
 </resources>

@@ -88,6 +88,7 @@ class AppContainer(
                 inSingleCaptureMode,
                 location = location,
                 photoFfcMirror = photoFfcMirror,
+                recordBursts = { preferencesRepository.recordBursts.value },
                 onPhotoCaptureStatus = onPhotoCaptureStatus,
                 onNewPicture = mediaRepository::broadcastNewPicture,
                 onFailure = { cameraId ->
