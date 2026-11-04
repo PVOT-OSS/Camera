@@ -72,6 +72,7 @@ class Camera2Session(
     private val captureStateMachine: CaptureStateMachine,
     private val inSingleCaptureMode: StateFlow<Boolean>,
     private val location: () -> Location?,
+    private val photoFfcMirror: () -> Boolean,
     private val onPhotoCaptureStatus: (PhotoCaptureStatus) -> Unit,
     private val onNewPicture: (Uri) -> Unit,
     private val onFailure: (cameraId: String) -> Unit,
@@ -360,6 +361,9 @@ class Camera2Session(
             val buffer = image.planes[0].buffer
             ByteArray(buffer.remaining()).also { buffer.get(it) }
         } ?: return
+        if (lensFacing == CameraMetadata.LENS_FACING_FRONT && photoFfcMirror()) {
+            JpegExif.flipHorizontally(bytes)
+        }
         val timestamp = photoTimestamp
         val singleCapture = inSingleCaptureMode.value
 

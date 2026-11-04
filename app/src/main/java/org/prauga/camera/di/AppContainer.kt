@@ -87,6 +87,7 @@ class AppContainer(
                 captureStateMachine,
                 inSingleCaptureMode,
                 location = location,
+                photoFfcMirror = photoFfcMirror,
                 onPhotoCaptureStatus = onPhotoCaptureStatus,
                 onNewPicture = mediaRepository::broadcastNewPicture,
                 onFailure = { cameraId ->
