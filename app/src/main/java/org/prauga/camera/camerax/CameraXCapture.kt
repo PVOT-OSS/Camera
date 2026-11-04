@@ -25,13 +25,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.prauga.camera.capture.CaptureSounds
 import org.prauga.camera.capture.CaptureStateMachine
 import org.prauga.camera.capture.RecordingEvent
 import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.CameraState
 import org.prauga.camera.models.Event
 import org.prauga.camera.repositories.MediaRepository
-import org.prauga.camera.utils.CameraSoundsUtils
 import org.prauga.camera.utils.StorageUtils
 
 class CameraXCapture(
@@ -40,7 +40,7 @@ class CameraXCapture(
     private val cameraExecutor: ExecutorService,
     private val scope: CoroutineScope,
     private val mediaRepository: MediaRepository,
-    private val cameraSoundsUtils: CameraSoundsUtils,
+    private val captureSounds: CaptureSounds,
     private val captureStateMachine: CaptureStateMachine,
     private val inSingleCaptureMode: StateFlow<Boolean>,
     private val location: () -> Location?,
@@ -122,7 +122,7 @@ class CameraXCapture(
             override fun onCaptureStarted() {
                 emitEvent(Event.PhotoCaptureStatus.CaptureStarted)
 
-                cameraSoundsUtils.playShutterClick()
+                captureSounds.playShutterClick()
             }
 
             override fun onImageSaved(output: ImageCapture.OutputFileResults) {
@@ -218,7 +218,7 @@ class CameraXCapture(
         )
 
         // Play shutter sound
-        val delayTime = if (cameraSoundsUtils.playStartVideoRecording()) 500L else 0L
+        val delayTime = if (captureSounds.playStartVideoRecording()) 500L else 0L
 
         scope.launch {
             delay(delayTime)
@@ -251,7 +251,7 @@ class CameraXCapture(
                     }
 
                     is VideoRecordEvent.Finalize -> {
-                        cameraSoundsUtils.playStopVideoRecording()
+                        captureSounds.playStopVideoRecording()
                         if (it.error != VideoRecordEvent.Finalize.ERROR_NO_VALID_DATA) {
                             Log.d(
                                 LOG_TAG,

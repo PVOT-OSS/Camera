@@ -18,6 +18,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import org.prauga.camera.capture.CameraSession
+import org.prauga.camera.capture.CaptureSounds
 import org.prauga.camera.capture.CaptureStateMachine
 import org.prauga.camera.capture.PreviewTarget
 import org.prauga.camera.models.Camera
@@ -27,13 +28,12 @@ import org.prauga.camera.models.Event
 import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.FlashMode
 import org.prauga.camera.repositories.MediaRepository
-import org.prauga.camera.utils.CameraSoundsUtils
 
 class CameraXSession(
     context: Context,
     scope: CoroutineScope,
     mediaRepository: MediaRepository,
-    cameraSoundsUtils: CameraSoundsUtils,
+    captureSounds: CaptureSounds,
     captureStateMachine: CaptureStateMachine,
     inSingleCaptureMode: StateFlow<Boolean>,
     qrImageAnalyzer: ImageAnalysis.Analyzer,
@@ -60,7 +60,7 @@ class CameraXSession(
         cameraExecutor,
         scope,
         mediaRepository,
-        cameraSoundsUtils,
+        captureSounds,
         captureStateMachine,
         inSingleCaptureMode,
         location,

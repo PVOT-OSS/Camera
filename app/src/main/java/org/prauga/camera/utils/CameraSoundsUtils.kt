@@ -8,9 +8,12 @@ package org.prauga.camera.utils
 import android.content.res.Resources
 import android.media.MediaActionSound
 import android.os.Build
+import org.prauga.camera.capture.CaptureSounds
 import org.prauga.camera.repositories.PreferencesRepository
 
-class CameraSoundsUtils(private val preferencesRepository: PreferencesRepository) {
+class CameraSoundsUtils(
+    private val preferencesRepository: PreferencesRepository,
+) : CaptureSounds {
     private val mediaActionSound = MediaActionSound().apply {
         // Preload all sounds to reduce latency
         load(MediaActionSound.SHUTTER_CLICK)
@@ -18,13 +21,13 @@ class CameraSoundsUtils(private val preferencesRepository: PreferencesRepository
         load(MediaActionSound.STOP_VIDEO_RECORDING)
     }
 
-    fun playShutterClick() {
+    override fun playShutterClick() {
         if (preferencesRepository.shutterSound.value || mustPlaySounds) {
             mediaActionSound.play(MediaActionSound.SHUTTER_CLICK)
         }
     }
 
-    fun playStartVideoRecording(): Boolean {
+    override fun playStartVideoRecording(): Boolean {
         if (preferencesRepository.shutterSound.value || mustPlaySounds) {
             mediaActionSound.play(MediaActionSound.START_VIDEO_RECORDING)
             return true
@@ -32,7 +35,7 @@ class CameraSoundsUtils(private val preferencesRepository: PreferencesRepository
         return false
     }
 
-    fun playStopVideoRecording() {
+    override fun playStopVideoRecording() {
         if (preferencesRepository.shutterSound.value || mustPlaySounds) {
             mediaActionSound.play(MediaActionSound.STOP_VIDEO_RECORDING)
         }
