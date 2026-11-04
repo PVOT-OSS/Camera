@@ -30,5 +30,6 @@ dependencyResolutionManagement {
 rootProject.name = "Camera"
 include(":app")
 include(":camera")
+include(":camera-camera2")
 include(":camera-camerax")
 include(":device")

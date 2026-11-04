@@ -6,6 +6,7 @@
 /build
 /build-logic/convention/build
 /camera/build
+/camera-camera2/build
 /camera-camerax/build
 /device/build
 /captures
