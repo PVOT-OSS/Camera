@@ -24,7 +24,6 @@ import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.ExperimentalZeroShutterLag
-import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.camera.view.ScreenFlashView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -37,13 +36,13 @@ import androidx.core.view.updateLayoutParams
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import coil3.request.error
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.prauga.camera.capture.RecordingEvent
 import org.prauga.camera.ext.select
 import org.prauga.camera.ext.slide
 import org.prauga.camera.ext.slideDown
@@ -417,13 +416,13 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         launch {
             viewModel.videoRecordEvent.collect { videoRecordEvent ->
                 when (videoRecordEvent) {
-                    is VideoRecordEvent.Finalize -> {
-                        if (videoRecordEvent.error != VideoRecordEvent.Finalize.ERROR_NO_VALID_DATA) {
+                    is RecordingEvent.Finalized -> {
+                        if (videoRecordEvent.hasValidData) {
                             if (!viewModel.uiState.value.inSingleCaptureMode) {
-                                onCapturedMedia(videoRecordEvent.outputResults.outputUri)
+                                onCapturedMedia(videoRecordEvent.outputUri)
                             } else {
                                 openCapturePreview(
-                                    videoRecordEvent.outputResults.outputUri,
+                                    videoRecordEvent.outputUri,
                                     MediaType.VIDEO,
                                 )
                             }

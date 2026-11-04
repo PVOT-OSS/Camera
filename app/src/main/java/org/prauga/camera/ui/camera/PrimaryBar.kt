@@ -12,7 +12,6 @@ import android.provider.MediaStore
 import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
-import androidx.camera.video.VideoRecordEvent
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
@@ -28,6 +27,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.prauga.camera.R
+import org.prauga.camera.capture.RecordingEvent
 import org.prauga.camera.ext.px
 import org.prauga.camera.ext.select
 import org.prauga.camera.ext.smoothRotate
@@ -212,25 +212,25 @@ class PrimaryBar(
         launch {
             viewModel.videoRecordEvent.collect { videoRecordEvent ->
                 when (videoRecordEvent) {
-                    is VideoRecordEvent.Start -> runOnUiThread {
+                    is RecordingEvent.Started -> runOnUiThread {
                         startVideoRecordingStateAnimation(
                             VideoRecordingStateAnimation.Init
                         )
                     }
 
-                    is VideoRecordEvent.Pause -> runOnUiThread {
+                    is RecordingEvent.Paused -> runOnUiThread {
                         startVideoRecordingStateAnimation(
                             VideoRecordingStateAnimation.ResumeToPause
                         )
                     }
 
-                    is VideoRecordEvent.Resume -> runOnUiThread {
+                    is RecordingEvent.Resumed -> runOnUiThread {
                         startVideoRecordingStateAnimation(
                             VideoRecordingStateAnimation.PauseToResume
                         )
                     }
 
-                    is VideoRecordEvent.Finalize -> runOnUiThread {
+                    is RecordingEvent.Finalized -> runOnUiThread {
                         startShutterAnimation(ShutterAnimation.VideoEnd)
                     }
 

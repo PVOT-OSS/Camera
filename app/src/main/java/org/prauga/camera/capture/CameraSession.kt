@@ -5,7 +5,6 @@
 
 package org.prauga.camera.capture
 
-import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.camera.view.ScreenFlashView
 import androidx.lifecycle.LifecycleOwner
@@ -20,7 +19,7 @@ interface CameraSession {
     val tapToFocusInfoState: Flow<FocusEvent>
     val isRecordingAudioSourceConfigured: Flow<Boolean>
     val videoRecordingDuration: StateFlow<Long>
-    val videoRecordEvent: SharedFlow<VideoRecordEvent>
+    val videoRecordEvent: SharedFlow<RecordingEvent>
 
     fun attachPreview(previewView: PreviewView, screenFlashView: ScreenFlashView)
     fun configure(cameraConfiguration: CameraConfiguration, lifecycleOwner: LifecycleOwner)

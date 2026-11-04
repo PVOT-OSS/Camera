@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.prauga.camera.camerax.CameraXCapture
 import org.prauga.camera.capture.CaptureStateMachine
+import org.prauga.camera.capture.RecordingEvent
 import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.CameraState
 import org.prauga.camera.models.Event
@@ -66,7 +67,7 @@ class CameraXCapture(
     /**
      * Video record event.
      */
-    val videoRecordEvent = MutableSharedFlow<VideoRecordEvent>()
+    val videoRecordEvent = MutableSharedFlow<RecordingEvent>()
 
     fun takePhoto() {
         // Bail out if a photo is already being taken
@@ -230,7 +231,7 @@ class CameraXCapture(
                 cameraExecutor,
             ) {
                 scope.launch {
-                    videoRecordEvent.emit(it)
+                    it.toRecordingEvent()?.let { event -> videoRecordEvent.emit(event) }
                 }
 
                 when (it) {
