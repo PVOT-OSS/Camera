@@ -90,7 +90,10 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     }
     private val mainLayout by lazy { findViewById<ConstraintLayout>(R.id.mainLayout) }
     private val screenFlashView by lazy { findViewById<ScreenFlashView>(R.id.screenFlashView) }
-    private val viewFinder by lazy { findViewById<PreviewView>(R.id.viewFinder) }
+    private val viewfinderLayout by lazy {
+        layoutInflater.inflate(R.layout.viewfinder_layout, mainLayout, false)
+    }
+    private val viewFinder by lazy { viewfinderLayout.findViewById<PreviewView>(R.id.viewFinder) }
 
     // System services
     private val keyguardManager by lazy { getSystemService(KeyguardManager::class.java) }
@@ -126,7 +129,9 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     private var quickTakeJob: Job? = null
     private var quickTakeActive = false
 
-    private val viewfinderOverlays by lazy { ViewfinderOverlays(mainLayout, viewModel, viewFinder) }
+    private val viewfinderOverlays by lazy {
+        ViewfinderOverlays(viewfinderLayout, viewModel, viewFinder)
+    }
 
     private val cameraAlerts by lazy { CameraAlerts(mainLayout, viewModel, this) }
 
@@ -230,10 +235,11 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                 onOpenGallery = { lifecycleScope.launch { galleryLauncher.openGallery() } },
                 onOpenSettings = ::openSettings,
                 canReview = { !keyguardManager.isKeyguardLocked },
-                onViewfinderFrame = ::setViewfinderFrame,
             )
 
-        cameraScreen.setContent { CameraTheme { CameraScreen(viewModel, screenState, actions) } }
+        cameraScreen.setContent {
+            CameraTheme { CameraScreen(viewModel, screenState, actions, viewfinderLayout) }
+        }
 
         // Set capture preview callback
         capturePreviewLayout.onChoiceCallback = { input ->
@@ -433,7 +439,10 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                         if (quickTakeActive) {
                             quickTakeActive = false
                             screenState.quickTake = CameraScreenState.QuickTake.NONE
-                            viewModel.setCameraMode(CameraMode.PHOTO)
+                            lifecycleScope.launch {
+                                viewModel.uiState.first { it.cameraState == CameraState.IDLE }
+                                viewModel.setCameraMode(CameraMode.PHOTO)
+                            }
                         }
 
                         if (videoRecordEvent.hasValidData) {
@@ -454,14 +463,6 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
             viewModel.qrResult.collectLatest { qrResult ->
                 qrBottomSheetDialog.setQrResult(qrResult)
             }
-        }
-    }
-
-    private fun setViewfinderFrame(top: Int, height: Int) {
-        viewFinder.updateLayoutParams<ConstraintLayout.LayoutParams> {
-            topMargin = top
-            this.height = height
-            bottomToBottom = ConstraintLayout.LayoutParams.UNSET
         }
     }
 

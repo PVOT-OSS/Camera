@@ -5,6 +5,7 @@
 
 package org.prauga.camera.ui.compose
 
+import androidx.activity.compose.BackHandler
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -12,41 +13,31 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.prauga.pvot.designsystem.components.camera.PvotAdjustmentSheet
+import com.prauga.pvot.designsystem.components.camera.PvotChoiceRow
+import com.prauga.pvot.designsystem.components.camera.PvotControlPanel
+import com.prauga.pvot.designsystem.components.camera.PvotControlTile
+import com.prauga.pvot.designsystem.components.camera.PvotRuler
 import java.util.Locale
 import kotlin.math.roundToInt
 import org.prauga.camera.R
@@ -81,6 +72,8 @@ fun Panels(
 ) {
     val panel = state.panel
     val dismiss = { state.panel = CameraScreenState.Panel.NONE }
+
+    BackHandler(enabled = panel != CameraScreenState.Panel.NONE, onBack = dismiss)
 
     Box(modifier = Modifier.fillMaxSize()) {
         if (panel != CameraScreenState.Panel.NONE) {
@@ -283,69 +276,18 @@ private fun controlTiles(
 
 @Composable
 private fun ControlsPanel(tiles: List<Tile>) {
-    GlassSurface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(58.dp),
-        alpha = 0.94f,
-        color = CameraPanel,
-    ) {
-        Column(
-            modifier = Modifier.padding(vertical = 16.dp, horizontal = 7.dp),
-            verticalArrangement = Arrangement.spacedBy(3.dp),
-        ) {
-            tiles.chunked(3).forEach { row ->
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    row.forEach { tile -> ControlTile(tile = tile, modifier = Modifier.weight(1f)) }
-                    repeat(3 - row.size) { Spacer(modifier = Modifier.weight(1f)) }
-                }
+    PvotControlPanel(modifier = Modifier.fillMaxWidth()) {
+        tiles.forEach { tile ->
+            PvotControlTile(
+                label = tile.label.uppercase(),
+                onClick = tile.onClick,
+                active = tile.active,
+                enabled = tile.enabled,
+                badge = tile.badge,
+            ) {
+                CameraIcon(icon = tile.icon, size = 30.dp)
             }
         }
-    }
-}
-
-@Composable
-private fun ControlTile(tile: Tile, modifier: Modifier = Modifier) {
-    Column(
-        modifier =
-            modifier
-                .height(110.dp)
-                .clip(RoundedCornerShape(24.dp))
-                .clickable(enabled = tile.enabled, onClick = tile.onClick),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(modifier = Modifier.height(7.dp))
-        Box(
-            modifier =
-                Modifier.size(60.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = if (tile.active) 0.2f else 0.1f)),
-            contentAlignment = Alignment.Center,
-        ) {
-            val tint =
-                (if (tile.active) CameraYellow else Color.White).copy(
-                    alpha = if (tile.enabled) 1f else 0.4f
-                )
-            when (val badge = tile.badge) {
-                null -> CameraIcon(icon = tile.icon, size = 30.dp, tint = tint)
-                else ->
-                    Box(contentAlignment = Alignment.Center) {
-                        CameraIcon(icon = tile.icon, size = 30.dp, tint = tint)
-                        Text(
-                            text = badge,
-                            color = tint,
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-            }
-        }
-        Spacer(modifier = Modifier.height(11.dp))
-        Text(
-            text = tile.label.uppercase(),
-            color = Color.White.copy(alpha = if (tile.enabled) 1f else 0.4f),
-            fontSize = 12.sp,
-            maxLines = 1,
-        )
     }
 }
 
@@ -356,82 +298,24 @@ private fun Sheet(
     onClose: () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    GlassSurface(
-        modifier = Modifier.fillMaxWidth().height(191.dp),
-        shape = RoundedCornerShape(48.dp),
-        alpha = 0.94f,
-        color = CameraPanel,
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        Box(modifier = Modifier.fillMaxWidth().padding(top = 8.dp, start = 16.dp, end = 16.dp)) {
-            icon?.let {
-                CameraIcon(
-                    icon = it,
-                    size = 23.dp,
-                    tint = CameraYellow,
-                    modifier = Modifier.align(Alignment.CenterStart).padding(start = 9.dp),
-                )
-            }
-            Text(
-                text = title.uppercase(),
-                color = Color.White,
-                fontSize = 12.sp,
-                modifier = Modifier.align(Alignment.Center),
-            )
-            Box(
-                modifier =
-                    Modifier.align(Alignment.CenterEnd)
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .clickable(onClick = onClose),
-                contentAlignment = Alignment.Center,
-            ) {
-                CameraIcon(
-                    icon = R.drawable.ic_cam_close,
-                    size = 20.dp,
-                    contentDescription = stringResource(R.string.close),
-                )
-            }
-        }
-
-        Box(
-            modifier = Modifier.fillMaxSize().padding(top = 56.dp, bottom = 16.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            content()
-        }
-    }
+    PvotAdjustmentSheet(
+        title = title.uppercase(),
+        onClose = onClose,
+        closeContentDescription = stringResource(R.string.close),
+        modifier = Modifier.fillMaxWidth(),
+        icon = icon?.let { { CameraIcon(icon = it, size = 23.dp) } },
+        closeIcon = { CameraIcon(icon = R.drawable.ic_cam_close, size = 20.dp) },
+        content = content,
+    )
 }
 
 @Composable
 private fun <T> OptionRow(options: List<Pair<T, String>>, selected: T?, onSelect: (T) -> Unit) {
-    Row(
-        modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        options.forEach { (value, label) ->
-            val isSelected = value == selected
-            Box(
-                modifier =
-                    Modifier.height(44.dp)
-                        .widthIn(min = 64.dp)
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(Color.White.copy(alpha = if (isSelected) 0.2f else 0.08f))
-                        .clickable { onSelect(value) }
-                        .padding(horizontal = 14.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = label,
-                    color = if (isSelected) CameraYellow else Color.White,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                )
-            }
-        }
-    }
+    PvotChoiceRow(
+        options = options.map { it.second },
+        selectedIndex = options.indexOfFirst { it.first == selected },
+        onSelect = { onSelect(options[it].first) },
+    )
 }
 
 @Composable
@@ -467,7 +351,6 @@ private fun ExposureSheet(
     val steps = range.endInclusive - range.start
 
     val index = (range.start + level * steps).roundToInt()
-    val ev = index * step
 
     Sheet(
         title = stringResource(R.string.control_exposure),
@@ -476,77 +359,20 @@ private fun ExposureSheet(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = formatEv(ev),
-                color = CameraYellow,
+                text = formatEv(index * step),
+                color = MaterialTheme.colorScheme.primary,
                 fontSize = 23.sp,
                 modifier = Modifier.padding(bottom = 10.dp),
             )
 
-            Box(
-                modifier =
-                    Modifier.fillMaxWidth()
-                        .padding(horizontal = 36.dp)
-                        .height(48.dp)
-                        .pointerInput(steps) {
-                            val apply = { x: Float ->
-                                val fraction = (x / size.width).coerceIn(0f, 1f)
-                                val snapped =
-                                    when (steps > 0) {
-                                        true -> (fraction * steps).roundToInt().toFloat() / steps
-                                        false -> 0.5f
-                                    }
-                                viewModel.setExposureCompensationLevel(snapped)
-                            }
-                            detectHorizontalDragGestures { change, _ -> apply(change.position.x) }
-                        }
-                        .pointerInput(steps) {
-                            detectTapGestures { offset ->
-                                val fraction = (offset.x / size.width).coerceIn(0f, 1f)
-                                viewModel.setExposureCompensationLevel(
-                                    when (steps > 0) {
-                                        true -> (fraction * steps).roundToInt().toFloat() / steps
-                                        false -> 0.5f
-                                    }
-                                )
-                            }
-                        }
-            ) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val ticks = 40
-                    for (i in 0..ticks) {
-                        val x = size.width * i / ticks
-                        val height =
-                            when {
-                                i % 10 == 0 -> 24.dp.toPx()
-                                i % 5 == 0 -> 17.dp.toPx()
-                                else -> 10.dp.toPx()
-                            }
-                        drawLine(
-                            color = Color.White.copy(alpha = if (i % 5 == 0) 0.9f else 0.5f),
-                            start = Offset(x, 6.dp.toPx()),
-                            end = Offset(x, 6.dp.toPx() + height),
-                            strokeWidth = 1.dp.toPx(),
-                        )
-                    }
-                    val indexX = size.width * level
-                    drawLine(
-                        color = CameraYellow,
-                        start = Offset(indexX, 0f),
-                        end = Offset(indexX, 37.dp.toPx()),
-                        strokeWidth = 2.dp.toPx(),
-                    )
-                }
-            }
-
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 25.dp)) {
-                Text(text = formatEv(range.start * step), color = Color.White, fontSize = 11.sp)
-                Spacer(modifier = Modifier.weight(1f))
-                Text(
-                    text = formatEv(range.endInclusive * step),
-                    color = Color.White,
-                    fontSize = 11.sp,
-                )
-            }
+            PvotRuler(
+                value = level,
+                onValueChange = viewModel::setExposureCompensationLevel,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 30.dp),
+                steps = steps,
+                startLabel = formatEv(range.start * step),
+                endLabel = formatEv(range.endInclusive * step),
+            )
         }
     }
 }
@@ -596,11 +422,11 @@ private fun PhotoFormatSheet(
     onClose: () -> Unit,
 ) {
     val photo = cameraConfiguration as? CameraConfiguration.Photo ?: return
-    val formats = photo.camera.supportedPhotoOutputFormats
 
     Sheet(title = stringResource(R.string.photo_format_title), onClose = onClose) {
         OptionRow(
-            options = formats.map { it to photoOutputFormatTitle(it) },
+            options =
+                photo.camera.supportedPhotoOutputFormats.map { it to photoOutputFormatTitle(it) },
             selected = photo.photoOutputFormat,
             onSelect = {
                 viewModel.setPhotoOutputFormat(it)

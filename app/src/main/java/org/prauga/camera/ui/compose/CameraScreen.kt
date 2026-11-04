@@ -6,8 +6,8 @@
 package org.prauga.camera.ui.compose
 
 import android.net.Uri
+import android.view.View
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -16,10 +16,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,10 +29,8 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -42,25 +40,35 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.min
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
 import coil3.video.VideoFrameDecoder
+import com.prauga.pvot.designsystem.components.PvotGlassIconButton
+import com.prauga.pvot.designsystem.components.PvotGlassSurface
+import com.prauga.pvot.designsystem.components.camera.PvotCameraGlassDefaults
+import com.prauga.pvot.designsystem.components.camera.PvotGlassChip
+import com.prauga.pvot.designsystem.components.camera.PvotModeSelector
+import com.prauga.pvot.designsystem.components.camera.PvotShutterButton
+import com.prauga.pvot.designsystem.components.camera.PvotShutterState
+import com.prauga.pvot.designsystem.effects.LocalPvotGlassBackdrop
+import com.prauga.pvot.designsystem.effects.PvotGlassBackdrop
+import com.prauga.pvot.designsystem.effects.pvotGlassBackdrop
+import com.prauga.pvot.designsystem.effects.rememberPvotGlassBackdrop
 import org.prauga.camera.R
 import org.prauga.camera.capture.models.CameraConfiguration
 import org.prauga.camera.capture.models.CameraMode
@@ -70,6 +78,7 @@ import org.prauga.camera.capture.models.FlashMode
 import org.prauga.camera.capture.models.PhotoAspectRatio
 import org.prauga.camera.capture.models.PhotoOutputFormat
 import org.prauga.camera.capture.models.VideoQuality
+import org.prauga.camera.utils.TimeUtils
 import org.prauga.camera.viewmodels.CameraUiState
 import org.prauga.camera.viewmodels.CameraViewModel
 
@@ -83,7 +92,6 @@ class CameraScreenActions(
     val onOpenGallery: () -> Unit,
     val onOpenSettings: () -> Unit,
     val canReview: () -> Boolean,
-    val onViewfinderFrame: (top: Int, height: Int) -> Unit,
 )
 
 private val TopBarHeight = 142.dp
@@ -96,6 +104,7 @@ fun CameraScreen(
     viewModel: CameraViewModel,
     state: CameraScreenState,
     actions: CameraScreenActions,
+    viewfinder: View,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val cameraConfiguration by viewModel.cameraConfiguration.collectAsStateWithLifecycle(null)
@@ -115,36 +124,68 @@ fun CameraScreen(
         }
     }
 
-    CompositionLocalProvider(LocalIconRotation provides iconRotation) {
-        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-            val aspectRatio =
-                when {
-                    uiState.cameraMode == CameraMode.VIDEO -> 16f / 9f
-                    uiState.cameraMode == CameraMode.PHOTO &&
-                        uiState.photoAspectRatio == PhotoAspectRatio.RATIO_16_9 -> 16f / 9f
-                    else -> 4f / 3f
-                }
-            val isVideoFrame = aspectRatio != 4f / 3f
+    val backdrop = rememberPvotGlassBackdrop()
 
-            val referenceHeight = maxWidth * 4 / 3
-            val referenceTop =
-                min(TopBarHeight, max(0.dp, maxHeight - referenceHeight - BottomBarHeight))
-            val referenceBottom = referenceTop + referenceHeight
+    CompositionLocalProvider(LocalContentColor provides Color.White) {
+        CameraContent(
+            viewModel,
+            state,
+            actions,
+            viewfinder,
+            uiState,
+            cameraConfiguration,
+            iconRotation,
+            backdrop,
+        )
+    }
+}
 
-            val frameHeight = min(maxHeight, maxWidth * aspectRatio)
-            val frameTop =
-                when (isVideoFrame) {
-                    true -> max(0.dp, (maxHeight - frameHeight) / 2)
-                    false -> referenceTop
-                }
+@Composable
+private fun CameraContent(
+    viewModel: CameraViewModel,
+    state: CameraScreenState,
+    actions: CameraScreenActions,
+    viewfinder: View,
+    uiState: CameraUiState,
+    cameraConfiguration: CameraConfiguration?,
+    iconRotation: Float,
+    backdrop: PvotGlassBackdrop,
+) {
+    BoxWithConstraints(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        val aspectRatio =
+            when {
+                uiState.cameraMode == CameraMode.VIDEO -> 16f / 9f
+                uiState.cameraMode == CameraMode.PHOTO &&
+                    uiState.photoAspectRatio == PhotoAspectRatio.RATIO_16_9 -> 16f / 9f
+                else -> 4f / 3f
+            }
+        val isVideoFrame = aspectRatio != 4f / 3f
 
-            val density = LocalDensity.current
-            LaunchedEffect(frameTop, frameHeight) {
-                with(density) {
-                    actions.onViewfinderFrame(frameTop.roundToPx(), frameHeight.roundToPx())
-                }
+        val referenceHeight = maxWidth * 4 / 3
+        val referenceTop =
+            min(TopBarHeight, max(0.dp, maxHeight - referenceHeight - BottomBarHeight))
+        val referenceBottom = referenceTop + referenceHeight
+
+        val frameHeight = min(maxHeight, maxWidth * aspectRatio)
+        val frameTop =
+            when (isVideoFrame) {
+                true -> max(0.dp, (maxHeight - frameHeight) / 2)
+                false -> referenceTop
             }
 
+        AndroidView(
+            factory = { viewfinder },
+            modifier =
+                Modifier.offset(y = frameTop)
+                    .fillMaxWidth()
+                    .height(frameHeight)
+                    .pvotGlassBackdrop(backdrop),
+        )
+
+        CompositionLocalProvider(
+            LocalIconRotation provides iconRotation,
+            LocalPvotGlassBackdrop provides backdrop,
+        ) {
             Shades(
                 isVideoFrame = isVideoFrame,
                 topHeight = referenceTop,
@@ -154,7 +195,7 @@ fun CameraScreen(
             ViewfinderOverlay(
                 state = state,
                 uiState = uiState,
-                modifier = Modifier.fillMaxWidth().height(frameHeight).offset(y = frameTop),
+                modifier = Modifier.offset(y = frameTop).fillMaxWidth().height(frameHeight),
                 lockTop = referenceTop - frameTop + 9.dp,
             )
 
@@ -181,15 +222,15 @@ fun CameraScreen(
                 viewModel = viewModel,
                 actions = actions,
             )
-
-            ReviewScreen(
-                visible = state.reviewOpen,
-                media = uiState.capturedMedia,
-                initialUri = state.latestMedia,
-                onDismiss = { state.reviewOpen = false },
-                onOpenGallery = actions.onOpenGallery,
-            )
         }
+
+        ReviewScreen(
+            visible = state.reviewOpen,
+            media = uiState.capturedMedia,
+            initialUri = state.latestMedia,
+            onDismiss = { state.reviewOpen = false },
+            onOpenGallery = actions.onOpenGallery,
+        )
     }
 }
 
@@ -228,17 +269,19 @@ private fun TopBar(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             AnimatedVisibility(visible = !recording, enter = fadeIn(), exit = fadeOut()) {
-                FormatChip(
-                    cameraConfiguration = cameraConfiguration,
+                PvotGlassChip(
+                    text = formatLabel(cameraConfiguration),
                     enabled = uiState.cameraState == CameraState.IDLE,
-                    onClick = {
-                        state.panel =
-                            when (cameraConfiguration) {
-                                is CameraConfiguration.Photo -> CameraScreenState.Panel.PHOTO_FORMAT
-                                is CameraConfiguration.Video -> CameraScreenState.Panel.VIDEO_FORMAT
-                                else -> CameraScreenState.Panel.NONE
+                    onClick =
+                        when (cameraConfiguration) {
+                            is CameraConfiguration.Photo -> {
+                                { state.panel = CameraScreenState.Panel.PHOTO_FORMAT }
                             }
-                    },
+                            is CameraConfiguration.Video -> {
+                                { state.panel = CameraScreenState.Panel.VIDEO_FORMAT }
+                            }
+                            else -> null
+                        },
                 )
             }
 
@@ -249,14 +292,22 @@ private fun TopBar(
                         ?.supportedExtensionModes
                         ?.contains(ExtensionMode.NIGHT) == true
             if (!recording && nightSupported) {
-                NightChip(
-                    active = uiState.photoEffect == ExtensionMode.NIGHT,
+                val active = uiState.photoEffect == ExtensionMode.NIGHT
+                PvotGlassChip(
+                    text = null,
+                    modifier = Modifier.width(32.dp),
+                    contentPadding = PaddingValues(0.dp),
                     onClick = {
                         viewModel.setExtensionMode(
-                            when (uiState.photoEffect) {
-                                ExtensionMode.NIGHT -> ExtensionMode.NONE
-                                else -> ExtensionMode.NIGHT
-                            }
+                            if (active) ExtensionMode.NONE else ExtensionMode.NIGHT
+                        )
+                    },
+                    leading = {
+                        CameraIcon(
+                            icon = R.drawable.ic_cam_moon,
+                            size = 18.dp,
+                            tint = if (active) CameraYellow else Color.White,
+                            contentDescription = stringResource(R.string.effect_night),
                         )
                     },
                 )
@@ -270,7 +321,7 @@ private fun TopBar(
             exit = fadeOut(),
         ) {
             RecordingTimer(
-                durationMs = uiState.videoRecordingDuration,
+                durationNanos = uiState.videoRecordingDuration,
                 paused = uiState.cameraState == CameraState.RECORDING_VIDEO_PAUSED,
             )
         }
@@ -288,34 +339,6 @@ private fun TopBar(
                         else -> CameraScreenState.Panel.CONTROLS
                     }
             },
-        )
-    }
-}
-
-@Composable
-private fun FormatChip(
-    cameraConfiguration: CameraConfiguration?,
-    enabled: Boolean,
-    onClick: () -> Unit,
-) {
-    GlassSurface(
-        modifier =
-            Modifier.height(32.dp)
-                .widthIn(min = 74.dp)
-                .clip(RoundedCornerShape(17.dp))
-                .clickable(
-                    enabled = enabled && cameraConfiguration !is CameraConfiguration.Qr,
-                    onClick = onClick,
-                ),
-        shape = RoundedCornerShape(17.dp),
-    ) {
-        Text(
-            text = formatLabel(cameraConfiguration),
-            color = Color.White,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            modifier = Modifier.padding(horizontal = 12.dp),
         )
     }
 }
@@ -364,65 +387,29 @@ fun videoFormatTitle(videoQuality: VideoQuality, frameRate: Int?) =
     }
 
 @Composable
-private fun NightChip(active: Boolean, onClick: () -> Unit) {
-    GlassSurface(
-        modifier = Modifier.size(32.dp).clip(CircleShape).clickable(onClick = onClick),
-        shape = CircleShape,
-    ) {
-        CameraIcon(
-            icon = R.drawable.ic_cam_moon,
-            size = 18.dp,
-            tint = if (active) CameraYellow else Color.White,
-            contentDescription = stringResource(R.string.effect_night),
-        )
-    }
-}
-
-@Composable
-private fun RecordingTimer(durationMs: Long, paused: Boolean) {
+private fun RecordingTimer(durationNanos: Long, paused: Boolean) {
     Box(contentAlignment = Alignment.TopCenter) {
-        GlassSurface(
-            modifier = Modifier.height(32.dp).width(108.dp),
-            shape = RoundedCornerShape(16.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
+        PvotGlassChip(
+            text = TimeUtils.convertNanosToString(durationNanos),
+            modifier = Modifier.width(108.dp),
+            leading = {
                 Box(
                     modifier =
                         Modifier.size(7.dp)
                             .clip(CircleShape)
                             .background(if (paused) Color.White else CameraRecording)
                 )
-                Text(
-                    text = formatDuration(durationMs),
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
+            },
+        )
 
         if (paused) {
-            GlassSurface(
-                modifier = Modifier.offset(y = 40.dp).height(24.dp).width(64.dp),
-                shape = RoundedCornerShape(6.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.recording_paused),
-                    color = Color.White,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
+            PvotGlassChip(
+                text = stringResource(R.string.recording_paused),
+                modifier = Modifier.offset(y = 40.dp),
+                cornerRadius = 6.dp,
+            )
         }
     }
-}
-
-private fun formatDuration(durationMs: Long): String {
-    val seconds = durationMs / 1000
-    return "%02d:%02d:%02d".format(seconds / 3600, seconds / 60 % 60, seconds % 60)
 }
 
 @Composable
@@ -434,10 +421,9 @@ private fun QuickControls(
     onOpenControls: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    GlassSurface(
+    PvotGlassSurface(
         modifier = modifier.height(32.dp).width(76.dp),
-        shape = RoundedCornerShape(17.dp),
-        alpha = 0.6f,
+        style = PvotCameraGlassDefaults.Style,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
@@ -469,6 +455,7 @@ private fun QuickControls(
                 CameraIcon(
                     icon = R.drawable.ic_quick_controls,
                     size = 16.dp,
+                    tint = Color.White,
                     contentDescription = stringResource(R.string.camera_controls),
                 )
             }
@@ -495,8 +482,10 @@ private fun BottomControls(
 ) {
     val recording = uiState.cameraState.isRecordingVideo
     val isIdle = uiState.cameraState == CameraState.IDLE
+    val alpha by
+        animateFloatAsState(if (state.panel == CameraScreenState.Panel.NONE) 1f else 0f, tween(220))
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().alpha(alpha)) {
         uiState.lenses.first?.let { activeCamera ->
             LensRow(
                 activeCamera = activeCamera,
@@ -517,19 +506,32 @@ private fun BottomControls(
         )
 
         if (uiState.cameraMode != CameraMode.QR) {
-            ShutterButton(
-                cameraMode = uiState.cameraMode,
-                cameraState = uiState.cameraState,
-                quickTake = state.quickTake,
-                enabled = uiState.isShutterButtonEnabled,
-                gesturesEnabled = !uiState.inSingleCaptureMode && state.countdown == null,
+            val gesturesEnabled =
+                !uiState.inSingleCaptureMode &&
+                    state.countdown == null &&
+                    uiState.cameraMode == CameraMode.PHOTO &&
+                    isIdle &&
+                    state.quickTake == CameraScreenState.QuickTake.NONE
+
+            PvotShutterButton(
+                state =
+                    when {
+                        uiState.cameraState.isRecordingVideo ||
+                            state.quickTake == CameraScreenState.QuickTake.LOCKED ->
+                            PvotShutterState.Recording
+                        uiState.cameraMode == CameraMode.VIDEO -> PvotShutterState.Video
+                        else -> PvotShutterState.Photo
+                    },
+                onClick = actions.onShutter,
+                contentDescription = stringResource(R.string.shutter_button_description),
                 modifier = Modifier.align(Alignment.TopCenter).offset(y = referenceBottom + 12.dp),
-                onTap = actions.onShutter,
-                onQuickTakeStart = actions.onQuickTakeStart,
-                onQuickTakeLock = actions.onQuickTakeLock,
-                onQuickTakeStop = actions.onQuickTakeStop,
-                onBurstStart = actions.onBurstStart,
-                onBurstStop = actions.onBurstStop,
+                enabled = uiState.isShutterButtonEnabled,
+                holding = state.quickTake == CameraScreenState.QuickTake.HOLDING,
+                onHold = if (gesturesEnabled) actions.onQuickTakeStart else null,
+                onHoldLock = actions.onQuickTakeLock,
+                onHoldRelease = actions.onQuickTakeStop,
+                onSlideStart = if (gesturesEnabled) actions.onBurstStart else null,
+                onSlideRelease = actions.onBurstStop,
             )
         }
 
@@ -550,6 +552,7 @@ private fun BottomControls(
                             else -> R.drawable.ic_cam_pause
                         },
                     size = 24.dp,
+                    tint = Color.White,
                     contentDescription =
                         stringResource(R.string.video_recording_state_button_description),
                 )
@@ -583,13 +586,16 @@ private fun BottomControls(
                         },
                     )
 
-                    ModeSelector(
-                        cameraMode = uiState.cameraMode,
+                    val modeTitles = ModeOrder.map { stringResource(modeTitle(it)).uppercase() }
+                    PvotModeSelector(
+                        modes = modeTitles,
+                        selectedIndex = ModeOrder.indexOf(uiState.cameraMode),
                         enabled = isIdle,
-                        onModeSelected = {
-                            when (it == uiState.cameraMode && it != CameraMode.QR) {
+                        onSelect = { index ->
+                            val mode = ModeOrder[index]
+                            when (mode == uiState.cameraMode && mode != CameraMode.QR) {
                                 true -> state.panel = CameraScreenState.Panel.CONTROLS
-                                false -> viewModel.setCameraMode(it)
+                                false -> viewModel.setCameraMode(mode)
                             }
                         },
                     )
@@ -624,15 +630,7 @@ private fun CaptureHint(state: CameraScreenState, modifier: Modifier = Modifier)
         enter = fadeIn(tween(160)),
         exit = fadeOut(tween(160)),
     ) {
-        GlassSurface(modifier = Modifier.height(28.dp), shape = RoundedCornerShape(8.dp)) {
-            Text(
-                text = text.orEmpty(),
-                color = Color.White,
-                fontSize = if (burstCount != null) 16.sp else 10.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 10.dp),
-            )
-        }
+        PvotGlassChip(text = text.orEmpty(), cornerRadius = 8.dp)
     }
 }
 
@@ -652,22 +650,18 @@ private fun LatestCapture(
         }
     }
 
-    Box(
-        modifier =
-            modifier
-                .size(43.dp)
-                .scale(scale.value)
-                .rotate(LocalIconRotation.current)
-                .clip(CircleShape)
-                .background(CameraGlass.copy(alpha = 0.55f))
-                .clickable(enabled = enabled, onClick = onClick),
-        contentAlignment = Alignment.Center,
+    PvotGlassSurface(
+        modifier = modifier.size(43.dp).scale(scale.value).rotate(LocalIconRotation.current),
+        style = PvotCameraGlassDefaults.Style,
+        onClick = onClick,
+        enabled = enabled,
     ) {
         when (uri) {
             null ->
                 CameraIcon(
                     icon = R.drawable.ic_image,
                     size = 20.dp,
+                    tint = Color.White,
                     contentDescription = stringResource(R.string.gallery_button_description),
                 )
 
@@ -675,7 +669,7 @@ private fun LatestCapture(
                 AsyncImage(
                     model = mediaRequest(uri),
                     contentDescription = stringResource(R.string.gallery_button_description),
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().clip(CircleShape),
                     contentScale = ContentScale.Crop,
                 )
         }
@@ -690,43 +684,6 @@ fun mediaRequest(uri: Uri) =
         .crossfade(true)
         .build()
 
-@Composable
-private fun ModeSelector(
-    cameraMode: CameraMode,
-    enabled: Boolean,
-    onModeSelected: (CameraMode) -> Unit,
-) {
-    Row(modifier = Modifier.height(38.dp), verticalAlignment = Alignment.CenterVertically) {
-        ModeOrder.forEach { mode ->
-            val selected = mode == cameraMode
-            val background by
-                animateColorAsState(
-                    CameraGlass.copy(alpha = if (selected) 0.62f else 0f),
-                    tween(260),
-                )
-            val textColor by
-                animateColorAsState(if (selected) CameraYellow else Color.White, tween(260))
-
-            Box(
-                modifier =
-                    Modifier.height(38.dp)
-                        .clip(RoundedCornerShape(21.dp))
-                        .background(background)
-                        .clickable(enabled = enabled) { onModeSelected(mode) }
-                        .padding(horizontal = 16.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = stringResource(modeTitle(mode)).uppercase(),
-                    color = textColor,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
-    }
-}
-
 private fun modeTitle(cameraMode: CameraMode) =
     when (cameraMode) {
         CameraMode.PHOTO -> R.string.camera_mode_photo
@@ -739,18 +696,16 @@ private fun FlipButton(modifier: Modifier = Modifier, enabled: Boolean, onClick:
     var turns by remember { mutableFloatStateOf(0f) }
     val rotation by animateFloatAsState(turns * 180f, tween(300))
 
-    GlassSurface(
-        modifier =
-            modifier.size(44.dp).clip(CircleShape).clickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                enabled = enabled,
-            ) {
-                turns += 1f
-                onClick()
-            },
-        shape = CircleShape,
-        alpha = 0.55f,
+    PvotGlassIconButton(
+        onClick = {
+            turns += 1f
+            onClick()
+        },
+        modifier = modifier,
+        enabled = enabled,
+        size = 44.dp,
+        style = PvotCameraGlassDefaults.Style,
+        contentColor = Color.White,
     ) {
         CameraIcon(
             icon = R.drawable.ic_quick_flip,

@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.prauga.pvot.designsystem.components.camera.PvotGlassChip
 import kotlinx.coroutines.delay
 import org.prauga.camera.R
 import org.prauga.camera.viewmodels.CameraUiState
@@ -61,17 +61,11 @@ fun ViewfinderOverlay(
             enter = fadeIn(tween(220)),
             exit = fadeOut(tween(220)),
         ) {
-            GlassSurface(
-                modifier = Modifier.height(28.dp).width(90.dp),
-                shape = RoundedCornerShape(6.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.ae_af_lock),
-                    color = CameraYellow,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
+            PvotGlassChip(
+                text = stringResource(R.string.ae_af_lock),
+                cornerRadius = 6.dp,
+                contentColor = CameraYellow,
+            )
         }
 
         AnimatedContent(

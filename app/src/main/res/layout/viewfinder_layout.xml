@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-License-Identifier: Apache-2.0
+-->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/viewfinderLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/black">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/viewFinder"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:soundEffectsEnabled="false"
+        app:implementationMode="compatible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:scaleType="fitCenter" />
+
+    <org.prauga.camera.ui.views.PreviewBlurView
+        android:id="@+id/previewBlurView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/black"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="@+id/viewFinder"
+        app:layout_constraintEnd_toEndOf="@+id/viewFinder"
+        app:layout_constraintStart_toStartOf="@+id/viewFinder"
+        app:layout_constraintTop_toTopOf="@+id/viewFinder" />
+
+    <org.prauga.camera.ui.views.GridView
+        android:id="@+id/gridView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="@+id/viewFinder"
+        app:layout_constraintEnd_toEndOf="@+id/viewFinder"
+        app:layout_constraintStart_toStartOf="@+id/viewFinder"
+        app:layout_constraintTop_toTopOf="@+id/viewFinder" />
+
+    <org.prauga.camera.ui.views.LevelerView
+        android:id="@+id/levelerView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="@+id/viewFinder"
+        app:layout_constraintEnd_toEndOf="@+id/viewFinder"
+        app:layout_constraintStart_toStartOf="@+id/viewFinder"
+        app:layout_constraintTop_toTopOf="@+id/viewFinder" />
+
+    <org.prauga.camera.ui.views.IslandView
+        android:id="@+id/islandView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="12dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="@+id/viewFinder"
+        app:layout_constraintTop_toTopOf="@+id/viewFinder" />
+</androidx.constraintlayout.widget.ConstraintLayout>

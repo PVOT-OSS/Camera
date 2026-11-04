@@ -23,8 +23,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -48,6 +46,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -70,6 +69,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.prauga.pvot.designsystem.components.PvotBottomSheet
+import com.prauga.pvot.designsystem.components.PvotDialog
+import com.prauga.pvot.designsystem.components.PvotDialogAction
+import com.prauga.pvot.designsystem.components.PvotDialogActionStyle
+import com.prauga.pvot.designsystem.components.PvotGlassIconButton
+import com.prauga.pvot.designsystem.components.PvotGlassSurface
+import com.prauga.pvot.designsystem.components.camera.PvotCameraGlassDefaults
+import com.prauga.pvot.designsystem.components.camera.PvotGlassChip
+import com.prauga.pvot.designsystem.effects.pvotGlassBackdrop
+import com.prauga.pvot.designsystem.effects.rememberPvotGlassBackdrop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -161,8 +170,13 @@ private fun Review(
         }
     }
 
+    val backdrop = rememberPvotGlassBackdrop()
+
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize().pvotGlassBackdrop(backdrop),
+        ) { page ->
             Box(
                 modifier =
                     Modifier.fillMaxSize().clickable(
@@ -183,14 +197,13 @@ private fun Review(
         }
 
         if (info?.isVideo == true && current != null) {
-            Box(
-                modifier =
-                    Modifier.align(Alignment.Center)
-                        .size(64.dp)
-                        .clip(CircleShape)
-                        .background(CameraGlass.copy(alpha = 0.6f))
-                        .clickable { context.viewMedia(current, info?.mimeType) },
-                contentAlignment = Alignment.Center,
+            PvotGlassIconButton(
+                onClick = { context.viewMedia(current, info?.mimeType) },
+                backdrop = backdrop,
+                modifier = Modifier.align(Alignment.Center),
+                size = 64.dp,
+                style = PvotCameraGlassDefaults.Style,
+                contentColor = Color.White,
             ) {
                 CameraIcon(
                     icon = R.drawable.ic_cam_play,
@@ -286,10 +299,11 @@ private fun Review(
                     onSelect = { scope.launch { pagerState.animateScrollToPage(it) } },
                 )
 
-                GlassSurface(
+                PvotGlassSurface(
+                    backdrop = backdrop,
                     modifier = Modifier.padding(horizontal = 11.dp).fillMaxWidth().height(52.dp),
-                    shape = RoundedCornerShape(26.dp),
-                    alpha = 0.55f,
+                    cornerRadius = 26.dp,
+                    style = PvotCameraGlassDefaults.PanelStyle,
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -332,47 +346,32 @@ private fun Review(
             }
         }
 
-        AnimatedVisibility(
-            visible = infoVisible && info != null,
-            modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding(),
-            enter = slideInVertically { it } + fadeIn(),
-            exit = slideOutVertically { it } + fadeOut(),
-        ) {
-            info?.let { InfoSheet(it, onClose = { infoVisible = false }) }
-        }
+        info?.let { InfoSheet(info = it, visible = infoVisible, onClose = { infoVisible = false }) }
 
-        AnimatedVisibility(
+        DeleteDialog(
             visible = deleteVisible,
-            modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding(),
-            enter = slideInVertically { it } + fadeIn(),
-            exit = slideOutVertically { it } + fadeOut(),
-        ) {
-            DeleteSheet(
-                isVideo = info?.isVideo == true,
-                onDelete = {
-                    deleteVisible = false
-                    current?.let { uri ->
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                            val request =
-                                MediaStore.createDeleteRequest(context.contentResolver, listOf(uri))
-                            deleteLauncher.launch(IntentSenderRequest.Builder(request).build())
-                        } else {
-                            scope.launch {
-                                val deleted =
-                                    withContext(Dispatchers.IO) {
-                                        runCatching {
-                                                context.contentResolver.delete(uri, null, null)
-                                            }
-                                            .getOrDefault(0)
-                                    }
-                                deletedMessage = deleted > 0
-                            }
+            isVideo = info?.isVideo == true,
+            onDelete = {
+                deleteVisible = false
+                current?.let { uri ->
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        val request =
+                            MediaStore.createDeleteRequest(context.contentResolver, listOf(uri))
+                        deleteLauncher.launch(IntentSenderRequest.Builder(request).build())
+                    } else {
+                        scope.launch {
+                            val deleted =
+                                withContext(Dispatchers.IO) {
+                                    runCatching { context.contentResolver.delete(uri, null, null) }
+                                        .getOrDefault(0)
+                                }
+                            deletedMessage = deleted > 0
                         }
                     }
-                },
-                onCancel = { deleteVisible = false },
-            )
-        }
+                }
+            },
+            onCancel = { deleteVisible = false },
+        )
 
         AnimatedVisibility(
             visible = deletedMessage,
@@ -380,15 +379,7 @@ private fun Review(
             enter = fadeIn(),
             exit = fadeOut(),
         ) {
-            GlassSurface(modifier = Modifier.height(40.dp), shape = RoundedCornerShape(20.dp)) {
-                Text(
-                    text = stringResource(R.string.review_deleted),
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 18.dp),
-                )
-            }
+            PvotGlassChip(text = stringResource(R.string.review_deleted), backdrop = backdrop)
         }
     }
 
@@ -452,35 +443,14 @@ private fun ToolbarButton(
 }
 
 @Composable
-private fun InfoSheet(info: MediaInfo, onClose: () -> Unit) {
+private fun InfoSheet(info: MediaInfo, visible: Boolean, onClose: () -> Unit) {
     val context = LocalContext.current
 
-    GlassSurface(
-        modifier = Modifier.padding(11.dp).fillMaxWidth(),
-        shape = RoundedCornerShape(32.dp),
-        alpha = 0.75f,
-        contentAlignment = Alignment.TopStart,
-    ) {
+    PvotBottomSheet(visible = visible, onDismissRequest = onClose, title = info.name) {
         Column(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = info.name.orEmpty(),
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                    maxLines = 1,
-                )
-                Box(
-                    modifier = Modifier.size(36.dp).clip(CircleShape).clickable(onClick = onClose),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CameraIcon(icon = R.drawable.ic_cam_close, size = 18.dp)
-                }
-            }
             info.dateTaken?.let {
                 InfoLine(
                     DateUtils.formatDateTime(
@@ -504,50 +474,35 @@ private fun InfoSheet(info: MediaInfo, onClose: () -> Unit) {
 
 @Composable
 private fun InfoLine(text: String) {
-    Text(text = text, color = Color.White.copy(alpha = 0.8f), fontSize = 13.sp)
+    Text(
+        text = text,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.bodyMedium,
+    )
 }
 
 @Composable
-private fun DeleteSheet(isVideo: Boolean, onDelete: () -> Unit, onCancel: () -> Unit) {
-    Column(
-        modifier = Modifier.padding(11.dp).fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+private fun DeleteDialog(
+    visible: Boolean,
+    isVideo: Boolean,
+    onDelete: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    PvotDialog(
+        visible = visible,
+        onDismissRequest = onCancel,
+        title =
+            stringResource(
+                if (isVideo) R.string.review_delete_video else R.string.review_delete_photo
+            ),
+        destructive = true,
     ) {
-        GlassSurface(
-            modifier =
-                Modifier.fillMaxWidth()
-                    .height(56.dp)
-                    .clip(RoundedCornerShape(28.dp))
-                    .clickable(onClick = onDelete),
-            shape = RoundedCornerShape(28.dp),
-            alpha = 0.75f,
-        ) {
-            Text(
-                text =
-                    stringResource(
-                        if (isVideo) R.string.review_delete_video else R.string.review_delete_photo
-                    ),
-                color = CameraRecording,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-        GlassSurface(
-            modifier =
-                Modifier.fillMaxWidth()
-                    .height(56.dp)
-                    .clip(RoundedCornerShape(28.dp))
-                    .clickable(onClick = onCancel),
-            shape = RoundedCornerShape(28.dp),
-            alpha = 0.75f,
-        ) {
-            Text(
-                text = stringResource(R.string.review_cancel),
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-            )
-        }
+        PvotDialogAction(
+            label = stringResource(R.string.review_delete),
+            onClick = onDelete,
+            style = PvotDialogActionStyle.Destructive,
+        )
+        PvotDialogAction(label = stringResource(R.string.review_cancel), onClick = onCancel)
     }
 }
 
