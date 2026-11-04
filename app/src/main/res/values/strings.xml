@@ -251,4 +251,9 @@
     <string name="video_mirror_mode_off">Off</string>
     <string name="video_mirror_mode_on">On</string>
     <string name="video_mirror_mode_on_ffc_only">Front facing camera only</string>
+
+    <!-- Camera engine -->
+    <string name="camera_engine_title">Photo engine</string>
+    <string name="camera_engine_camerax">CameraX</string>
+    <string name="camera_engine_camera2">Camera2 (experimental)</string>
 </resources>

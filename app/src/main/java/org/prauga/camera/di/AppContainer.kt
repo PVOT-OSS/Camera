@@ -10,6 +10,7 @@ import android.location.Location
 import androidx.camera.core.ImageAnalysis
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
+import org.prauga.camera.camera2.Camera2Session
 import org.prauga.camera.camerax.CameraXDevices
 import org.prauga.camera.camerax.CameraXSession
 import org.prauga.camera.capture.CameraDevices
@@ -17,10 +18,12 @@ import org.prauga.camera.capture.CameraSession
 import org.prauga.camera.capture.CaptureSounds
 import org.prauga.camera.capture.CaptureStateMachine
 import org.prauga.camera.capture.PhotoCaptureStatus
+import org.prauga.camera.capture.RoutingCameraSession
 import org.prauga.camera.capture.models.CameraFacing
 import org.prauga.camera.device.DeviceInfo
 import org.prauga.camera.device.DeviceResolver
 import org.prauga.camera.device.GenericModule
+import org.prauga.camera.models.CameraEngine
 import org.prauga.camera.repositories.DeviceStateRepository
 import org.prauga.camera.repositories.MediaRepository
 import org.prauga.camera.repositories.PreferencesRepository
@@ -50,19 +53,26 @@ class AppContainer(
         cameraFacing: () -> CameraFacing,
         photoFfcMirror: () -> Boolean,
         onPhotoCaptureStatus: (PhotoCaptureStatus) -> Unit,
-    ): CameraSession = CameraXSession(
-        context,
+    ): CameraSession = RoutingCameraSession(
         scope,
-        captureSounds,
-        captureStateMachine,
-        inSingleCaptureMode,
-        qrImageAnalyzer,
-        cameraXDevices::getExtensionEnabledCameraSelector,
-        location = location,
-        cameraFacing = cameraFacing,
-        photoFfcMirror = photoFfcMirror,
-        onPhotoCaptureStatus = onPhotoCaptureStatus,
-        onNewPicture = mediaRepository::broadcastNewPicture,
-        onNewVideo = mediaRepository::broadcastNewVideo,
-    )
+        CameraXSession(
+            context,
+            scope,
+            captureSounds,
+            captureStateMachine,
+            inSingleCaptureMode,
+            qrImageAnalyzer,
+            cameraXDevices::getExtensionEnabledCameraSelector,
+            location = location,
+            cameraFacing = cameraFacing,
+            photoFfcMirror = photoFfcMirror,
+            onPhotoCaptureStatus = onPhotoCaptureStatus,
+            onNewPicture = mediaRepository::broadcastNewPicture,
+            onNewVideo = mediaRepository::broadcastNewVideo,
+        ),
+        Camera2Session(context),
+    ) {
+        preferencesRepository.cameraEngine.value == CameraEngine.CAMERA2
+                && Camera2Session.supports(it)
+    }
 }

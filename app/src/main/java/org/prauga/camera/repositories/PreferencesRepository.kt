@@ -31,6 +31,7 @@ import org.prauga.camera.capture.models.VideoDynamicRange
 import org.prauga.camera.capture.models.VideoMirrorMode
 import org.prauga.camera.capture.models.VideoQuality
 import org.prauga.camera.ext.preferenceFlow
+import org.prauga.camera.models.CameraEngine
 import org.prauga.camera.models.GestureAction
 import org.prauga.camera.models.GridMode
 import org.prauga.camera.models.HardwareKey
@@ -427,6 +428,20 @@ class PreferencesRepository(
                 VideoDynamicRange.HDR10_PLUS_10_BIT -> "hdr10_plus_10_bit"
                 VideoDynamicRange.DOLBY_VISION_10_BIT -> "dolby_vision_10_bit"
                 VideoDynamicRange.DOLBY_VISION_8_BIT -> "dolby_vision_8_bit"
+            }
+        },
+    ).asPreferenceHolder()
+
+    /**
+     * Engine used for photos.
+     */
+    val cameraEngine = enumPreference(
+        key = "camera_engine",
+        defaultValue = CameraEngine.CAMERAX,
+        enumMapper = {
+            when (it) {
+                CameraEngine.CAMERAX -> "camerax"
+                CameraEngine.CAMERA2 -> "camera2"
             }
         },
     ).asPreferenceHolder()

@@ -126,6 +126,15 @@
             app:iconSpaceReserved="false"
             app:title="@string/processing_title" />
 
+        <ListPreference
+            app:defaultValue="camerax"
+            app:entries="@array/camera_engine_entries"
+            app:entryValues="@array/camera_engine_values"
+            app:iconSpaceReserved="false"
+            app:key="camera_engine"
+            app:title="@string/camera_engine_title"
+            app:useSimpleSummaryProvider="true" />
+
     </PreferenceCategory>
 
 </PreferenceScreen>

@@ -40,7 +40,9 @@ import org.prauga.camera.capture.PreviewTarget
 import org.prauga.camera.capture.RecordingEvent
 import org.prauga.camera.capture.ZoomInfo
 import org.prauga.camera.capture.models.CameraConfiguration
+import org.prauga.camera.capture.models.ExtensionMode
 import org.prauga.camera.capture.models.FlashMode
+import org.prauga.camera.capture.models.PhotoOutputFormat
 
 class Camera2Session(
     context: Context,
@@ -304,5 +306,10 @@ class Camera2Session(
         private const val LOG_TAG = "Camera2Session"
 
         val isSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+
+        fun supports(cameraConfiguration: CameraConfiguration) = isSupported
+                && cameraConfiguration is CameraConfiguration.Photo
+                && cameraConfiguration.extensionMode == ExtensionMode.NONE
+                && cameraConfiguration.photoOutputFormat == PhotoOutputFormat.JPEG
     }
 }

@@ -63,6 +63,7 @@ android {
 
 dependencies {
     implementation(project(":camera"))
+    implementation(project(":camera-camera2"))
     implementation(project(":camera-camerax"))
     implementation(project(":device"))
 

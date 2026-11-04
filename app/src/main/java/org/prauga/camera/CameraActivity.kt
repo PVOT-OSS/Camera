@@ -42,9 +42,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.prauga.camera.camera2.Camera2PreviewTarget
 import org.prauga.camera.camerax.CameraXPreviewTarget
 import org.prauga.camera.capture.PhotoCaptureStatus
 import org.prauga.camera.capture.RecordingEvent
+import org.prauga.camera.capture.RoutingCameraSession
 import org.prauga.camera.capture.models.CameraConfiguration
 import org.prauga.camera.capture.models.CameraMode
 import org.prauga.camera.capture.models.CameraState
@@ -448,7 +450,12 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         permissionsManager.permissionStateFlow(Permission.CAMERA).collect { permissionState ->
             if (permissionState == PermissionState.GRANTED && !initialized) {
                 // Attach CameraController to PreviewView and ScreenFlashView
-                viewModel.attachPreview(CameraXPreviewTarget(viewFinder, screenFlashView))
+                viewModel.attachPreview(
+                    RoutingCameraSession.Target(
+                        CameraXPreviewTarget(viewFinder, screenFlashView),
+                        Camera2PreviewTarget(viewFinder),
+                    )
+                )
                 screenFlashView.setScreenFlashWindow(window)
 
                 when (viewModel.initializeCameraConfiguration()) {
