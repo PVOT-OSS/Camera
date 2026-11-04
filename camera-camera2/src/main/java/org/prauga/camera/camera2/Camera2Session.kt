@@ -17,6 +17,7 @@ import android.hardware.camera2.CameraManager
 import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureFailure
 import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.CaptureResult
 import android.hardware.camera2.TotalCaptureResult
 import android.location.Location
 import android.media.ImageReader
@@ -100,6 +101,15 @@ class Camera2Session(
     @Volatile
     private var zoomRatioRange = 1f..1f
     private var zoomAnimator: ValueAnimator? = null
+
+    @Volatile
+    private var flashMode = FlashMode.OFF
+
+    @Volatile
+    private var exposureCompensationIndex = 0
+
+    private var precaptureState = PrecaptureState.IDLE
+    private val precaptureTimeout = Runnable { finishPrecapture() }
 
     private val orientationListener = object : OrientationEventListener(context) {
         override fun onOrientationChanged(orientation: Int) {
@@ -203,6 +213,71 @@ class Camera2Session(
             return
         }
 
+        cameraHandler.post {
+            when (flashMode) {
+                FlashMode.AUTO, FlashMode.ON -> startPrecapture()
+                else -> capturePhoto()
+            }
+        }
+    }
+
+    private fun startPrecapture() {
+        val camera = cameraDevice
+        val session = captureSession
+        val previewSurface = previewSurface
+        if (camera == null || session == null || previewSurface == null) {
+            captureStateMachine.endPhoto()
+            return
+        }
+
+        val request = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW).apply {
+            addTarget(previewSurface)
+            applyControls()
+            set(
+                CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                CameraMetadata.CONTROL_AE_PRECAPTURE_TRIGGER_START,
+            )
+        }.build()
+
+        precaptureState = PrecaptureState.WAITING_START
+        cameraHandler.postDelayed(precaptureTimeout, PRECAPTURE_TIMEOUT_MS)
+        session.capture(request, null, cameraHandler)
+    }
+
+    private fun onPreviewResult(result: CaptureResult) {
+        val aeState = result.get(CaptureResult.CONTROL_AE_STATE)
+
+        when (precaptureState) {
+            PrecaptureState.IDLE -> {}
+
+            PrecaptureState.WAITING_START -> when (aeState) {
+                CameraMetadata.CONTROL_AE_STATE_PRECAPTURE -> {
+                    precaptureState = PrecaptureState.WAITING_DONE
+                }
+
+                null,
+                CameraMetadata.CONTROL_AE_STATE_CONVERGED,
+                CameraMetadata.CONTROL_AE_STATE_FLASH_REQUIRED -> finishPrecapture()
+            }
+
+            PrecaptureState.WAITING_DONE -> if (aeState != CameraMetadata.CONTROL_AE_STATE_PRECAPTURE) {
+                finishPrecapture()
+            }
+        }
+    }
+
+    private fun finishPrecapture() {
+        if (precaptureState == PrecaptureState.IDLE) {
+            return
+        }
+
+        precaptureState = PrecaptureState.IDLE
+        cameraHandler.removeCallbacks(precaptureTimeout)
+
+        capturePhoto()
+    }
+
+    private fun capturePhoto() {
         val camera = cameraDevice
         val session = captureSession
         val imageReader = imageReader
@@ -294,9 +369,17 @@ class Camera2Session(
 
     override fun setAudioEnabled(enabled: Boolean) {}
 
-    override fun setFlashMode(flashMode: FlashMode) {}
+    override fun setFlashMode(flashMode: FlashMode) {
+        this.flashMode = flashMode
 
-    override fun setExposureCompensationIndex(exposureCompensationIndex: Int) {}
+        updatePreview()
+    }
+
+    override fun setExposureCompensationIndex(exposureCompensationIndex: Int) {
+        this.exposureCompensationIndex = exposureCompensationIndex
+
+        updatePreview()
+    }
 
     override fun setLinearZoom(linearZoom: Float) =
         setZoomRatio(Camera2Zoom.zoomRatio(zoomRatioRange, linearZoom))
@@ -431,6 +514,8 @@ class Camera2Session(
             result: TotalCaptureResult,
         ) {
             _previewStreaming.value = true
+
+            onPreviewResult(result)
         }
     }
 
@@ -456,6 +541,28 @@ class Camera2Session(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             set(CaptureRequest.CONTROL_ZOOM_RATIO, zoomRatio)
         }
+        set(
+            CaptureRequest.CONTROL_AE_MODE,
+            when (flashMode) {
+                FlashMode.AUTO -> CameraMetadata.CONTROL_AE_MODE_ON_AUTO_FLASH
+                FlashMode.ON -> CameraMetadata.CONTROL_AE_MODE_ON_ALWAYS_FLASH
+                else -> CameraMetadata.CONTROL_AE_MODE_ON
+            },
+        )
+        set(
+            CaptureRequest.FLASH_MODE,
+            when (flashMode) {
+                FlashMode.TORCH -> CameraMetadata.FLASH_MODE_TORCH
+                else -> CameraMetadata.FLASH_MODE_OFF
+            },
+        )
+        set(CaptureRequest.CONTROL_AE_EXPOSURE_COMPENSATION, exposureCompensationIndex)
+    }
+
+    private enum class PrecaptureState {
+        IDLE,
+        WAITING_START,
+        WAITING_DONE,
     }
 
     private fun closeCamera() {
@@ -493,6 +600,7 @@ class Camera2Session(
 
     companion object {
         private const val LOG_TAG = "Camera2Session"
+        private const val PRECAPTURE_TIMEOUT_MS = 1500L
 
         val isSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 
