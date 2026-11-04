@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.prauga.camera.utils
+package org.prauga.camera.camerax
 
 import android.content.ContentResolver
 import android.content.ContentValues

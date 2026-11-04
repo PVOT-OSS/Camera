@@ -32,7 +32,6 @@ import org.prauga.camera.capture.PhotoCaptureStatus
 import org.prauga.camera.capture.RecordingEvent
 import org.prauga.camera.models.CameraFacing
 import org.prauga.camera.models.CameraState
-import org.prauga.camera.utils.StorageUtils
 
 class CameraXCapture(
     private val context: Context,
