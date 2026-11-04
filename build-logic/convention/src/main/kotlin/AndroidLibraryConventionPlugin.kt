@@ -17,7 +17,7 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
             extensions.configure<LibraryExtension> {
                 compileSdk { version = release(37) { minorApiLevel = 1 } }
 
-                defaultConfig { minSdk = 26 }
+                defaultConfig { minSdk = 27 }
 
                 compileOptions {
                     sourceCompatibility = JavaVersion.VERSION_21

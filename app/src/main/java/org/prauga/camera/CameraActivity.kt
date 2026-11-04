@@ -9,7 +9,6 @@ import android.app.KeyguardManager
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.ViewGroup
@@ -192,9 +191,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightNavigationBars =
             false
 
-        if (
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 && keyguardManager.isKeyguardLocked
-        ) {
+        if (keyguardManager.isKeyguardLocked) {
             setShowWhenLocked(true)
 
             @Suppress("SourceLockedOrientationActivity")
