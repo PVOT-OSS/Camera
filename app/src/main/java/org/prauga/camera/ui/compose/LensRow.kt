@@ -48,6 +48,7 @@ fun LensRow(
     referenceBottom: Dp,
     onSelectCamera: (Camera) -> Unit,
     onZoom: (Float) -> Unit,
+    onZoomStart: () -> Unit,
     onPinchZoom: (Float) -> Unit,
     onResetZoom: () -> Unit,
 ) {
@@ -147,6 +148,7 @@ fun LensRow(
             onAdjustStart =
                 if (canZoom) {
                     {
+                        onZoomStart()
                         dialVisible = true
                         dialInteraction = 1
                     }

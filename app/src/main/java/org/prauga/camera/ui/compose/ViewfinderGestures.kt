@@ -32,14 +32,18 @@ fun Modifier.viewfinderGestures(
     onTap: (Offset) -> Unit,
     onLongPress: (Offset) -> Unit,
     onExposureDrag: (Float) -> Unit,
+    onPinchStart: () -> Unit,
     onPinch: (Float) -> Unit,
+    onPinchEnd: () -> Unit,
     onSwipe: (next: Boolean) -> Unit,
 ): Modifier {
     val currentCanAdjustExposure by rememberUpdatedState(canAdjustExposure)
     val currentOnTap by rememberUpdatedState(onTap)
     val currentOnLongPress by rememberUpdatedState(onLongPress)
     val currentOnExposureDrag by rememberUpdatedState(onExposureDrag)
+    val currentOnPinchStart by rememberUpdatedState(onPinchStart)
     val currentOnPinch by rememberUpdatedState(onPinch)
+    val currentOnPinchEnd by rememberUpdatedState(onPinchEnd)
     val currentOnSwipe by rememberUpdatedState(onSwipe)
 
     return pointerInput(Unit) {
@@ -73,7 +77,11 @@ fun Modifier.viewfinderGestures(
 
                 ViewfinderGesture.Tap -> currentOnTap(down.position)
 
-                ViewfinderGesture.Pinch -> pinch(currentOnPinch)
+                ViewfinderGesture.Pinch -> {
+                    currentOnPinchStart()
+                    pinch(currentOnPinch)
+                    currentOnPinchEnd()
+                }
 
                 ViewfinderGesture.Drag -> {
                     var last = down.position
@@ -82,7 +90,9 @@ fun Modifier.viewfinderGestures(
                     while (true) {
                         val event = awaitPointerEvent()
                         if (event.changes.size > 1) {
+                            currentOnPinchStart()
                             pinch(currentOnPinch, event)
+                            currentOnPinchEnd()
                             return@awaitEachGesture
                         }
                         val change = event.changes.first()

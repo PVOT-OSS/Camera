@@ -36,6 +36,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,9 +46,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -70,6 +73,7 @@ import com.prauga.pvot.designsystem.effects.LocalPvotGlassBackdrop
 import com.prauga.pvot.designsystem.effects.PvotGlassBackdrop
 import com.prauga.pvot.designsystem.effects.pvotGlassBackdrop
 import com.prauga.pvot.designsystem.effects.rememberPvotGlassBackdrop
+import kotlinx.coroutines.delay
 import org.prauga.camera.R
 import org.prauga.camera.capture.models.CameraConfiguration
 import org.prauga.camera.capture.models.CameraMode
@@ -99,6 +103,8 @@ class CameraScreenActions(
 private val TopBarHeight = 142.dp
 private val BottomBarHeight = 196.dp
 private val TopControlsInset = 63.dp
+
+private const val LENSES_RETURN_MS = 900L
 
 private val ModeOrder = listOf(CameraMode.VIDEO, CameraMode.PHOTO, CameraMode.QR)
 
@@ -186,6 +192,31 @@ private fun CameraContent(
                     .pvotGlassBackdrop(backdrop),
         )
 
+        val haptics = LocalHapticFeedback.current
+        val detents = remember { ZoomDetents() }
+        val zoomStops =
+            uiState.lenses.first
+                ?.logicalZoomRatios
+                ?.values
+                ?.toList()
+                ?.takeIf { it.size > 1 } ?: listOf(1f)
+        val beginZoom = { detents.begin(uiState.zoomState?.zoomRatio ?: 1f) }
+        val zoomBy = { scaleFactor: Float ->
+            uiState.zoomState?.let { zoomState ->
+                val (zoomRatio, reached) =
+                    detents.scale(
+                        scaleFactor,
+                        zoomStops,
+                        zoomState.minZoomRatio..zoomState.maxZoomRatio,
+                    )
+                if (reached) {
+                    haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                }
+                viewModel.setZoomRatio(zoomRatio)
+            }
+            Unit
+        }
+
         val density = LocalDensity.current
         val topInset = max(0.dp, referenceTop - frameTop)
         LaunchedEffect(topInset) { actions.onViewfinderTopInset(with(density) { topInset.roundToPx() }) }
@@ -215,7 +246,12 @@ private fun CameraContent(
                             viewModel.adjustExposureCompensationLevel(it)
                             state.exposureKey++
                         },
-                        onPinch = viewModel::pinchToZoom,
+                        onPinchStart = {
+                            beginZoom()
+                            state.pinching = true
+                        },
+                        onPinch = zoomBy,
+                        onPinchEnd = { state.pinching = false },
                         onSwipe = { next ->
                             if (uiState.cameraState == CameraState.IDLE) {
                                 if (next) viewModel.nextCameraMode() else viewModel.previousCameraMode()
@@ -249,6 +285,8 @@ private fun CameraContent(
                 viewModel = viewModel,
                 actions = actions,
                 referenceBottom = referenceBottom,
+                onZoomStart = beginZoom,
+                onZoomBy = zoomBy,
             )
 
             Panels(
@@ -496,6 +534,8 @@ private fun BottomControls(
     viewModel: CameraViewModel,
     actions: CameraScreenActions,
     referenceBottom: Dp,
+    onZoomStart: () -> Unit,
+    onZoomBy: (Float) -> Unit,
 ) {
     val recording = uiState.cameraState.isRecordingVideo
     val isIdle = uiState.cameraState == CameraState.IDLE
@@ -503,17 +543,46 @@ private fun BottomControls(
         animateFloatAsState(if (state.panel == CameraScreenState.Panel.NONE) 1f else 0f, tween(220))
 
     Box(modifier = Modifier.fillMaxSize().alpha(alpha)) {
-        uiState.lenses.first?.let { activeCamera ->
-            LensRow(
-                activeCamera = activeCamera,
-                availableCameras = uiState.lenses.second,
-                zoomState = uiState.zoomState,
-                enabled = uiState.cameraMode != CameraMode.QR,
-                referenceBottom = referenceBottom,
-                onSelectCamera = viewModel::selectCamera,
-                onZoom = viewModel::smoothZoom,
-                onPinchZoom = viewModel::pinchToZoom,
-                onResetZoom = viewModel::resetZoom,
+        var lensesVisible by remember { mutableStateOf(true) }
+        LaunchedEffect(state.pinching) {
+            if (state.pinching) {
+                lensesVisible = false
+            } else {
+                delay(LENSES_RETURN_MS)
+                lensesVisible = true
+            }
+        }
+
+        AnimatedVisibility(
+            visible = lensesVisible,
+            enter = fadeIn(tween(220)),
+            exit = fadeOut(tween(160)),
+        ) {
+            uiState.lenses.first?.let { activeCamera ->
+                LensRow(
+                    activeCamera = activeCamera,
+                    availableCameras = uiState.lenses.second,
+                    zoomState = uiState.zoomState,
+                    enabled = uiState.cameraMode != CameraMode.QR,
+                    referenceBottom = referenceBottom,
+                    onSelectCamera = viewModel::selectCamera,
+                    onZoom = viewModel::smoothZoom,
+                    onZoomStart = onZoomStart,
+                    onPinchZoom = onZoomBy,
+                    onResetZoom = viewModel::resetZoom,
+                )
+            }
+        }
+
+        AnimatedVisibility(
+            visible = !lensesVisible && uiState.zoomState != null,
+            modifier = Modifier.align(Alignment.TopCenter).offset(y = referenceBottom - 49.dp),
+            enter = fadeIn(tween(160)),
+            exit = fadeOut(tween(220)),
+        ) {
+            PvotGlassChip(
+                text = "${formatZoomRatio(uiState.zoomState?.zoomRatio ?: 1f)}×",
+                contentColor = CameraYellow,
             )
         }
 

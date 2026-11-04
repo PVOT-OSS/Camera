@@ -43,6 +43,8 @@ class CameraScreenState {
     var latestMedia by mutableStateOf<Uri?>(null)
     var latestMediaKey by mutableIntStateOf(0)
 
+    var pinching by mutableStateOf(false)
+
     var burstCount by mutableStateOf<Int?>(null)
     var quickTake by mutableStateOf(QuickTake.NONE)
 
