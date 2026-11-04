@@ -10,7 +10,6 @@ import androidx.camera.core.ZoomState
 import androidx.camera.view.LifecycleCameraController
 import androidx.core.animation.addListener
 import kotlinx.coroutines.sync.Mutex
-import org.prauga.camera.camerax.CameraXZoom
 
 class CameraXZoom(
     private val cameraController: LifecycleCameraController,
