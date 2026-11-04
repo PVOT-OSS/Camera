@@ -290,22 +290,30 @@ class Camera2Session(
             return
         }
 
-        val request =
-            camera
-                .createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-                .apply {
-                    addTarget(previewSurface)
-                    applyControls()
-                    set(
-                        CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
-                        CameraMetadata.CONTROL_AE_PRECAPTURE_TRIGGER_START,
-                    )
-                }
-                .build()
+        try {
+            val request =
+                camera
+                    .createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                    .apply {
+                        addTarget(previewSurface)
+                        applyControls()
+                        set(
+                            CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                            CameraMetadata.CONTROL_AE_PRECAPTURE_TRIGGER_START,
+                        )
+                    }
+                    .build()
 
-        precaptureState = PrecaptureState.WAITING_START
-        cameraHandler.postDelayed(precaptureTimeout, PRECAPTURE_TIMEOUT_MS)
-        session.capture(request, null, cameraHandler)
+            precaptureState = PrecaptureState.WAITING_START
+            cameraHandler.postDelayed(precaptureTimeout, PRECAPTURE_TIMEOUT_MS)
+            session.capture(request, null, cameraHandler)
+        } catch (e: Exception) {
+            Log.w(LOG_TAG, "Unable to start the precapture sequence", e)
+            cameraHandler.removeCallbacks(precaptureTimeout)
+            precaptureState = PrecaptureState.IDLE
+            clearScreenFlash()
+            captureStateMachine.endPhoto()
+        }
     }
 
     private fun onPreviewResult(result: CaptureResult) {
@@ -372,29 +380,36 @@ class Camera2Session(
         val burstRecorder = burstRecorder
         val frames = if (burstRecorder != null) Camera2BurstRecorder.FRAMES else 1
         val requests =
-            List(frames) { index ->
-                camera
-                    .createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
-                    .apply {
-                        setTag(index)
-                        if (index == 0) {
-                            addTarget(imageReader.surface)
+            try {
+                List(frames) { index ->
+                    camera
+                        .createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE)
+                        .apply {
+                            setTag(index)
+                            if (index == 0) {
+                                addTarget(imageReader.surface)
+                            }
+                            applyControls()
+                            set(CaptureRequest.JPEG_ORIENTATION, jpegOrientation())
+                            if (!inSingleCaptureMode.value) {
+                                location()?.let { set(CaptureRequest.JPEG_GPS_LOCATION, it) }
+                            }
+                            burstRecorder?.let {
+                                addTarget(it.imageReader.surface)
+                                set(CaptureRequest.CONTROL_AE_LOCK, true)
+                                set(
+                                    CaptureRequest.STATISTICS_LENS_SHADING_MAP_MODE,
+                                    CameraMetadata.STATISTICS_LENS_SHADING_MAP_MODE_ON,
+                                )
+                            }
                         }
-                        applyControls()
-                        set(CaptureRequest.JPEG_ORIENTATION, jpegOrientation())
-                        if (!inSingleCaptureMode.value) {
-                            location()?.let { set(CaptureRequest.JPEG_GPS_LOCATION, it) }
-                        }
-                        burstRecorder?.let {
-                            addTarget(it.imageReader.surface)
-                            set(CaptureRequest.CONTROL_AE_LOCK, true)
-                            set(
-                                CaptureRequest.STATISTICS_LENS_SHADING_MAP_MODE,
-                                CameraMetadata.STATISTICS_LENS_SHADING_MAP_MODE_ON,
-                            )
-                        }
-                    }
-                    .build()
+                        .build()
+                }
+            } catch (e: Exception) {
+                Log.w(LOG_TAG, "Unable to create the photo requests", e)
+                clearScreenFlash()
+                captureStateMachine.endPhoto()
+                return
             }
 
         photoTimestamp = System.currentTimeMillis()
@@ -448,9 +463,15 @@ class Camera2Session(
                 }
             }
 
-        when (requests.size) {
-            1 -> session.capture(requests.first(), callback, cameraHandler)
-            else -> session.captureBurst(requests, callback, cameraHandler)
+        try {
+            when (requests.size) {
+                1 -> session.capture(requests.first(), callback, cameraHandler)
+                else -> session.captureBurst(requests, callback, cameraHandler)
+            }
+        } catch (e: Exception) {
+            Log.w(LOG_TAG, "Unable to capture the photo", e)
+            clearScreenFlash()
+            captureStateMachine.endPhoto()
         }
     }
 
@@ -525,7 +546,11 @@ class Camera2Session(
         updatePreview()
     }
 
-    override fun focus(x: Float, y: Float) {
+    override fun focus(x: Float, y: Float) = meter(x, y, lock = false)
+
+    override fun lockFocus(x: Float, y: Float) = meter(x, y, lock = true)
+
+    private fun meter(x: Float, y: Float, lock: Boolean) {
         val textureView = textureView ?: return
         val activeArraySize = activeArraySize ?: return
 
@@ -567,7 +592,9 @@ class Camera2Session(
             updatePreview()
             sendAfTrigger(CameraMetadata.CONTROL_AF_TRIGGER_START)
 
-            cameraHandler.postDelayed(cancelFocus, FOCUS_RESET_MS)
+            if (!lock) {
+                cameraHandler.postDelayed(cancelFocus, FOCUS_RESET_MS)
+            }
         }
     }
 
@@ -576,17 +603,17 @@ class Camera2Session(
         val session = captureSession ?: return
         val previewSurface = previewSurface ?: return
 
-        val request =
-            camera
-                .createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-                .apply {
-                    addTarget(previewSurface)
-                    applyControls()
-                    set(CaptureRequest.CONTROL_AF_TRIGGER, trigger)
-                }
-                .build()
-
         try {
+            val request =
+                camera
+                    .createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                    .apply {
+                        addTarget(previewSurface)
+                        applyControls()
+                        set(CaptureRequest.CONTROL_AF_TRIGGER, trigger)
+                    }
+                    .build()
+
             session.capture(request, null, cameraHandler)
         } catch (e: Exception) {
             Log.w(LOG_TAG, "Unable to send the AF trigger", e)
@@ -774,16 +801,16 @@ class Camera2Session(
             val session = captureSession ?: return@post
             val previewSurface = previewSurface ?: return@post
 
-            val request =
-                camera
-                    .createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-                    .apply {
-                        addTarget(previewSurface)
-                        applyControls()
-                    }
-                    .build()
-
             try {
+                val request =
+                    camera
+                        .createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                        .apply {
+                            addTarget(previewSurface)
+                            applyControls()
+                        }
+                        .build()
+
                 session.setRepeatingRequest(request, previewCallback, cameraHandler)
             } catch (e: Exception) {
                 Log.w(LOG_TAG, "Unable to update the preview", e)
