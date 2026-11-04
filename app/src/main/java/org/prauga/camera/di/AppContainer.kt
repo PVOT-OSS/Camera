@@ -18,6 +18,9 @@ import org.prauga.camera.capture.CaptureSounds
 import org.prauga.camera.capture.CaptureStateMachine
 import org.prauga.camera.capture.PhotoCaptureStatus
 import org.prauga.camera.capture.models.CameraFacing
+import org.prauga.camera.device.DeviceInfo
+import org.prauga.camera.device.DeviceResolver
+import org.prauga.camera.device.GenericModule
 import org.prauga.camera.repositories.DeviceStateRepository
 import org.prauga.camera.repositories.MediaRepository
 import org.prauga.camera.repositories.PreferencesRepository
@@ -26,7 +29,11 @@ class AppContainer(
     private val context: Context,
     coroutineScope: CoroutineScope,
 ) {
-    private val cameraXDevices by lazy { CameraXDevices(context, coroutineScope) }
+    private val device by lazy {
+        DeviceResolver(listOf(GenericModule())).resolve(DeviceInfo.current())
+    }
+
+    private val cameraXDevices by lazy { CameraXDevices(context, coroutineScope, device) }
 
     val cameraDevices: CameraDevices get() = cameraXDevices
     val deviceStateRepository by lazy { DeviceStateRepository(context) }

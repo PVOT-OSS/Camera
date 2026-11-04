@@ -64,6 +64,7 @@ android {
 dependencies {
     implementation(project(":camera"))
     implementation(project(":camera-camerax"))
+    implementation(project(":device"))
 
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)

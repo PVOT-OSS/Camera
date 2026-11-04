@@ -13,6 +13,7 @@ android {
 
 dependencies {
     api(project(":camera"))
+    api(project(":device"))
 
     api(libs.androidx.camera.core)
     api(libs.androidx.camera.view)

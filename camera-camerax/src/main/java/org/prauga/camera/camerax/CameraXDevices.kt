@@ -8,6 +8,7 @@ package org.prauga.camera.camerax
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.hardware.camera2.CameraManager
 import androidx.annotation.OptIn as AndroidXOptIn
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
@@ -31,6 +32,8 @@ import org.prauga.camera.capture.CameraDevices
 import org.prauga.camera.capture.models.Camera
 import org.prauga.camera.capture.models.CameraFacing
 import org.prauga.camera.capture.models.ExtensionMode
+import org.prauga.camera.device.CameraCapabilities
+import org.prauga.camera.device.DeviceResolver
 
 /**
  * Repository that provides camera devices.
@@ -39,7 +42,10 @@ import org.prauga.camera.capture.models.ExtensionMode
 class CameraXDevices(
     private val context: Context,
     coroutineScope: CoroutineScope,
+    private val device: DeviceResolver.ResolvedDevice,
 ) : CameraDevices {
+    private val cameraManager by lazy { context.getSystemService(CameraManager::class.java) }
+
     /**
      * CameraX's [ProcessCameraProvider].
      */
@@ -125,15 +131,29 @@ class CameraXDevices(
         Camera2CameraInfo.from(it).cameraId == camera.cameraId
     }
 
-    private fun CameraInfo.isInternalCameraAllowed() =
-        Camera2CameraInfo.from(this).cameraId in mainCameraIds
+    private fun CameraInfo.isInternalCameraAllowed() = Camera2CameraInfo.from(this).cameraId.let {
+        device.includesCamera(it, default = it in mainCameraIds)
+    }
 
     private fun List<CameraInfo>.mapToCamera() = map { it.toCamera() }.sortedBy { it.cameraId }
 
-    private fun CameraInfo.toCamera() = cameraFromCameraX(
-        this,
-        extensionsManager,
-    )
+    private fun CameraInfo.toCamera(): Camera {
+        val capabilities = device.capabilities(
+            CameraCapabilities(
+                cameraId = Camera2CameraInfo.from(this).cameraId,
+                logicalZoomRatios = sortedMapOf(1f to 1f),
+                additionalVideoFrameRates = mapOf(),
+            ),
+            cameraManager::getCameraCharacteristics,
+        )
+
+        return cameraFromCameraX(
+            this,
+            extensionsManager,
+            capabilities.logicalZoomRatios,
+            capabilities.additionalVideoFrameRates,
+        )
+    }
 
     private fun requireCameraPermission() = require(
         ContextCompat.checkSelfPermission(

@@ -19,6 +19,7 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionsManager
 import androidx.camera.video.Recorder
 import androidx.core.util.toClosedRange
+import java.util.SortedMap
 import org.prauga.camera.capture.models.Camera
 import org.prauga.camera.capture.models.CameraFacing
 import org.prauga.camera.capture.models.ColorCorrectionAberrationMode
@@ -42,9 +43,9 @@ import org.prauga.camera.capture.models.VideoStabilizationMode
 fun cameraFromCameraX(
     cameraInfo: CameraInfo,
     extensionsManager: ExtensionsManager,
+    logicalZoomRatios: SortedMap<Float, Float>,
+    additionalVideoFrameRates: Map<VideoQuality, Map<FrameRate, Boolean>>,
 ): Camera {
-    val logicalZoomRatios = sortedMapOf(1f to 1f)
-    val additionalVideoFrameRates = mapOf<VideoQuality, Map<FrameRate, Boolean>>()
     val supportedExtensionModes = extensionsManager.getSupportedModes(cameraInfo.cameraSelector)
 
     /**
