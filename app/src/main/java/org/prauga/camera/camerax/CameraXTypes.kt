@@ -13,6 +13,9 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionMode as CameraXExtensionMode
 import androidx.camera.core.ZoomState
 import androidx.camera.video.Quality
+import androidx.camera.view.CameraController
+import androidx.camera.view.TapToFocusInfo
+import org.prauga.camera.capture.FocusEvent
 import org.prauga.camera.capture.ZoomInfo
 import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.PhotoAspectRatio
@@ -53,6 +56,17 @@ fun VideoDynamicRange.toCameraXDynamicRange(): DynamicRange = when (this) {
 fun DynamicRange.toVideoDynamicRange() = VideoDynamicRange.entries.first {
     it.toCameraXDynamicRange() == this
 }
+
+fun TapToFocusInfo.toFocusEvent() = FocusEvent(
+    focusState = when (focusState) {
+        CameraController.TAP_TO_FOCUS_STARTED -> FocusEvent.State.STARTED
+        CameraController.TAP_TO_FOCUS_FOCUSED -> FocusEvent.State.FOCUSED
+        CameraController.TAP_TO_FOCUS_NOT_FOCUSED -> FocusEvent.State.NOT_FOCUSED
+        CameraController.TAP_TO_FOCUS_FAILED -> FocusEvent.State.FAILED
+        else -> FocusEvent.State.NOT_STARTED
+    },
+    tapPoint = tapPoint,
+)
 
 fun ZoomState.toZoomInfo() = ZoomInfo(
     zoomRatio = zoomRatio,

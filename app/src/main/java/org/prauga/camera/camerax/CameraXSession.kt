@@ -75,7 +75,9 @@ class CameraXSession(
 
     override val zoomState = cameraController.zoomState.asFlow().map { it.toZoomInfo() }
 
-    override val tapToFocusInfoState = cameraController.tapToFocusInfoState.asFlow()
+    override val tapToFocusInfoState = cameraController.tapToFocusInfoState.asFlow().map {
+        it.toFocusEvent()
+    }
 
     override val isRecordingAudioSourceConfigured = capture.videoRecording.map {
         it?.isAudioSourceConfigured == true

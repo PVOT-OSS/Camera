@@ -13,7 +13,6 @@ import android.os.Looper
 import android.os.Message
 import android.view.View
 import android.widget.ImageView
-import androidx.camera.view.CameraController
 import androidx.camera.view.PreviewView
 import androidx.core.view.isVisible
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +20,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.prauga.camera.R
+import org.prauga.camera.capture.FocusEvent
 import org.prauga.camera.ext.mapToRange
 import org.prauga.camera.ext.px
 import org.prauga.camera.ext.select
@@ -166,7 +166,7 @@ class ViewfinderOverlays(
         launch {
             viewModel.tapToFocusInfoState.collectLatest { tapToFocusInfoState ->
                 when (tapToFocusInfoState.focusState) {
-                    CameraController.TAP_TO_FOCUS_STARTED -> {
+                    FocusEvent.State.STARTED -> {
                         viewFinderFocus.x =
                             tapToFocusInfoState.tapPoint!!.x - (viewFinderFocus.width / 2)
                         viewFinderFocus.y =

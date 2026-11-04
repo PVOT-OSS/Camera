@@ -8,7 +8,6 @@ package org.prauga.camera.capture
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.camera.view.ScreenFlashView
-import androidx.camera.view.TapToFocusInfo
 import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
@@ -18,7 +17,7 @@ import org.prauga.camera.models.FlashMode
 
 interface CameraSession {
     val zoomState: Flow<ZoomInfo>
-    val tapToFocusInfoState: Flow<TapToFocusInfo>
+    val tapToFocusInfoState: Flow<FocusEvent>
     val isRecordingAudioSourceConfigured: Flow<Boolean>
     val videoRecordingDuration: StateFlow<Long>
     val videoRecordEvent: SharedFlow<VideoRecordEvent>
