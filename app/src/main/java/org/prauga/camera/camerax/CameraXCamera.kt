@@ -19,20 +19,20 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.extensions.ExtensionsManager
 import androidx.camera.video.Recorder
 import androidx.core.util.toClosedRange
-import org.prauga.camera.models.Camera
-import org.prauga.camera.models.CameraFacing
-import org.prauga.camera.models.ColorCorrectionAberrationMode
-import org.prauga.camera.models.DistortionCorrectionMode
-import org.prauga.camera.models.EdgeMode
-import org.prauga.camera.models.FlashMode
-import org.prauga.camera.models.FrameRate
-import org.prauga.camera.models.HotPixelMode
-import org.prauga.camera.models.NoiseReductionMode
-import org.prauga.camera.models.PhotoOutputFormat
-import org.prauga.camera.models.ShadingMode
-import org.prauga.camera.models.VideoQuality
-import org.prauga.camera.models.VideoQualityInfo
-import org.prauga.camera.models.VideoStabilizationMode
+import org.prauga.camera.capture.models.Camera
+import org.prauga.camera.capture.models.CameraFacing
+import org.prauga.camera.capture.models.ColorCorrectionAberrationMode
+import org.prauga.camera.capture.models.DistortionCorrectionMode
+import org.prauga.camera.capture.models.EdgeMode
+import org.prauga.camera.capture.models.FlashMode
+import org.prauga.camera.capture.models.FrameRate
+import org.prauga.camera.capture.models.HotPixelMode
+import org.prauga.camera.capture.models.NoiseReductionMode
+import org.prauga.camera.capture.models.PhotoOutputFormat
+import org.prauga.camera.capture.models.ShadingMode
+import org.prauga.camera.capture.models.VideoQuality
+import org.prauga.camera.capture.models.VideoQualityInfo
+import org.prauga.camera.capture.models.VideoStabilizationMode
 
 @OptIn(
     ExperimentalCamera2Interop::class,

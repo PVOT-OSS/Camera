@@ -3,12 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.prauga.camera.models
+package org.prauga.camera.capture.models
 
-enum class VideoQuality {
-    SD,
-    HD,
-    FHD,
-    QHD,
-    UHD,
+enum class PhotoAspectRatio {
+    RATIO_4_3,
+    RATIO_16_9,
 }

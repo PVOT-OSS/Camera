@@ -7,7 +7,7 @@ package org.prauga.camera.capture
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.prauga.camera.models.CameraState
+import org.prauga.camera.capture.models.CameraState
 
 class CaptureStateMachine {
     private val _state = MutableStateFlow(CameraState.IDLE)

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.prauga.camera.models
+package org.prauga.camera.capture.models
 
 /**
  * Camera configuration. Should only contain information about the session that can only be

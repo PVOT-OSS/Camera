@@ -23,11 +23,11 @@ import org.prauga.camera.capture.CaptureSounds
 import org.prauga.camera.capture.CaptureStateMachine
 import org.prauga.camera.capture.PhotoCaptureStatus
 import org.prauga.camera.capture.PreviewTarget
-import org.prauga.camera.models.Camera
-import org.prauga.camera.models.CameraConfiguration
-import org.prauga.camera.models.CameraFacing
-import org.prauga.camera.models.ExtensionMode
-import org.prauga.camera.models.FlashMode
+import org.prauga.camera.capture.models.Camera
+import org.prauga.camera.capture.models.CameraConfiguration
+import org.prauga.camera.capture.models.CameraFacing
+import org.prauga.camera.capture.models.ExtensionMode
+import org.prauga.camera.capture.models.FlashMode
 
 class CameraXSession(
     context: Context,

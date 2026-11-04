@@ -11,14 +11,14 @@ import android.os.Build
 import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.core.util.toRange
-import org.prauga.camera.models.ColorCorrectionAberrationMode
-import org.prauga.camera.models.DistortionCorrectionMode
-import org.prauga.camera.models.EdgeMode
-import org.prauga.camera.models.FrameRate
-import org.prauga.camera.models.HotPixelMode
-import org.prauga.camera.models.NoiseReductionMode
-import org.prauga.camera.models.ShadingMode
-import org.prauga.camera.models.VideoStabilizationMode
+import org.prauga.camera.capture.models.ColorCorrectionAberrationMode
+import org.prauga.camera.capture.models.DistortionCorrectionMode
+import org.prauga.camera.capture.models.EdgeMode
+import org.prauga.camera.capture.models.FrameRate
+import org.prauga.camera.capture.models.HotPixelMode
+import org.prauga.camera.capture.models.NoiseReductionMode
+import org.prauga.camera.capture.models.ShadingMode
+import org.prauga.camera.capture.models.VideoStabilizationMode
 
 @ExperimentalCamera2Interop
 fun <ValueT> CaptureRequestOptions.Builder.setOrClearCaptureRequestOption(

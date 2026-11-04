@@ -28,11 +28,11 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.prauga.camera.R
 import org.prauga.camera.capture.RecordingEvent
+import org.prauga.camera.capture.models.CameraMode
+import org.prauga.camera.capture.models.CameraState
 import org.prauga.camera.ext.px
 import org.prauga.camera.ext.select
 import org.prauga.camera.ext.smoothRotate
-import org.prauga.camera.models.CameraMode
-import org.prauga.camera.models.CameraState
 import org.prauga.camera.ui.GalleryLauncher
 import org.prauga.camera.viewmodels.CameraViewModel
 

@@ -30,8 +30,8 @@ import org.prauga.camera.capture.CaptureSounds
 import org.prauga.camera.capture.CaptureStateMachine
 import org.prauga.camera.capture.PhotoCaptureStatus
 import org.prauga.camera.capture.RecordingEvent
-import org.prauga.camera.models.CameraFacing
-import org.prauga.camera.models.CameraState
+import org.prauga.camera.capture.models.CameraFacing
+import org.prauga.camera.capture.models.CameraState
 
 class CameraXCapture(
     private val context: Context,

@@ -17,12 +17,12 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
+import org.prauga.camera.capture.models.CameraConfiguration
+import org.prauga.camera.capture.models.CameraMode
+import org.prauga.camera.capture.models.CameraState
+import org.prauga.camera.capture.models.FlashMode
 import org.prauga.camera.ext.next
-import org.prauga.camera.models.CameraConfiguration
-import org.prauga.camera.models.CameraMode
-import org.prauga.camera.models.CameraState
 import org.prauga.camera.models.Event
-import org.prauga.camera.models.FlashMode
 import org.prauga.camera.repositories.PreferencesRepository
 
 class FlashController(

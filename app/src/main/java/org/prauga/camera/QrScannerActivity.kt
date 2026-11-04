@@ -5,7 +5,8 @@
 
 package org.prauga.camera
 
-import org.prauga.camera.models.CameraMode
+import org.prauga.camera.capture.models.CameraMode
+
 
 class QrScannerActivity : CameraActivity() {
     override fun overrideInitialCameraMode() = CameraMode.QR

@@ -9,8 +9,8 @@ import androidx.lifecycle.LifecycleOwner
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import org.prauga.camera.models.CameraConfiguration
-import org.prauga.camera.models.FlashMode
+import org.prauga.camera.capture.models.CameraConfiguration
+import org.prauga.camera.capture.models.FlashMode
 
 interface CameraSession {
     val zoomState: Flow<ZoomInfo>

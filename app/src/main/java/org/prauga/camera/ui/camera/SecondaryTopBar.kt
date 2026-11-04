@@ -18,19 +18,19 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.prauga.camera.R
+import org.prauga.camera.capture.models.CameraMode
+import org.prauga.camera.capture.models.CameraState
+import org.prauga.camera.capture.models.ExtensionMode
+import org.prauga.camera.capture.models.PhotoAspectRatio
+import org.prauga.camera.capture.models.VideoDynamicRange
+import org.prauga.camera.capture.models.VideoQuality
 import org.prauga.camera.ext.select
 import org.prauga.camera.ext.slide
 import org.prauga.camera.ext.slideDown
 import org.prauga.camera.ext.smoothRotate
-import org.prauga.camera.models.CameraMode
-import org.prauga.camera.models.CameraState
-import org.prauga.camera.models.ExtensionMode
 import org.prauga.camera.models.GridMode
-import org.prauga.camera.models.PhotoAspectRatio
 import org.prauga.camera.models.Rotation
 import org.prauga.camera.models.TimerMode
-import org.prauga.camera.models.VideoDynamicRange
-import org.prauga.camera.models.VideoQuality
 import org.prauga.camera.viewmodels.CameraViewModel
 
 class SecondaryTopBar(

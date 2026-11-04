@@ -14,30 +14,30 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.shareIn
+import org.prauga.camera.capture.models.CameraFacing
+import org.prauga.camera.capture.models.CameraMode
+import org.prauga.camera.capture.models.ColorCorrectionAberrationMode
+import org.prauga.camera.capture.models.DistortionCorrectionMode
+import org.prauga.camera.capture.models.EdgeMode
+import org.prauga.camera.capture.models.ExtensionMode
+import org.prauga.camera.capture.models.FlashMode
+import org.prauga.camera.capture.models.FrameRate
+import org.prauga.camera.capture.models.HotPixelMode
+import org.prauga.camera.capture.models.NoiseReductionMode
+import org.prauga.camera.capture.models.PhotoAspectRatio
+import org.prauga.camera.capture.models.PhotoCaptureMode
+import org.prauga.camera.capture.models.ShadingMode
+import org.prauga.camera.capture.models.VideoDynamicRange
+import org.prauga.camera.capture.models.VideoMirrorMode
+import org.prauga.camera.capture.models.VideoQuality
 import org.prauga.camera.ext.preferenceFlow
-import org.prauga.camera.models.CameraFacing
-import org.prauga.camera.models.CameraMode
-import org.prauga.camera.models.ColorCorrectionAberrationMode
-import org.prauga.camera.models.DistortionCorrectionMode
-import org.prauga.camera.models.EdgeMode
-import org.prauga.camera.models.ExtensionMode
-import org.prauga.camera.models.FlashMode
-import org.prauga.camera.models.FrameRate
 import org.prauga.camera.models.GestureAction
 import org.prauga.camera.models.GridMode
 import org.prauga.camera.models.HardwareKey
-import org.prauga.camera.models.HotPixelMode
-import org.prauga.camera.models.NoiseReductionMode
-import org.prauga.camera.models.PhotoAspectRatio
-import org.prauga.camera.models.PhotoCaptureMode
 import org.prauga.camera.models.Preference
 import org.prauga.camera.models.Preference.Companion.enumPreference
 import org.prauga.camera.models.Preference.Companion.primitivePreference
-import org.prauga.camera.models.ShadingMode
 import org.prauga.camera.models.TimerMode
-import org.prauga.camera.models.VideoDynamicRange
-import org.prauga.camera.models.VideoMirrorMode
-import org.prauga.camera.models.VideoQuality
 
 /**
  * User preferences repository.

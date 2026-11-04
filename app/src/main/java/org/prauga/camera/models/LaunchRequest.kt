@@ -7,6 +7,8 @@ package org.prauga.camera.models
 
 import android.content.Intent
 import android.provider.MediaStore
+import org.prauga.camera.capture.models.CameraFacing
+import org.prauga.camera.capture.models.CameraMode
 import org.prauga.camera.utils.ShortcutsUtils
 
 data class LaunchRequest(

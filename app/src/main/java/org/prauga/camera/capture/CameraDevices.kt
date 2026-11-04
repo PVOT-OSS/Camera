@@ -7,7 +7,7 @@ package org.prauga.camera.capture
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
-import org.prauga.camera.models.Camera
+import org.prauga.camera.capture.models.Camera
 
 interface CameraDevices {
     val cameras: SharedFlow<List<Camera>>

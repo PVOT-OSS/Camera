@@ -10,7 +10,7 @@ import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.TorchState
 import androidx.camera.view.CameraController
-import org.prauga.camera.models.FlashMode
+import org.prauga.camera.capture.models.FlashMode
 
 var CameraController.flashMode: FlashMode
     get() = when (torchState.value) {

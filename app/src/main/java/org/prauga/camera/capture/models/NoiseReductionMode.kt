@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.prauga.camera.models
+package org.prauga.camera.capture.models
 
-enum class EdgeMode {
+enum class NoiseReductionMode {
     OFF,
     FAST,
     HIGH_QUALITY,
+    MINIMAL,
     ZERO_SHUTTER_LAG;
 
     companion object {

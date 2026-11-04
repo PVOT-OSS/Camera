@@ -16,9 +16,9 @@ import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import com.google.android.material.button.MaterialButton
 import org.prauga.camera.R
+import org.prauga.camera.capture.models.CameraMode
+import org.prauga.camera.capture.models.CameraState
 import org.prauga.camera.ext.px
-import org.prauga.camera.models.CameraMode
-import org.prauga.camera.models.CameraState
 import org.prauga.camera.utils.TimeUtils
 import kotlin.reflect.cast
 

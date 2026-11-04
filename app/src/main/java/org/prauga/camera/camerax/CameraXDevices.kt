@@ -28,9 +28,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.shareIn
 import org.prauga.camera.capture.CameraDevices
-import org.prauga.camera.models.Camera
-import org.prauga.camera.models.CameraFacing
-import org.prauga.camera.models.ExtensionMode
+import org.prauga.camera.capture.models.Camera
+import org.prauga.camera.capture.models.CameraFacing
+import org.prauga.camera.capture.models.ExtensionMode
 
 /**
  * Repository that provides camera devices.

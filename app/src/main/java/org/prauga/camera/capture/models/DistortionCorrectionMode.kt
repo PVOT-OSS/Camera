@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.prauga.camera.models
+package org.prauga.camera.capture.models
 
-enum class ColorCorrectionAberrationMode {
+enum class DistortionCorrectionMode {
     OFF,
     FAST,
     HIGH_QUALITY;

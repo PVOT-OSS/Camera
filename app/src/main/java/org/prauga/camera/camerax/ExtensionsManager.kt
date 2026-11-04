@@ -7,7 +7,7 @@ package org.prauga.camera.camerax
 
 import androidx.camera.core.CameraSelector
 import androidx.camera.extensions.ExtensionsManager
-import org.prauga.camera.models.ExtensionMode
+import org.prauga.camera.capture.models.ExtensionMode
 
 internal fun ExtensionsManager.getSupportedModes(
     cameraSelector: CameraSelector,

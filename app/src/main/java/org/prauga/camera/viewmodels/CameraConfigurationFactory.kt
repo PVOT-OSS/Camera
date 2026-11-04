@@ -5,17 +5,17 @@
 
 package org.prauga.camera.viewmodels
 
-import org.prauga.camera.models.Camera
-import org.prauga.camera.models.CameraConfiguration
-import org.prauga.camera.models.CameraMode
-import org.prauga.camera.models.ColorCorrectionAberrationMode
-import org.prauga.camera.models.DistortionCorrectionMode
-import org.prauga.camera.models.EdgeMode
-import org.prauga.camera.models.HotPixelMode
-import org.prauga.camera.models.NoiseReductionMode
-import org.prauga.camera.models.PhotoCaptureMode
-import org.prauga.camera.models.PhotoOutputFormat
-import org.prauga.camera.models.ShadingMode
+import org.prauga.camera.capture.models.Camera
+import org.prauga.camera.capture.models.CameraConfiguration
+import org.prauga.camera.capture.models.CameraMode
+import org.prauga.camera.capture.models.ColorCorrectionAberrationMode
+import org.prauga.camera.capture.models.DistortionCorrectionMode
+import org.prauga.camera.capture.models.EdgeMode
+import org.prauga.camera.capture.models.HotPixelMode
+import org.prauga.camera.capture.models.NoiseReductionMode
+import org.prauga.camera.capture.models.PhotoCaptureMode
+import org.prauga.camera.capture.models.PhotoOutputFormat
+import org.prauga.camera.capture.models.ShadingMode
 import org.prauga.camera.repositories.PreferencesRepository
 
 class CameraConfigurationFactory(

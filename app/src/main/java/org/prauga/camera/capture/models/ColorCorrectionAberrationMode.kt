@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.prauga.camera.models
+package org.prauga.camera.capture.models
 
-enum class HotPixelMode {
+enum class ColorCorrectionAberrationMode {
     OFF,
     FAST,
     HIGH_QUALITY;

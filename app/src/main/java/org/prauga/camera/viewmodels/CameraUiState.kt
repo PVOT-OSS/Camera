@@ -7,20 +7,20 @@ package org.prauga.camera.viewmodels
 
 import android.net.Uri
 import org.prauga.camera.capture.ZoomInfo
-import org.prauga.camera.models.Camera
-import org.prauga.camera.models.CameraMode
-import org.prauga.camera.models.CameraState
-import org.prauga.camera.models.ExtensionMode
-import org.prauga.camera.models.FlashMode
-import org.prauga.camera.models.FrameRate
+import org.prauga.camera.capture.models.Camera
+import org.prauga.camera.capture.models.CameraMode
+import org.prauga.camera.capture.models.CameraState
+import org.prauga.camera.capture.models.ExtensionMode
+import org.prauga.camera.capture.models.FlashMode
+import org.prauga.camera.capture.models.FrameRate
+import org.prauga.camera.capture.models.PhotoAspectRatio
+import org.prauga.camera.capture.models.VideoDynamicRange
+import org.prauga.camera.capture.models.VideoQuality
 import org.prauga.camera.models.GridMode
 import org.prauga.camera.models.IslandItem
-import org.prauga.camera.models.PhotoAspectRatio
 import org.prauga.camera.models.Rotation
 import org.prauga.camera.models.ThermalStatus
 import org.prauga.camera.models.TimerMode
-import org.prauga.camera.models.VideoDynamicRange
-import org.prauga.camera.models.VideoQuality
 
 data class CameraUiState(
     val cameraMode: CameraMode,

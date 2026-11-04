@@ -21,11 +21,11 @@ import org.prauga.camera.capture.CameraError
 import org.prauga.camera.capture.FocusEvent
 import org.prauga.camera.capture.RecordingEvent
 import org.prauga.camera.capture.ZoomInfo
-import org.prauga.camera.models.ExtensionMode
-import org.prauga.camera.models.PhotoAspectRatio
-import org.prauga.camera.models.PhotoCaptureMode
-import org.prauga.camera.models.VideoDynamicRange
-import org.prauga.camera.models.VideoQuality
+import org.prauga.camera.capture.models.ExtensionMode
+import org.prauga.camera.capture.models.PhotoAspectRatio
+import org.prauga.camera.capture.models.PhotoCaptureMode
+import org.prauga.camera.capture.models.VideoDynamicRange
+import org.prauga.camera.capture.models.VideoQuality
 
 fun ExtensionMode.toCameraXExtensionMode() = when (this) {
     ExtensionMode.NONE -> CameraXExtensionMode.NONE

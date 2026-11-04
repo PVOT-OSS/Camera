@@ -7,9 +7,9 @@ package org.prauga.camera.viewmodels
 
 import android.content.Intent
 import android.os.BatteryManager
-import org.prauga.camera.models.CameraConfiguration
+import org.prauga.camera.capture.models.CameraConfiguration
+import org.prauga.camera.capture.models.PhotoOutputFormat
 import org.prauga.camera.models.IslandItem
-import org.prauga.camera.models.PhotoOutputFormat
 import org.prauga.camera.models.ThermalStatus
 
 fun islandItemsOf(

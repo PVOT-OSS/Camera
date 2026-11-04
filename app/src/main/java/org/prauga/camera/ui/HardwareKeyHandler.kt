@@ -7,7 +7,7 @@ package org.prauga.camera.ui
 
 import android.util.Log
 import android.view.KeyEvent
-import org.prauga.camera.models.CameraMode
+import org.prauga.camera.capture.models.CameraMode
 import org.prauga.camera.models.GestureAction
 import org.prauga.camera.models.HardwareKey
 import org.prauga.camera.viewmodels.CameraViewModel

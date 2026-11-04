@@ -15,10 +15,10 @@ import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.view.children
 import androidx.core.view.setMargins
 import org.prauga.camera.R
+import org.prauga.camera.capture.models.Camera
+import org.prauga.camera.capture.models.CameraState
 import org.prauga.camera.ext.px
 import org.prauga.camera.ext.smoothRotate
-import org.prauga.camera.models.Camera
-import org.prauga.camera.models.CameraState
 import org.prauga.camera.models.Rotation
 import java.util.Locale
 

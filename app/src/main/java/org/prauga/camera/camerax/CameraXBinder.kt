@@ -23,15 +23,15 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
-import org.prauga.camera.models.Camera
-import org.prauga.camera.models.CameraConfiguration
-import org.prauga.camera.models.CameraFacing
-import org.prauga.camera.models.ExtensionMode
-import org.prauga.camera.models.FlashMode
-import org.prauga.camera.models.PhotoCaptureMode
-import org.prauga.camera.models.PhotoOutputFormat
-import org.prauga.camera.models.VideoMirrorMode
-import org.prauga.camera.models.VideoStabilizationMode
+import org.prauga.camera.capture.models.Camera
+import org.prauga.camera.capture.models.CameraConfiguration
+import org.prauga.camera.capture.models.CameraFacing
+import org.prauga.camera.capture.models.ExtensionMode
+import org.prauga.camera.capture.models.FlashMode
+import org.prauga.camera.capture.models.PhotoCaptureMode
+import org.prauga.camera.capture.models.PhotoOutputFormat
+import org.prauga.camera.capture.models.VideoMirrorMode
+import org.prauga.camera.capture.models.VideoStabilizationMode
 import java.util.concurrent.Executor
 
 @OptIn(ExperimentalCamera2Interop::class, ExperimentalZeroShutterLag::class)

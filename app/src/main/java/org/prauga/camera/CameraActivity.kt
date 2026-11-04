@@ -45,13 +45,13 @@ import kotlinx.coroutines.launch
 import org.prauga.camera.camerax.CameraXPreviewTarget
 import org.prauga.camera.capture.PhotoCaptureStatus
 import org.prauga.camera.capture.RecordingEvent
+import org.prauga.camera.capture.models.CameraConfiguration
+import org.prauga.camera.capture.models.CameraMode
+import org.prauga.camera.capture.models.CameraState
 import org.prauga.camera.ext.select
 import org.prauga.camera.ext.slide
 import org.prauga.camera.ext.slideDown
 import org.prauga.camera.ext.updateBarsVisibility
-import org.prauga.camera.models.CameraConfiguration
-import org.prauga.camera.models.CameraMode
-import org.prauga.camera.models.CameraState
 import org.prauga.camera.models.Event
 import org.prauga.camera.models.LaunchRequest
 import org.prauga.camera.models.MediaType
