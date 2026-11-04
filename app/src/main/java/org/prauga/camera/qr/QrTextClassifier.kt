@@ -132,12 +132,14 @@ class QrTextClassifier(private val context: Context) {
                 QrResult(context) {
                     text = it.text
 
-                    it.actions.forEach { action ->
-                        addAction {
-                            title = action.title.toString()
-                            contentDescription = action.contentDescription.toString()
-                            icon = action.icon
-                            pendingIntent = action.actionIntent
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        it.actions.forEach { action ->
+                            addAction {
+                                title = action.title.toString()
+                                contentDescription = action.contentDescription.toString()
+                                icon = action.icon
+                                pendingIntent = action.actionIntent
+                            }
                         }
                     }
                 }
