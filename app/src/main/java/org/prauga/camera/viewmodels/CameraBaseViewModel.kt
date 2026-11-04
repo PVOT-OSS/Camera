@@ -13,13 +13,12 @@ import org.prauga.camera.CameraApplication
  * Base view model for all app view models.
  */
 abstract class CameraBaseViewModel(application: Application) : AndroidViewModel(application) {
-    private val cameraApplication = getApplication<CameraApplication>()
+    protected val container = getApplication<CameraApplication>().container
 
-    protected val cameraDevices = cameraApplication.cameraDevices
-    protected val cameraXDevices = cameraApplication.cameraXDevices
-    protected val deviceStateRepository = cameraApplication.deviceStateRepository
-    protected val mediaRepository = cameraApplication.mediaRepository
-    protected val preferencesRepository = cameraApplication.preferencesRepository
+    protected val cameraDevices = container.cameraDevices
+    protected val deviceStateRepository = container.deviceStateRepository
+    protected val mediaRepository = container.mediaRepository
+    protected val preferencesRepository = container.preferencesRepository
 
     @Suppress("EmptyMethod")
     final override fun <T : Application> getApplication() = super.getApplication<T>()

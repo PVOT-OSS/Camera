@@ -34,7 +34,6 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
-import org.prauga.camera.camerax.CameraXSession
 import org.prauga.camera.capture.CameraSession
 import org.prauga.camera.capture.CaptureStateMachine
 import org.prauga.camera.capture.PreviewTarget
@@ -87,20 +86,16 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     private val qrImageAnalyzer = QrImageAnalyzer(applicationContext, viewModelScope)
 
     private val cameraSession: CameraSession by lazy {
-        CameraXSession(
-            applicationContext,
+        container.createCameraSession(
             viewModelScope,
             cameraSoundsUtils,
             captureStateMachine,
             inSingleCaptureMode,
             qrImageAnalyzer,
-            cameraXDevices::getExtensionEnabledCameraSelector,
             location = { location.value },
             cameraFacing = { cameraFacing.value },
             photoFfcMirror = { preferencesRepository.photoFfcMirror.value },
             onPhotoCaptureStatus = { emitEvent(Event.PhotoCapture(it)) },
-            onNewPicture = mediaRepository::broadcastNewPicture,
-            onNewVideo = mediaRepository::broadcastNewVideo,
         )
     }
 
