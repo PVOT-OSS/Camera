@@ -20,6 +20,7 @@ import android.widget.Toast
 import androidx.cardview.widget.CardView
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.R as MaterialR
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import org.prauga.camera.R
@@ -88,7 +89,7 @@ class QrBottomSheetDialog(context: Context) : BottomSheetDialog(context) {
                 }
                 if (item.canTintIcon) {
                     item.icon?.setTint(
-                        context.getThemeColor(com.google.android.material.R.attr.colorOnBackground)
+                        context.getThemeColor(MaterialR.attr.colorOnBackground)
                     )
                 }
                 item.icon?.loadDrawable(context)?.also { drawable ->
@@ -160,7 +161,7 @@ class QrBottomSheetDialog(context: Context) : BottomSheetDialog(context) {
         titleTextView.text = firstAction.title
         if (firstAction.canTintIcon) {
             firstAction.icon?.setTint(
-                context.getThemeColor(com.google.android.material.R.attr.colorOnBackground)
+                context.getThemeColor(MaterialR.attr.colorOnBackground)
             )
         }
         iconImageView.isVisible = firstAction.icon != null

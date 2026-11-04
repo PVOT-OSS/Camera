@@ -13,10 +13,12 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.FrameLayout
 import android.widget.ImageView
+import androidx.appcompat.R as AppCompatR
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.R as MaterialR
 import org.prauga.camera.R
 import org.prauga.camera.ext.getThemeColor
 import org.prauga.camera.models.IslandItem
@@ -89,8 +91,8 @@ class IslandView @JvmOverloads constructor(
                 view.imageTintList = ColorStateList.valueOf(
                     context.getThemeColor(
                         when (isWarning) {
-                            true -> androidx.appcompat.R.attr.colorError
-                            false -> com.google.android.material.R.attr.colorOnSurface
+                            true -> AppCompatR.attr.colorError
+                            false -> MaterialR.attr.colorOnSurface
                         }
                     )
                 )

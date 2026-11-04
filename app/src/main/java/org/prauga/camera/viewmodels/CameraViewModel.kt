@@ -9,6 +9,7 @@ import android.app.Application
 import android.net.Uri
 import android.util.Log
 import android.view.OrientationEventListener
+import androidx.annotation.OptIn as AndroidXOptIn
 import androidx.camera.core.AspectRatio
 import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.core.ImageCapture
@@ -516,7 +517,7 @@ class CameraViewModel(application: Application) : CameraBaseViewModel(applicatio
     /**
      * Whether the user should be able to select a photo effect.
      */
-    @androidx.annotation.OptIn(ExperimentalZeroShutterLag::class)
+    @AndroidXOptIn(ExperimentalZeroShutterLag::class)
     private val isPhotoEffectButtonVisible = combine(
         cameraConfiguration,
         cameraMode,

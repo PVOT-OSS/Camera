@@ -9,6 +9,7 @@ import android.hardware.camera2.CameraMetadata
 import android.hardware.camera2.CaptureRequest
 import android.os.Build
 import androidx.camera.camera2.interop.CaptureRequestOptions
+import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.core.util.toRange
 import org.prauga.camera.models.ColorCorrectionAberrationMode
 import org.prauga.camera.models.DistortionCorrectionMode
@@ -19,7 +20,7 @@ import org.prauga.camera.models.NoiseReductionMode
 import org.prauga.camera.models.ShadingMode
 import org.prauga.camera.models.VideoStabilizationMode
 
-@androidx.camera.camera2.interop.ExperimentalCamera2Interop
+@ExperimentalCamera2Interop
 fun <ValueT> CaptureRequestOptions.Builder.setOrClearCaptureRequestOption(
     key: CaptureRequest.Key<ValueT>,
     value: ValueT?
@@ -27,7 +28,7 @@ fun <ValueT> CaptureRequestOptions.Builder.setOrClearCaptureRequestOption(
     setCaptureRequestOption(key, it)
 } ?: clearCaptureRequestOption(key)
 
-@androidx.camera.camera2.interop.ExperimentalCamera2Interop
+@ExperimentalCamera2Interop
 fun CaptureRequestOptions.Builder.setFrameRate(
     frameRate: FrameRate?
 ) = setOrClearCaptureRequestOption(
@@ -35,7 +36,7 @@ fun CaptureRequestOptions.Builder.setFrameRate(
     frameRate?.range?.toRange(),
 )
 
-@androidx.camera.camera2.interop.ExperimentalCamera2Interop
+@ExperimentalCamera2Interop
 fun CaptureRequestOptions.Builder.setVideoStabilizationMode(
     videoStabilizationMode: VideoStabilizationMode?
 ) = setOrClearCaptureRequestOption(
@@ -54,7 +55,7 @@ fun CaptureRequestOptions.Builder.setVideoStabilizationMode(
     }
 )
 
-@androidx.camera.camera2.interop.ExperimentalCamera2Interop
+@ExperimentalCamera2Interop
 fun CaptureRequestOptions.Builder.setEdgeMode(
     edgeMode: EdgeMode?
 ) = setOrClearCaptureRequestOption(
@@ -68,7 +69,7 @@ fun CaptureRequestOptions.Builder.setEdgeMode(
     }
 )
 
-@androidx.camera.camera2.interop.ExperimentalCamera2Interop
+@ExperimentalCamera2Interop
 fun CaptureRequestOptions.Builder.setNoiseReductionMode(
     noiseReductionMode: NoiseReductionMode?
 ) = setOrClearCaptureRequestOption(
@@ -83,7 +84,7 @@ fun CaptureRequestOptions.Builder.setNoiseReductionMode(
     }
 )
 
-@androidx.camera.camera2.interop.ExperimentalCamera2Interop
+@ExperimentalCamera2Interop
 fun CaptureRequestOptions.Builder.setShadingMode(
     shadingMode: ShadingMode?
 ) = setOrClearCaptureRequestOption(
@@ -96,7 +97,7 @@ fun CaptureRequestOptions.Builder.setShadingMode(
     }
 )
 
-@androidx.camera.camera2.interop.ExperimentalCamera2Interop
+@ExperimentalCamera2Interop
 fun CaptureRequestOptions.Builder.setColorCorrectionAberrationMode(
     colorCorrectionAberrationMode: ColorCorrectionAberrationMode?
 ) = setOrClearCaptureRequestOption(
@@ -111,7 +112,7 @@ fun CaptureRequestOptions.Builder.setColorCorrectionAberrationMode(
     }
 )
 
-@androidx.camera.camera2.interop.ExperimentalCamera2Interop
+@ExperimentalCamera2Interop
 fun CaptureRequestOptions.Builder.setDistortionCorrectionMode(
     distortionCorrectionMode: DistortionCorrectionMode?
 ) = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -130,7 +131,7 @@ fun CaptureRequestOptions.Builder.setDistortionCorrectionMode(
     this
 }
 
-@androidx.camera.camera2.interop.ExperimentalCamera2Interop
+@ExperimentalCamera2Interop
 fun CaptureRequestOptions.Builder.setHotPixelMode(
     hotPixelMode: HotPixelMode?
 ) = setOrClearCaptureRequestOption(

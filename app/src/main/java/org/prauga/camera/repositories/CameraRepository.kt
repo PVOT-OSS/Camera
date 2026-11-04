@@ -7,6 +7,7 @@ package org.prauga.camera.repositories
 
 import android.Manifest
 import android.content.Context
+import androidx.annotation.OptIn as AndroidXOptIn
 import androidx.camera.camera2.interop.Camera2CameraInfo
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraInfo
@@ -29,7 +30,7 @@ import org.prauga.camera.models.CameraFacing
 /**
  * Repository that provides camera devices.
  */
-@androidx.annotation.OptIn(ExperimentalCamera2Interop::class, ExperimentalLensFacing::class)
+@AndroidXOptIn(ExperimentalCamera2Interop::class, ExperimentalLensFacing::class)
 class CameraRepository(
     private val context: Context,
     coroutineScope: CoroutineScope,

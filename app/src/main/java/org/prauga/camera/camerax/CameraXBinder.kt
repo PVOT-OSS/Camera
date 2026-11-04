@@ -6,6 +6,7 @@
 package org.prauga.camera.camerax
 
 import android.util.Log
+import androidx.annotation.OptIn
 import androidx.camera.camera2.interop.CaptureRequestOptions
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.CameraSelector
@@ -41,7 +42,7 @@ import org.prauga.camera.models.VideoMirrorMode
 import org.prauga.camera.models.VideoStabilizationMode
 import java.util.concurrent.Executor
 
-@androidx.annotation.OptIn(ExperimentalCamera2Interop::class, ExperimentalZeroShutterLag::class)
+@OptIn(ExperimentalCamera2Interop::class, ExperimentalZeroShutterLag::class)
 class CameraXBinder(
     private val cameraController: LifecycleCameraController,
     private val analyzerExecutor: Executor,

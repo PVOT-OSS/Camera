@@ -5,6 +5,7 @@
 
 package org.prauga.camera.viewmodels
 
+import androidx.annotation.OptIn
 import androidx.camera.core.ExperimentalZeroShutterLag
 import androidx.camera.core.ImageCapture
 import org.prauga.camera.models.Camera
@@ -23,7 +24,7 @@ class CameraConfigurationFactory(
     private val preferencesRepository: PreferencesRepository,
     private val inSingleCaptureMode: () -> Boolean,
 ) {
-    @androidx.annotation.OptIn(ExperimentalZeroShutterLag::class)
+    @OptIn(ExperimentalZeroShutterLag::class)
     fun create(
         camera: Camera,
         cameraMode: CameraMode,
@@ -114,7 +115,7 @@ class CameraConfigurationFactory(
         )
     }
 
-    @androidx.annotation.OptIn(ExperimentalZeroShutterLag::class)
+    @OptIn(ExperimentalZeroShutterLag::class)
     private fun buildPhotoCamera2Options(
         camera: Camera,
         photoCaptureMode: Int,
@@ -181,7 +182,7 @@ class CameraConfigurationFactory(
         },
     )
 
-    @androidx.annotation.OptIn(ExperimentalZeroShutterLag::class)
+    @OptIn(ExperimentalZeroShutterLag::class)
     private fun buildVideoCamera2Options(
         camera: Camera,
     ) = CameraConfiguration.Camera2Options(

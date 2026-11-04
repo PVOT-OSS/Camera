@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit
 
 object TimeUtils {
     fun convertNanosToString(nanos: Long): String {
-        return java.lang.String.format(
+        return String.format(
             Locale.US, "%02d:%02d:%02d",
             TimeUnit.NANOSECONDS.toHours(nanos),
             TimeUnit.NANOSECONDS.toMinutes(nanos) % TimeUnit.HOURS.toMinutes(1),

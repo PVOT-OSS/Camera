@@ -6,6 +6,7 @@
 package org.prauga.camera.ext
 
 import androidx.camera.camera2.interop.Camera2CameraControl
+import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.TorchState
 import androidx.camera.view.CameraController
@@ -35,5 +36,5 @@ var CameraController.flashMode: FlashMode
     }
 
 val CameraController.camera2CameraControl: Camera2CameraControl?
-    @androidx.camera.camera2.interop.ExperimentalCamera2Interop
+    @ExperimentalCamera2Interop
     get() = cameraControl?.let { Camera2CameraControl.from(it) }

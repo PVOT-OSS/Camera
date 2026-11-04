@@ -20,6 +20,7 @@ import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.camera2.interop.ExperimentalCamera2Interop
 import androidx.camera.core.ExperimentalZeroShutterLag
@@ -73,7 +74,7 @@ import org.prauga.camera.utils.PermissionsManager
 import org.prauga.camera.utils.ShortcutsUtils
 import org.prauga.camera.viewmodels.CameraViewModel
 
-@androidx.annotation.OptIn(ExperimentalCamera2Interop::class, ExperimentalZeroShutterLag::class)
+@OptIn(ExperimentalCamera2Interop::class, ExperimentalZeroShutterLag::class)
 open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     // View models
     private val viewModel by viewModels<CameraViewModel>()
