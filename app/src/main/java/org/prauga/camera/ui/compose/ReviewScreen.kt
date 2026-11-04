@@ -26,19 +26,26 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.statusBarsIgnoringVisibility
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -51,6 +58,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -61,11 +69,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
@@ -84,6 +98,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.prauga.camera.R
+
+private const val DOUBLE_TAP_ZOOM = 2.5f
+private const val MAX_ZOOM = 5f
 
 private data class MediaInfo(
     val name: String?,
@@ -121,6 +138,7 @@ fun ReviewScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Review(
     media: List<Uri>,
@@ -177,23 +195,10 @@ private fun Review(
             state = pagerState,
             modifier = Modifier.fillMaxSize().pvotGlassBackdrop(backdrop),
         ) { page ->
-            Box(
-                modifier =
-                    Modifier.fillMaxSize().clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) {
-                        chromeVisible = !chromeVisible
-                    },
-                contentAlignment = Alignment.Center,
-            ) {
-                AsyncImage(
-                    model = mediaRequest(media[page]),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit,
-                )
-            }
+            ZoomableMedia(
+                uri = media[page],
+                onTap = { chromeVisible = !chromeVisible },
+            )
         }
 
         if (info?.isVideo == true && current != null) {
@@ -223,7 +228,7 @@ private fun Review(
                 modifier =
                     Modifier.fillMaxWidth()
                         .background(Color.Black)
-                        .statusBarsPadding()
+                        .windowInsetsPadding(WindowInsets.statusBarsIgnoringVisibility)
                         .height(64.dp)
                         .padding(horizontal = 8.dp)
             ) {
@@ -387,6 +392,72 @@ private fun Review(
         if (media.isEmpty()) {
             onDismiss()
         }
+    }
+}
+
+@Composable
+private fun ZoomableMedia(uri: Uri, onTap: () -> Unit) {
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+    var size by remember { mutableStateOf(IntSize.Zero) }
+
+    val clamp = { value: Offset, zoom: Float ->
+        val maxX = size.width * (zoom - 1f) / 2f
+        val maxY = size.height * (zoom - 1f) / 2f
+        Offset(value.x.coerceIn(-maxX, maxX), value.y.coerceIn(-maxY, maxY))
+    }
+
+    Box(
+        modifier =
+            Modifier.fillMaxSize()
+                .onSizeChanged { size = it }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = { onTap() },
+                        onDoubleTap = { tap ->
+                            if (scale > 1f) {
+                                scale = 1f
+                                offset = Offset.Zero
+                            } else {
+                                scale = DOUBLE_TAP_ZOOM
+                                val center = Offset(size.width / 2f, size.height / 2f)
+                                offset = clamp((center - tap) * (DOUBLE_TAP_ZOOM - 1f), scale)
+                            }
+                        },
+                    )
+                }
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false)
+                        do {
+                            val event = awaitPointerEvent()
+                            if (event.changes.size > 1 || scale > 1f) {
+                                val zoom = event.calculateZoom()
+                                scale = (scale * zoom).coerceIn(1f, MAX_ZOOM)
+                                offset = clamp(offset * zoom + event.calculatePan(), scale)
+                                event.changes.forEach { if (it.positionChanged()) it.consume() }
+                            }
+                        } while (event.changes.any { it.pressed })
+                        if (scale < 1.05f) {
+                            scale = 1f
+                            offset = Offset.Zero
+                        }
+                    }
+                }
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    translationX = offset.x
+                    translationY = offset.y
+                },
+        contentAlignment = Alignment.Center,
+    ) {
+        AsyncImage(
+            model = mediaRequest(uri),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit,
+        )
     }
 }
 
